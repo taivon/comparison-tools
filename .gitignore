@@ -1,0 +1,25 @@
+*.pyc
+db.sqlite3
+.python-version
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+*.log
+
+# Virtual env
+venv/
+
+# Tailwind + Node
+node_modules/
+theme/static_src/
+theme/static/css/
+theme/node_modules/
+theme/package-lock.json
+
+# OS
+.DS_Store
+
+# Django stuff
+/static/
