@@ -1,0 +1,165 @@
+{% extends 'apartments/base.html' %}
+
+{% block title %}Update Preferences{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Update Preferences</h1>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">Sorting Preferences</h3>
+                    <p class="mt-1 text-sm text-gray-500">Drag and drop to rank the importance of each factor in sorting apartments.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div id="attribute-list" class="space-y-2">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 cursor-move" draggable="true" data-attribute="price">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="h-5 w-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium text-gray-700">Price</span>
+                                </div>
+                                <span class="text-sm text-gray-500">Drag to reorder</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 cursor-move" draggable="true" data-attribute="sqft">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="h-5 w-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium text-gray-700">Square Footage</span>
+                                </div>
+                                <span class="text-sm text-gray-500">Drag to reorder</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 cursor-move" draggable="true" data-attribute="distance">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="h-5 w-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium text-gray-700">Distance</span>
+                                </div>
+                                <span class="text-sm text-gray-500">Drag to reorder</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Discount Calculation</h3>
+                        <p class="mt-1 text-sm text-gray-500">Choose how discounts should be calculated.</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="{{ form.discount_calculation.id_for_label }}" class="block text-sm font-medium text-gray-700">Discount Calculation</label>
+                        <div class="mt-1">
+                            {{ form.discount_calculation }}
+                        </div>
+                        {% if form.discount_calculation.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.discount_calculation.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end">
+            <a href="{% url 'apartments:index' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                Cancel
+            </a>
+            <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                Update Preferences
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const list = document.getElementById('attribute-list');
+    let draggedItem = null;
+
+    // Add drag and drop event listeners
+    list.addEventListener('dragstart', function(e) {
+        draggedItem = e.target;
+        e.target.style.opacity = '0.5';
+    });
+
+    list.addEventListener('dragend', function(e) {
+        e.target.style.opacity = '1';
+    });
+
+    list.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+
+    list.addEventListener('drop', function(e) {
+        e.preventDefault();
+        if (e.target.closest('[draggable="true"]')) {
+            const dropTarget = e.target.closest('[draggable="true"]');
+            const dropTargetRect = dropTarget.getBoundingClientRect();
+            const dropTargetMiddle = dropTargetRect.top + dropTargetRect.height / 2;
+            
+            if (e.clientY < dropTargetMiddle) {
+                list.insertBefore(draggedItem, dropTarget);
+            } else {
+                list.insertBefore(draggedItem, dropTarget.nextSibling);
+            }
+        }
+        updateWeights();
+    });
+
+    function updateWeights() {
+        const items = list.querySelectorAll('[draggable="true"]');
+        items.forEach((item, index) => {
+            const attribute = item.dataset.attribute;
+            // First item gets 100, second 67, third 34
+            const weight = 100 - (index * 33);
+            
+            switch(attribute) {
+                case 'price':
+                    document.getElementById('id_price_weight').value = weight;
+                    break;
+                case 'sqft':
+                    // Invert the weight for square footage to sort higher values first
+                    document.getElementById('id_sqft_weight').value = 100 - weight;
+                    break;
+                case 'distance':
+                    document.getElementById('id_distance_weight').value = weight;
+                    break;
+            }
+        });
+    }
+
+    // Initialize weights based on current values
+    const priceWeight = document.getElementById('id_price_weight').value;
+    const sqftWeight = document.getElementById('id_sqft_weight').value;
+    const distanceWeight = document.getElementById('id_distance_weight').value;
+
+    // Sort items based on current weights
+    const items = Array.from(list.querySelectorAll('[draggable="true"]'));
+    items.sort((a, b) => {
+        const aWeight = a.dataset.attribute === 'price' ? priceWeight :
+                       a.dataset.attribute === 'sqft' ? sqftWeight :
+                       distanceWeight;
+        const bWeight = b.dataset.attribute === 'price' ? priceWeight :
+                       b.dataset.attribute === 'sqft' ? sqftWeight :
+                       distanceWeight;
+        return bWeight - aWeight;
+    });
+
+    // Reorder the list
+    items.forEach(item => list.appendChild(item));
+});
+</script>
+{% endblock %} 

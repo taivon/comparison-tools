@@ -1,0 +1,84 @@
+{% extends 'apartments/base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Apartment{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">
+        {% if form.instance.pk %}Edit{% else %}Add{% endif %} Apartment
+    </h1>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+            <div class="grid grid-cols-6 gap-6">
+                <div class="col-span-6 sm:col-span-3">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-6 sm:col-span-3">
+                    <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700">Price ($)</label>
+                    {{ form.price }}
+                    {% if form.price.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.price.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-6 sm:col-span-3">
+                    <label for="{{ form.square_footage.id_for_label }}" class="block text-sm font-medium text-gray-700">Square Footage</label>
+                    {{ form.square_footage }}
+                    {% if form.square_footage.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.square_footage.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-6 sm:col-span-3">
+                    <label for="{{ form.lease_length_months.id_for_label }}" class="block text-sm font-medium text-gray-700">Lease Length (months)</label>
+                    {{ form.lease_length_months }}
+                    {% if form.lease_length_months.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.lease_length_months.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-6 sm:col-span-2">
+                    <label for="{{ form.months_free.id_for_label }}" class="block text-sm font-medium text-gray-700">Months Free</label>
+                    {{ form.months_free }}
+                    {% if form.months_free.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.months_free.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-6 sm:col-span-2">
+                    <label for="{{ form.weeks_free.id_for_label }}" class="block text-sm font-medium text-gray-700">Weeks Free</label>
+                    {{ form.weeks_free }}
+                    {% if form.weeks_free.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.weeks_free.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="col-span-6 sm:col-span-2">
+                    <label for="{{ form.flat_discount.id_for_label }}" class="block text-sm font-medium text-gray-700">Flat Discount ($)</label>
+                    {{ form.flat_discount }}
+                    {% if form.flat_discount.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.flat_discount.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end">
+            <a href="{% url 'apartments:index' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                Cancel
+            </a>
+            <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                {% if form.instance.pk %}Update{% else %}Add{% endif %} Apartment
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %} 

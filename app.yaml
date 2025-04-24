@@ -3,7 +3,7 @@ runtime: python312
 entrypoint: gunicorn config.wsgi --bind=0.0.0.0:$PORT
 
 automatic_scaling:
-  max_instances: 5
+  max_instances: 1
 
 handlers:
 - url: /static

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-e&f)15o0*-pg2ul$(w&on#i5kz+a-(kk=hvyff3wg%k&!pqsor
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['analyze.apartments', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'tailwind',
     'theme',
     'django_browser_reload',
+    'apartments',
 ]
 
 TAILWIND_APP_NAME = 'theme'
@@ -129,7 +130,39 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-ALLOWED_HOSTS = ['*']  # Update later with real domain
-DEBUG = False  # Turn off debug in production
+ALLOWED_HOSTS = ['analyze.apartments', 'localhost', '127.0.0.1']
+DEBUG = True  # Keep debug on for development
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+# Login settings
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'apartments:index'
+LOGOUT_REDIRECT_URL = 'login'
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apartments': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
