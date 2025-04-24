@@ -24,9 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-e&f)15o0*-pg2ul$(w&on#i5kz+a-(kk=hvyff3wg%k&!pqsor'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Set DEBUG to False if running in Google App Engine
+DEBUG = 'GAE_ENV' not in os.environ
 
-ALLOWED_HOSTS = ['analyze.apartments', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['analyze.apartments', 'localhost', '127.0.0.1', 'analyze-apartments.wl.r.appspot.com']
 
 
 # Application definition
@@ -131,7 +132,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 ALLOWED_HOSTS = ['analyze.apartments', 'localhost', '127.0.0.1']
-DEBUG = True  # Keep debug on for development
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
