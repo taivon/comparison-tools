@@ -1,21 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.http import JsonResponse, Http404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+import json
 from .firestore_service import (
     FirestoreService,
     FirestoreApartment,
     FirestoreUserPreferences,
 )
-from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm
+from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm, LoginForm
+from .auth_utils import firestore_login, firestore_logout, firestore_authenticate, login_required_firestore
 import logging
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
 
-@login_required
+@login_required_firestore
 def index(request):
     firestore_service = FirestoreService()
     apartments = firestore_service.get_user_apartments(request.user.id)
@@ -67,7 +69,7 @@ def index(request):
     return render(request, "apartments/index.html", context)
 
 
-@login_required
+@login_required_firestore
 def create_apartment(request):
     if request.method == "POST":
         form = ApartmentForm(request.POST)
@@ -113,7 +115,7 @@ def create_apartment(request):
     return render(request, "apartments/apartment_form.html", {"form": form})
 
 
-@login_required
+@login_required_firestore
 def update_apartment(request, pk):
     firestore_service = FirestoreService()
     apartment = firestore_service.get_apartment(pk)
@@ -152,7 +154,7 @@ def update_apartment(request, pk):
     return render(request, "apartments/apartment_form.html", {"form": form})
 
 
-@login_required
+@login_required_firestore
 def delete_apartment(request, pk):
     firestore_service = FirestoreService()
     apartment = firestore_service.get_apartment(pk)
@@ -166,7 +168,7 @@ def delete_apartment(request, pk):
     return redirect("apartments:index")
 
 
-@login_required
+@login_required_firestore
 def update_preferences(request):
     firestore_service = FirestoreService()
     preferences = firestore_service.get_user_preferences(request.user.id)
@@ -203,21 +205,116 @@ def signup_view(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            messages.success(
-                request,
-                f"Welcome {user.first_name or user.username}! Your account has been created successfully.",
-            )
-            login(request, user)
-            return redirect("apartments:index")
+            try:
+                user = form.save()
+                messages.success(
+                    request,
+                    f"Welcome {user.first_name or user.username}! Your account has been created successfully.",
+                )
+                firestore_login(request, user)
+                return redirect("apartments:index")
+            except Exception as e:
+                logger.error(f"Error creating user: {e}")
+                messages.error(request, "An error occurred while creating your account. Please try again.")
     else:
         form = CustomUserCreationForm()
 
     return render(request, "apartments/signup.html", {"form": form})
 
 
+def login_view(request):
+    """Handle user login"""
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            
+            user = firestore_authenticate(username, password)
+            if user:
+                firestore_login(request, user)
+                messages.success(request, f"Welcome back, {user.username}!")
+                return redirect("apartments:index")
+            else:
+                messages.error(request, "Invalid username or password.")
+    else:
+        form = LoginForm()
+
+    return render(request, "apartments/login.html", {"form": form})
+
+
 def logout_view(request):
     """Handle user logout with GET and POST requests"""
-    logout(request)
+    firestore_logout(request)
     messages.success(request, "You have been successfully logged out.")
     return redirect("login")
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def sync_firebase_user(request):
+    """Sync Firebase authenticated user with Firestore user collection"""
+    try:
+        data = json.loads(request.body)
+        firebase_uid = data.get('uid')
+        email = data.get('email')
+        display_name = data.get('displayName', '')
+        photo_url = data.get('photoURL', '')
+        
+        if not firebase_uid or not email:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+        
+        firestore_service = FirestoreService()
+        
+        # Check if user already exists by email
+        existing_user = firestore_service.get_user_by_email(email)
+        
+        if existing_user:
+            # Update existing user with Firebase UID
+            update_data = {
+                'firebase_uid': firebase_uid,
+                'photo_url': photo_url,
+            }
+            firestore_service.update_user(existing_user.doc_id, update_data)
+            user = firestore_service.get_user(existing_user.doc_id)
+        else:
+            # Create new user
+            # Generate username from display_name or email
+            username = display_name.lower().replace(' ', '') if display_name else email.split('@')[0]
+            
+            # Ensure username is unique
+            counter = 1
+            base_username = username
+            while firestore_service.get_user_by_username(username):
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            user_data = {
+                'username': username,
+                'email': email,
+                'first_name': display_name.split(' ')[0] if display_name else '',
+                'last_name': ' '.join(display_name.split(' ')[1:]) if display_name and len(display_name.split(' ')) > 1 else '',
+                'firebase_uid': firebase_uid,
+                'photo_url': photo_url,
+                'is_staff': False,  # New users start as free tier
+            }
+            
+            # Create user without password (Firebase handles auth)
+            user = firestore_service.create_firebase_user(user_data)
+        
+        # Log the user into Django session
+        firestore_login(request, user)
+        
+        return JsonResponse({
+            'success': True,
+            'user': {
+                'id': user.doc_id,
+                'username': user.username,
+                'email': user.email,
+                'is_staff': user.is_staff
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error syncing Firebase user: {e}")
+        return JsonResponse({'error': 'Internal server error'}, status=500)

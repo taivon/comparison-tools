@@ -15,21 +15,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.contrib import admin
 from django.urls import include, path
-from django.contrib.auth import views as auth_views
 from apartments import views as apartment_views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # path("admin/", admin.site.urls),  # Disabled for Firestore-only setup
     path("__reload__/", include("django_browser_reload.urls")),
     path("", include("apartments.urls")),
-    path(
-        "accounts/login/",
-        auth_views.LoginView.as_view(template_name="apartments/login.html"),
-        name="login",
-    ),
-    path("accounts/logout/", apartment_views.logout_view, name="logout"),
-    path("accounts/signup/", apartment_views.signup_view, name="signup"),
-    path("accounts/", include("social_django.urls", namespace="social")),
+    path("login/", apartment_views.login_view, name="login"),
+    path("logout/", apartment_views.logout_view, name="logout"),
+    path("signup/", apartment_views.signup_view, name="signup"),
+    path("auth/", include("social_django.urls", namespace="social")),  # Google OAuth
 ]

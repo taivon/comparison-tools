@@ -84,13 +84,13 @@ else:
 
 # Conditional apps based on environment
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
+    # "django.contrib.admin",  # Disabled for Firestore-only setup
+    "django.contrib.auth",  # Keep for session management
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "social_django",
+    "social_django",  # Re-enabled for Google OAuth
     "apartments",
 ]
 
@@ -110,8 +110,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "social_django.middleware.SocialAuthExceptionMiddleware",
+    "apartments.middleware.FirestoreSessionMiddleware",  # Custom Firestore auth
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -382,11 +381,10 @@ SOCIAL_AUTH_PIPELINE = [
     "social_core.pipeline.social_auth.social_uid",
     "social_core.pipeline.social_auth.auth_allowed",
     "social_core.pipeline.social_auth.social_user",
-    "social_core.pipeline.user.get_username",
-    "social_core.pipeline.user.create_user",
-    "social_core.pipeline.social_auth.associate_user",
+    # Custom pipeline steps for Firestore users
+    "apartments.social_auth_pipeline.create_firestore_user",
+    "apartments.social_auth_pipeline.associate_firestore_user",
     "social_core.pipeline.social_auth.load_extra_data",
-    "social_core.pipeline.user.user_details",
 ]
 
 # Additional Social Auth Settings
