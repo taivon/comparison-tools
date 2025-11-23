@@ -13,4 +13,4 @@ handlers:
   script: auto
 
 env_variables:
-    APPENGINE_URL: https://analyze-apartments.wl.r.appspot.com
+    APPENGINE_URL: https://comparison-tools-479102.uc.r.appspot.com

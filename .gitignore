@@ -23,3 +23,7 @@ theme/package-lock.json
 
 # Django stuff
 /static/
+
+# GCP Service Account Keys (should never be committed)
+gcp-service-account-key.json
+*service-account*.json

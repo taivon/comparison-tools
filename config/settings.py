@@ -39,7 +39,7 @@ SECRET_KEY = 'django-insecure-e&f)15o0*-pg2ul$(w&on#i5kz+a-(kk=hvyff3wg%k&!pqsor
 # Set DEBUG to False if running in Google App Engine
 DEBUG = 'GAE_ENV' not in os.environ
 
-# ALLOWED_HOSTS = ['analyze.apartments', 'localhost', '127.0.0.1', 'analyze-apartments.wl.r.appspot.com']
+# ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'comparison-tools-479102.uc.r.appspot.com']
 # SECURITY WARNING: It's recommended that you use this when
 # running in production. The URL will be known once you first deploy
 # to App Engine. This code takes the URL and converts it to both these settings formats.
