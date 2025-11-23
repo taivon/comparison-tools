@@ -105,32 +105,40 @@ jobs:
           --member="serviceAccount:github-actions-deploy@comparison-tools-479102.iam.gserviceaccount.com" \
           --role="roles/secretmanager.admin" || true
     
-    - name: Create Google Secret for OAuth
+    - name: Create Google Secrets for OAuth
       env:
+        GOOGLE_OAUTH2_KEY: ${{ secrets.GOOGLE_OAUTH2_KEY }}
         GOOGLE_OAUTH2_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
       run: |
+        # Create or update the OAuth key in Secret Manager
+        if gcloud secrets describe google-oauth2-key --project=comparison-tools-479102 >/dev/null 2>&1; then
+          echo "OAuth key secret exists, updating..."
+          echo "${GOOGLE_OAUTH2_KEY}" | gcloud secrets versions add google-oauth2-key --data-file=- --project=comparison-tools-479102
+        else
+          echo "Creating new OAuth key secret..."
+          echo "${GOOGLE_OAUTH2_KEY}" | gcloud secrets create google-oauth2-key --data-file=- --project=comparison-tools-479102
+        fi
+        
         # Create or update the OAuth secret in Secret Manager
         if gcloud secrets describe google-oauth2-secret --project=comparison-tools-479102 >/dev/null 2>&1; then
-          echo "Secret exists, updating..."
+          echo "OAuth secret exists, updating..."
           echo "${GOOGLE_OAUTH2_SECRET}" | gcloud secrets versions add google-oauth2-secret --data-file=- --project=comparison-tools-479102
         else
-          echo "Creating new secret..."
+          echo "Creating new OAuth secret..."
           echo "${GOOGLE_OAUTH2_SECRET}" | gcloud secrets create google-oauth2-secret --data-file=- --project=comparison-tools-479102
         fi
         
-        # Grant App Engine access to the secret
+        # Grant App Engine access to both secrets
+        gcloud secrets add-iam-policy-binding google-oauth2-key \
+          --member="serviceAccount:comparison-tools-479102@appspot.gserviceaccount.com" \
+          --role="roles/secretmanager.secretAccessor" \
+          --project=comparison-tools-479102
         gcloud secrets add-iam-policy-binding google-oauth2-secret \
           --member="serviceAccount:comparison-tools-479102@appspot.gserviceaccount.com" \
           --role="roles/secretmanager.secretAccessor" \
           --project=comparison-tools-479102
     
     - name: Deploy to App Engine
-      env:
-        GOOGLE_OAUTH2_KEY: ${{ secrets.GOOGLE_OAUTH2_KEY }}
       run: |
         gcloud config set project comparison-tools-479102
-        # Create a temporary app.yaml with the OAuth key environment variable
-        cp app.yaml app-deploy.yaml
-        echo "    GOOGLE_OAUTH2_KEY: \"${GOOGLE_OAUTH2_KEY}\"" >> app-deploy.yaml
-        gcloud app deploy app-deploy.yaml --quiet --verbosity=debug
-        rm app-deploy.yaml
+        gcloud app deploy app.yaml --quiet --verbosity=debug

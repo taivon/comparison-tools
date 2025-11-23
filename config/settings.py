@@ -235,25 +235,47 @@ LOGGING = {
     },
 }
 
-# Google OAuth2 Settings
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("GOOGLE_OAUTH2_KEY", "")
+# Google OAuth2 Settings - Fetch from Secret Manager in production, env vars in development
+def get_oauth_credentials():
+    """Fetch OAuth credentials from Secret Manager in production or environment variables in development."""
+    if DEBUG:
+        # Use environment variables in development
+        return {
+            'key': os.getenv("GOOGLE_OAUTH2_KEY", ""),
+            'secret': os.getenv("GOOGLE_OAUTH2_SECRET", "")
+        }
+    else:
+        # Fetch from Google Secret Manager in production
+        try:
+            from google.cloud import secretmanager
+            client = secretmanager.SecretManagerServiceClient()
+            
+            # Fetch OAuth key
+            key_name = f"projects/comparison-tools-479102/secrets/google-oauth2-key/versions/latest"
+            key_response = client.access_secret_version(request={"name": key_name})
+            oauth_key = key_response.payload.data.decode("UTF-8")
+            
+            # Fetch OAuth secret
+            secret_name = f"projects/comparison-tools-479102/secrets/google-oauth2-secret/versions/latest"
+            secret_response = client.access_secret_version(request={"name": secret_name})
+            oauth_secret = secret_response.payload.data.decode("UTF-8")
+            
+            return {'key': oauth_key, 'secret': oauth_secret}
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to fetch OAuth credentials from Secret Manager: {e}")
+            # Fallback to environment variables if Secret Manager fails
+            return {
+                'key': os.getenv("GOOGLE_OAUTH2_KEY", ""),
+                'secret': os.getenv("GOOGLE_OAUTH2_SECRET", "")
+            }
 
-# Get OAuth secret from Secret Manager in production, environment variable in development
-if DEBUG:
-    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("GOOGLE_OAUTH2_SECRET", "")
-else:
-    # Fetch from Google Secret Manager in production
-    try:
-        from google.cloud import secretmanager
-        client = secretmanager.SecretManagerServiceClient()
-        name = f"projects/comparison-tools-479102/secrets/google-oauth2-secret/versions/latest"
-        response = client.access_secret_version(request={"name": name})
-        SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = response.payload.data.decode("UTF-8")
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Failed to fetch OAuth secret from Secret Manager: {e}")
-        SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("GOOGLE_OAUTH2_SECRET", "")
+# Get OAuth credentials
+oauth_creds = get_oauth_credentials()
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = oauth_creds['key']
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = oauth_creds['secret']
 
 # Social Authentication Settings
 AUTHENTICATION_BACKENDS = [
