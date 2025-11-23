@@ -748,10 +748,56 @@ function calculateNetEffectivePrice(apartment) {
     const weeksFree = parseInt(apartment.weeks_free || 0);
     const flatDiscount = parseFloat(apartment.flat_discount || 0);
 
-    const totalMonthsFree = monthsFree + (weeksFree / 4);
+    // Get discount calculation method from user preferences
+    const discountCalcMethod = '{{ preferences.discount_calculation|default:"daily" }}';
+
+    let totalDiscount = 0;
+    const annualRent = price * 12;
+
+    if (discountCalcMethod === 'daily') {
+        // Calculate using daily rate (annual rent / 365 days)
+        const dailyRate = annualRent / 365;
+
+        // Convert months to days (365/12 = ~30.42 days per month)
+        if (monthsFree > 0) {
+            const daysFromMonths = monthsFree * (365 / 12);
+            totalDiscount += dailyRate * daysFromMonths;
+        }
+
+        // Convert weeks to days
+        if (weeksFree > 0) {
+            totalDiscount += dailyRate * weeksFree * 7;
+        }
+    } else if (discountCalcMethod === 'weekly') {
+        // Calculate using weekly rate (annual rent / 52 weeks)
+        const weeklyRate = annualRent / 52;
+
+        // Convert months to weeks (52/12 = ~4.33 weeks per month)
+        if (monthsFree > 0) {
+            const weeksFromMonths = monthsFree * (52 / 12);
+            totalDiscount += weeklyRate * weeksFromMonths;
+        }
+
+        // Add weeks directly
+        if (weeksFree > 0) {
+            totalDiscount += weeklyRate * weeksFree;
+        }
+    } else {
+        // Fallback to monthly calculation
+        if (monthsFree > 0) {
+            totalDiscount += price * monthsFree;
+        }
+        if (weeksFree > 0) {
+            totalDiscount += price * (weeksFree / 4);
+        }
+    }
+
+    // Add flat discount
+    totalDiscount += flatDiscount;
+
+    // Calculate net effective price
     const totalRent = price * leaseLength;
-    const discountFromFreeMonths = price * totalMonthsFree;
-    const netTotal = totalRent - discountFromFreeMonths - flatDiscount;
+    const netTotal = totalRent - totalDiscount;
     const netEffectivePrice = netTotal / leaseLength;
 
     return netEffectivePrice;
