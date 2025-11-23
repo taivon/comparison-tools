@@ -142,6 +142,7 @@ def index(request):
     context = {
         "can_add_apartment": can_add_apartment,
         "is_anonymous": not request.user.is_authenticated,
+        "apartment_count": apartment_count,
     }
     return render(request, "apartments/index.html", context)
 

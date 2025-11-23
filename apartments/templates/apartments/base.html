@@ -54,7 +54,14 @@
                     <div class="hidden md:block ml-10">
                         <div class="flex items-baseline space-x-8">
                             <a href="{% url 'apartments:index' %}" class="text-gray-900 dark:text-white hover:text-brand-purple px-3 py-2 text-sm font-medium">Home</a>
-                            <a href="{% url 'apartments:dashboard' %}" class="text-gray-900 dark:text-white hover:text-brand-purple px-3 py-2 text-sm font-medium">Dashboard</a>
+                            {% if user.is_authenticated %}
+                                {% if apartment_count > 0 %}
+                                    <a href="{% url 'apartments:dashboard' %}" class="text-gray-900 dark:text-white hover:text-brand-purple px-3 py-2 text-sm font-medium">Dashboard</a>
+                                {% endif %}
+                            {% else %}
+                                <!-- Anonymous users: show/hide via JavaScript based on sessionStorage -->
+                                <a href="{% url 'apartments:dashboard' %}" id="dashboardLink" class="text-gray-900 dark:text-white hover:text-brand-purple px-3 py-2 text-sm font-medium hidden">Dashboard</a>
+                            {% endif %}
                             <!-- Removed Explore and Alerts buttons with no links -->
                         </div>
                     </div>
@@ -556,6 +563,16 @@
             const prompt = document.getElementById('signupPrompt');
             if (prompt && sessionStorage.getItem('signupPromptDismissed')) {
                 prompt.style.display = 'none';
+            }
+
+            // Show/hide Dashboard link for anonymous users based on sessionStorage
+            const dashboardLink = document.getElementById('dashboardLink');
+            if (dashboardLink) {
+                const apartments = sessionStorage.getItem('anonymous_apartments');
+                const apartmentCount = apartments ? JSON.parse(apartments).length : 0;
+                if (apartmentCount > 0) {
+                    dashboardLink.classList.remove('hidden');
+                }
             }
         });
         
