@@ -59,18 +59,18 @@ class ApartmentForm(forms.Form):
             attrs={
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary"
             }
-        )
+        ),
     )
     price = forms.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal('0'))],
+        validators=[MinValueValidator(Decimal("0"))],
         widget=forms.NumberInput(
             attrs={
                 "step": "0.01",
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
             }
-        )
+        ),
     )
     square_footage = forms.IntegerField(
         validators=[MinValueValidator(0)],
@@ -78,7 +78,7 @@ class ApartmentForm(forms.Form):
             attrs={
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary"
             }
-        )
+        ),
     )
     lease_length_months = forms.IntegerField(
         validators=[MinValueValidator(1)],
@@ -86,7 +86,7 @@ class ApartmentForm(forms.Form):
             attrs={
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary"
             }
-        )
+        ),
     )
     months_free = forms.IntegerField(
         initial=0,
@@ -95,7 +95,7 @@ class ApartmentForm(forms.Form):
             attrs={
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary"
             }
-        )
+        ),
     )
     weeks_free = forms.IntegerField(
         initial=0,
@@ -104,50 +104,50 @@ class ApartmentForm(forms.Form):
             attrs={
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary"
             }
-        )
+        ),
     )
     flat_discount = forms.DecimalField(
         max_digits=10,
         decimal_places=2,
-        initial=Decimal('0'),
-        validators=[MinValueValidator(Decimal('0'))],
+        initial=Decimal("0"),
+        validators=[MinValueValidator(Decimal("0"))],
         widget=forms.NumberInput(
             attrs={
                 "step": "0.01",
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
             }
-        )
+        ),
     )
 
 
 class UserPreferencesForm(forms.Form):
     DISCOUNT_CHOICES = [
-        ('monthly', 'Monthly'),
-        ('weekly', 'Weekly'),
-        ('daily', 'Daily')
+        ("monthly", "Monthly"),
+        ("weekly", "Weekly"),
+        ("daily", "Daily"),
     ]
-    
+
     price_weight = forms.IntegerField(
         initial=50,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-        widget=forms.HiddenInput()
+        widget=forms.HiddenInput(),
     )
     sqft_weight = forms.IntegerField(
         initial=50,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-        widget=forms.HiddenInput()
+        widget=forms.HiddenInput(),
     )
     distance_weight = forms.IntegerField(
         initial=50,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-        widget=forms.HiddenInput()
+        widget=forms.HiddenInput(),
     )
     discount_calculation = forms.ChoiceField(
         choices=DISCOUNT_CHOICES,
-        initial='monthly',
+        initial="monthly",
         widget=forms.Select(
             attrs={
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary"
             }
-        )
+        ),
     )

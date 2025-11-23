@@ -3,7 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.http import JsonResponse, Http404
-from .firestore_service import FirestoreService, FirestoreApartment, FirestoreUserPreferences
+from .firestore_service import (
+    FirestoreService,
+    FirestoreApartment,
+    FirestoreUserPreferences,
+)
 from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm
 import logging
 from decimal import Decimal
@@ -22,10 +26,10 @@ def index(request):
         form = UserPreferencesForm(request.POST)
         if form.is_valid():
             preferences_data = {
-                'price_weight': form.cleaned_data['price_weight'],
-                'sqft_weight': form.cleaned_data['sqft_weight'],
-                'distance_weight': form.cleaned_data['distance_weight'],
-                'discount_calculation': form.cleaned_data['discount_calculation']
+                "price_weight": form.cleaned_data["price_weight"],
+                "sqft_weight": form.cleaned_data["sqft_weight"],
+                "distance_weight": form.cleaned_data["distance_weight"],
+                "discount_calculation": form.cleaned_data["discount_calculation"],
             }
             firestore_service.update_user_preferences(request.user.id, preferences_data)
             messages.success(request, "Preferences updated successfully!")
@@ -35,10 +39,10 @@ def index(request):
         initial_data = {}
         if preferences:
             initial_data = {
-                'price_weight': preferences.price_weight,
-                'sqft_weight': preferences.sqft_weight,
-                'distance_weight': preferences.distance_weight,
-                'discount_calculation': preferences.discount_calculation
+                "price_weight": preferences.price_weight,
+                "sqft_weight": preferences.sqft_weight,
+                "distance_weight": preferences.distance_weight,
+                "discount_calculation": preferences.discount_calculation,
             }
         form = UserPreferencesForm(initial=initial_data)
 
@@ -85,14 +89,14 @@ def create_apartment(request):
 
             try:
                 apartment_data = {
-                    'name': form.cleaned_data['name'],
-                    'price': form.cleaned_data['price'],
-                    'square_footage': form.cleaned_data['square_footage'],
-                    'lease_length_months': form.cleaned_data['lease_length_months'],
-                    'months_free': form.cleaned_data['months_free'],
-                    'weeks_free': form.cleaned_data['weeks_free'],
-                    'flat_discount': form.cleaned_data['flat_discount'],
-                    'user_id': str(request.user.id)
+                    "name": form.cleaned_data["name"],
+                    "price": form.cleaned_data["price"],
+                    "square_footage": form.cleaned_data["square_footage"],
+                    "lease_length_months": form.cleaned_data["lease_length_months"],
+                    "months_free": form.cleaned_data["months_free"],
+                    "weeks_free": form.cleaned_data["weeks_free"],
+                    "flat_discount": form.cleaned_data["flat_discount"],
+                    "user_id": str(request.user.id),
                 }
                 firestore_service.create_apartment(apartment_data)
                 messages.success(request, "Apartment added successfully!")
@@ -113,21 +117,21 @@ def create_apartment(request):
 def update_apartment(request, pk):
     firestore_service = FirestoreService()
     apartment = firestore_service.get_apartment(pk)
-    
+
     if not apartment or apartment.user_id != str(request.user.id):
         raise Http404("Apartment not found")
-    
+
     if request.method == "POST":
         form = ApartmentForm(request.POST)
         if form.is_valid():
             apartment_data = {
-                'name': form.cleaned_data['name'],
-                'price': form.cleaned_data['price'],
-                'square_footage': form.cleaned_data['square_footage'],
-                'lease_length_months': form.cleaned_data['lease_length_months'],
-                'months_free': form.cleaned_data['months_free'],
-                'weeks_free': form.cleaned_data['weeks_free'],
-                'flat_discount': form.cleaned_data['flat_discount']
+                "name": form.cleaned_data["name"],
+                "price": form.cleaned_data["price"],
+                "square_footage": form.cleaned_data["square_footage"],
+                "lease_length_months": form.cleaned_data["lease_length_months"],
+                "months_free": form.cleaned_data["months_free"],
+                "weeks_free": form.cleaned_data["weeks_free"],
+                "flat_discount": form.cleaned_data["flat_discount"],
             }
             firestore_service.update_apartment(pk, apartment_data)
             messages.success(request, "Apartment updated successfully!")
@@ -135,13 +139,13 @@ def update_apartment(request, pk):
     else:
         # Initialize form with current apartment data
         initial_data = {
-            'name': apartment.name,
-            'price': apartment.price,
-            'square_footage': apartment.square_footage,
-            'lease_length_months': apartment.lease_length_months,
-            'months_free': apartment.months_free,
-            'weeks_free': apartment.weeks_free,
-            'flat_discount': apartment.flat_discount
+            "name": apartment.name,
+            "price": apartment.price,
+            "square_footage": apartment.square_footage,
+            "lease_length_months": apartment.lease_length_months,
+            "months_free": apartment.months_free,
+            "weeks_free": apartment.weeks_free,
+            "flat_discount": apartment.flat_discount,
         }
         form = ApartmentForm(initial=initial_data)
 
@@ -152,10 +156,10 @@ def update_apartment(request, pk):
 def delete_apartment(request, pk):
     firestore_service = FirestoreService()
     apartment = firestore_service.get_apartment(pk)
-    
+
     if not apartment or apartment.user_id != str(request.user.id):
         raise Http404("Apartment not found")
-    
+
     if request.method == "POST":
         firestore_service.delete_apartment(pk)
         messages.success(request, "Apartment deleted successfully!")
@@ -171,10 +175,10 @@ def update_preferences(request):
         form = UserPreferencesForm(request.POST)
         if form.is_valid():
             preferences_data = {
-                'price_weight': form.cleaned_data['price_weight'],
-                'sqft_weight': form.cleaned_data['sqft_weight'],
-                'distance_weight': form.cleaned_data['distance_weight'],
-                'discount_calculation': form.cleaned_data['discount_calculation']
+                "price_weight": form.cleaned_data["price_weight"],
+                "sqft_weight": form.cleaned_data["sqft_weight"],
+                "distance_weight": form.cleaned_data["distance_weight"],
+                "discount_calculation": form.cleaned_data["discount_calculation"],
             }
             firestore_service.update_user_preferences(request.user.id, preferences_data)
             messages.success(request, "Preferences updated successfully!")
@@ -184,10 +188,10 @@ def update_preferences(request):
         initial_data = {}
         if preferences:
             initial_data = {
-                'price_weight': preferences.price_weight,
-                'sqft_weight': preferences.sqft_weight,
-                'distance_weight': preferences.distance_weight,
-                'discount_calculation': preferences.discount_calculation
+                "price_weight": preferences.price_weight,
+                "sqft_weight": preferences.sqft_weight,
+                "distance_weight": preferences.distance_weight,
+                "discount_calculation": preferences.discount_calculation,
             }
         form = UserPreferencesForm(initial=initial_data)
 
