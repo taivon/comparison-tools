@@ -33,7 +33,7 @@
                 </div>
                 <div class="flex items-center">
                     {% if user.is_authenticated %}
-                        <span class="text-gray-700 mr-4">Welcome, {{ user.username }}</span>
+                        <span class="text-gray-700 mr-4">Welcome, {{ user.first_name|default:user.username }}</span>
                         {% if not user.is_staff %}
                             <a href="#" class="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
                                 Upgrade to Premium
