@@ -13,10 +13,10 @@ venv/
 
 # Tailwind + Node
 node_modules/
-theme/static_src/
+theme/static_src/node_modules/
 theme/static/css/
 theme/node_modules/
-theme/package-lock.json
+theme/static_src/package-lock.json
 
 # OS
 .DS_Store
