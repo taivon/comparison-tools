@@ -22,10 +22,4 @@ handlers:
 env_variables:
     APPENGINE_URL: https://apartments.comparison.tools
     # OAuth key as plain text environment variable
-    # OAuth secret retrieved from Google Secret Manager
-    
-# Google Secret Manager configuration
-# The OAuth secret is stored securely in Secret Manager
-secrets:
-- secret_id: google-oauth2-secret
-  env_var: GOOGLE_OAUTH2_SECRET
+    # OAuth secret retrieved from Google Secret Manager at runtime

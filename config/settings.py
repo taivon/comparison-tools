@@ -237,7 +237,23 @@ LOGGING = {
 
 # Google OAuth2 Settings
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("GOOGLE_OAUTH2_KEY", "")
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("GOOGLE_OAUTH2_SECRET", "")
+
+# Get OAuth secret from Secret Manager in production, environment variable in development
+if DEBUG:
+    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("GOOGLE_OAUTH2_SECRET", "")
+else:
+    # Fetch from Google Secret Manager in production
+    try:
+        from google.cloud import secretmanager
+        client = secretmanager.SecretManagerServiceClient()
+        name = f"projects/comparison-tools-479102/secrets/google-oauth2-secret/versions/latest"
+        response = client.access_secret_version(request={"name": name})
+        SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = response.payload.data.decode("UTF-8")
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to fetch OAuth secret from Secret Manager: {e}")
+        SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("GOOGLE_OAUTH2_SECRET", "")
 
 # Social Authentication Settings
 AUTHENTICATION_BACKENDS = [
