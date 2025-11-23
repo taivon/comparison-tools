@@ -122,6 +122,16 @@ def index(request):
         # Anonymous users: max 2 apartments
         can_add_apartment = len(apartments) < 2
 
+    # Check if any apartment has discounts
+    has_discounts = any(
+        (
+            getattr(apt, "months_free", 0) > 0
+            or getattr(apt, "weeks_free", 0) > 0
+            or getattr(apt, "flat_discount", 0) > 0
+        )
+        for apt in apartments
+    )
+
     context = {
         "apartments": apartments,
         "preferences": preferences,
@@ -133,6 +143,7 @@ def index(request):
             2 if not (request.user.is_authenticated and request.user.is_staff) else None
         ),
         "is_anonymous": not request.user.is_authenticated,
+        "has_discounts": has_discounts,
     }
     return render(request, "apartments/index.html", context)
 

@@ -2,6 +2,9 @@
 
 {% block title %}Find Your Perfect Apartment{% endblock %}
 
+{% block extra_head %}
+{% endblock %}
+
 {% block content %}
 {% if not apartments %}
     <!-- Hero Section with Inline Search -->
@@ -185,22 +188,37 @@
                             {% endif %}
                         </p>
                     </div>
-                    {% if can_add_apartment %}
-                        <a href="{% url 'apartments:create_apartment' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors">
-                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            Add Apartment
-                        </a>
-                    {% else %}
-                        <div class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-gray-100 cursor-not-allowed">
-                            <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Limit Reached ({{ apartment_count }}/{{ apartment_limit }})
+                    <div class="flex items-center space-x-3">
+                        <!-- View Toggle -->
+                        <div class="inline-flex rounded-lg border border-gray-300 bg-white">
+                            <button id="cardViewBtn" onclick="switchView('cards')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-l-lg transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                                </svg>
+                            </button>
+                            <button id="tableViewBtn" onclick="switchView('table')" class="px-3 py-2 text-sm font-medium text-white bg-brand-purple rounded-r-lg transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
                         </div>
-                        <p class="mt-2 text-xs text-gray-500">Upgrade to premium for unlimited apartments</p>
-                    {% endif %}
+
+                        {% if can_add_apartment %}
+                            <button onclick="openAddApartmentModal()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors">
+                                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add Apartment
+                            </button>
+                        {% else %}
+                            <div class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-gray-100 cursor-not-allowed">
+                                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Limit Reached ({{ apartment_count }}/{{ apartment_limit }})
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -245,9 +263,12 @@
         </div>
     {% endif %}
 
-    <!-- Apartments Grid -->
+    <!-- Apartments Views Container -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+
+        <!-- Card View -->
+        <div id="cardView" class="hidden grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {% for apartment in apartments %}
                 <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 hover:shadow-md transition-shadow duration-200">
                     <!-- Card Header -->
@@ -324,10 +345,19 @@
                     <!-- Card Footer -->
                     <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
                         <div class="flex items-center justify-between">
+                            <button onclick="openEditApartmentModal({
+                                pk: '{{ apartment.pk|default:apartment.id|default:apartment.doc_id }}',
+                                name: '{{ apartment.name|escapejs }}',
+                                price: {{ apartment.price }},
+                                square_footage: {{ apartment.square_footage }},
+                                lease_length_months: {{ apartment.lease_length_months|default:12 }},
+                                months_free: {{ apartment.months_free|default:0 }},
+                                weeks_free: {{ apartment.weeks_free|default:0 }},
+                                flat_discount: {{ apartment.flat_discount|default:0 }}
+                            })" class="text-brand-purple hover:text-brand-purple-light text-sm font-medium">
+                                Edit details
+                            </button>
                             {% if apartment.pk %}
-                                <a href="{% url 'apartments:update_apartment' apartment.pk %}" class="text-brand-purple hover:text-brand-purple-light text-sm font-medium">
-                                    Edit details
-                                </a>
                                 <form action="{% url 'apartments:delete_apartment' apartment.pk %}" method="post" class="inline">
                                     {% csrf_token %}
                                     <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium" onclick="return confirm('Are you sure you want to delete {{ apartment.name }}?')">
@@ -335,13 +365,182 @@
                                     </button>
                                 </form>
                             {% else %}
-                                <span class="text-gray-500 text-sm">Invalid apartment data</span>
+                                <button onclick='deleteSessionApartment("{{ apartment.id }}")' class="text-red-600 hover:text-red-700 text-sm font-medium">
+                                    Remove
+                                </button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
+
+        <!-- Table View -->
+        <div id="tableView" class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr class="divide-x divide-gray-200">
+                        <th scope="col" class="px-6 py-3 text-left">
+                            <button onclick="sortTable('name')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                                Name
+                                <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </button>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left">
+                            <button onclick="sortTable('price')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                                Monthly Rent
+                                <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </button>
+                        </th>
+                        {% if has_discounts %}
+                        <th scope="col" class="px-6 py-3 text-left">
+                            <button onclick="sortTable('net_price')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                                Net Effective
+                                <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </button>
+                        </th>
+                        {% endif %}
+                        <th scope="col" class="px-6 py-3 text-left">
+                            <button onclick="sortTable('square_footage')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                                Sq Ft
+                                <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </button>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left">
+                            <button onclick="sortTable('price_per_sqft')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                                $/Sq Ft
+                                <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </button>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Lease Term
+                        </th>
+                        {% if has_discounts %}
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Discounts
+                        </th>
+                        {% endif %}
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="apartmentsTableBody">
+                    {% for apartment in apartments %}
+                        <tr class="hover:bg-gray-50 divide-x divide-gray-200" data-apartment-id="{{ apartment.pk|default:apartment.doc_id }}">
+                            <!-- Name -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ apartment.name }}
+                                    </div>
+                                    {% if apartment.months_free or apartment.weeks_free or apartment.flat_discount %}
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Deal
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <!-- Monthly Rent -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    ${{ apartment.price|floatformat:0 }}
+                                </div>
+                            </td>
+                            <!-- Net Effective -->
+                            {% if has_discounts %}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-semibold text-green-600">
+                                    ${{ apartment.net_effective_price|floatformat:0 }}
+                                </div>
+                            </td>
+                            {% endif %}
+                            <!-- Square Footage -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    {{ apartment.square_footage }}
+                                </div>
+                            </td>
+                            <!-- Price per Sq Ft -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    ${{ apartment.price_per_sqft|floatformat:2 }}
+                                </div>
+                            </td>
+                            <!-- Lease Term -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    {{ apartment.lease_length_months }} months
+                                </div>
+                            </td>
+                            <!-- Discounts -->
+                            {% if has_discounts %}
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">
+                                    {% if apartment.months_free %}
+                                        <div>{{ apartment.months_free }}mo free</div>
+                                    {% endif %}
+                                    {% if apartment.weeks_free %}
+                                        <div>{{ apartment.weeks_free }}wk free</div>
+                                    {% endif %}
+                                    {% if apartment.flat_discount %}
+                                        <div>${{ apartment.flat_discount|floatformat:0 }} off</div>
+                                    {% endif %}
+                                    {% if not apartment.months_free and not apartment.weeks_free and not apartment.flat_discount %}
+                                        <span class="text-gray-400">None</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            {% endif %}
+                            <!-- Actions -->
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openEditApartmentModal({
+                                    pk: '{{ apartment.pk|default:apartment.id|default:apartment.doc_id }}',
+                                    name: '{{ apartment.name|escapejs }}',
+                                    price: {{ apartment.price }},
+                                    square_footage: {{ apartment.square_footage }},
+                                    lease_length_months: {{ apartment.lease_length_months|default:12 }},
+                                    months_free: {{ apartment.months_free|default:0 }},
+                                    weeks_free: {{ apartment.weeks_free|default:0 }},
+                                    flat_discount: {{ apartment.flat_discount|default:0 }}
+                                })" class="text-brand-purple hover:text-brand-purple-light mr-3">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                                {% if apartment.pk %}
+                                    <form action="{% url 'apartments:delete_apartment' apartment.pk %}" method="post" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Are you sure you want to delete {{ apartment.name }}?')">
+                                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <button onclick='deleteSessionApartment("{{ apartment.id }}")' class="text-red-600 hover:text-red-700">
+                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
     </div>
 {% endif %}
 
@@ -454,6 +653,227 @@
     </div>
 </div>
 
+<!-- Add Apartment Modal -->
+<div id="addApartmentModal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" aria-hidden="true" onclick="closeAddApartmentModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <form id="addApartmentForm" onsubmit="handleAddApartment(event)">
+                {% csrf_token %}
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-brand-purple/10 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Add New Apartment</h3>
+                                    <p class="text-sm text-gray-500">Enter apartment details to compare</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="closeAddApartmentModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Basic Fields -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="modal_name" class="block text-sm font-medium text-gray-700 mb-2">Apartment Name</label>
+                            <input type="text" name="name" id="modal_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., The Grand at 5th">
+                        </div>
+                        <div>
+                            <label for="modal_price" class="block text-sm font-medium text-gray-700 mb-2">Monthly Rent ($)</label>
+                            <input type="number" name="price" id="modal_price" required step="0.01"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., 2500">
+                        </div>
+                        <div>
+                            <label for="modal_square_footage" class="block text-sm font-medium text-gray-700 mb-2">Square Footage</label>
+                            <input type="number" name="square_footage" id="modal_square_footage" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., 850">
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options Toggle -->
+                    <div class="mb-4">
+                        <button type="button" onclick="toggleModalAdvancedOptions()"
+                                class="flex items-center text-sm font-medium text-brand-purple hover:text-brand-purple-light transition-colors">
+                            <svg id="modalAdvancedChevron" class="w-4 h-4 mr-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            More options (lease length, discounts)
+                        </button>
+                    </div>
+
+                    <!-- Advanced Fields (Hidden by Default) -->
+                    <div id="modalAdvancedOptions" class="hidden mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-4">Additional Details</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="modal_lease_length_months" class="block text-sm font-medium text-gray-700 mb-2">Lease Length (months)</label>
+                                <input type="number" name="lease_length_months" id="modal_lease_length_months" value="12"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="12">
+                            </div>
+                            <div>
+                                <label for="modal_months_free" class="block text-sm font-medium text-gray-700 mb-2">Months Free</label>
+                                <input type="number" name="months_free" id="modal_months_free" value="0"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                            <div>
+                                <label for="modal_weeks_free" class="block text-sm font-medium text-gray-700 mb-2">Weeks Free</label>
+                                <input type="number" name="weeks_free" id="modal_weeks_free" value="0"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                            <div>
+                                <label for="modal_flat_discount" class="block text-sm font-medium text-gray-700 mb-2">Flat Discount ($)</label>
+                                <input type="number" name="flat_discount" id="modal_flat_discount" value="0" step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                    <button type="submit" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-6 py-3 bg-brand-purple text-sm font-medium text-white hover:bg-brand-purple-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:ml-3 sm:w-auto">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Apartment
+                    </button>
+                    <button type="button" onclick="closeAddApartmentModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:mt-0 sm:w-auto">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Apartment Modal -->
+<div id="editApartmentModal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" aria-hidden="true" onclick="closeEditApartmentModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <form id="editApartmentForm" onsubmit="handleEditApartment(event)">
+                {% csrf_token %}
+                <input type="hidden" id="edit_apartment_id" name="apartment_id">
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-brand-purple/10 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Edit Apartment</h3>
+                                    <p class="text-sm text-gray-500">Update apartment details</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="closeEditApartmentModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Basic Fields -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="edit_name" class="block text-sm font-medium text-gray-700 mb-2">Apartment Name</label>
+                            <input type="text" name="name" id="edit_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., The Grand at 5th">
+                        </div>
+                        <div>
+                            <label for="edit_price" class="block text-sm font-medium text-gray-700 mb-2">Monthly Rent ($)</label>
+                            <input type="number" name="price" id="edit_price" required step="0.01"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., 2500">
+                        </div>
+                        <div>
+                            <label for="edit_square_footage" class="block text-sm font-medium text-gray-700 mb-2">Square Footage</label>
+                            <input type="number" name="square_footage" id="edit_square_footage" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., 850">
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options Toggle -->
+                    <div class="mb-4">
+                        <button type="button" onclick="toggleEditAdvancedOptions()"
+                                class="flex items-center text-sm font-medium text-brand-purple hover:text-brand-purple-light transition-colors">
+                            <svg id="editAdvancedChevron" class="w-4 h-4 mr-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            More options (lease length, discounts)
+                        </button>
+                    </div>
+
+                    <!-- Advanced Fields (Hidden by Default) -->
+                    <div id="editAdvancedOptions" class="hidden mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-4">Additional Details</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="edit_lease_length_months" class="block text-sm font-medium text-gray-700 mb-2">Lease Length (months)</label>
+                                <input type="number" name="lease_length_months" id="edit_lease_length_months" value="12"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="12">
+                            </div>
+                            <div>
+                                <label for="edit_months_free" class="block text-sm font-medium text-gray-700 mb-2">Months Free</label>
+                                <input type="number" name="months_free" id="edit_months_free" value="0"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                            <div>
+                                <label for="edit_weeks_free" class="block text-sm font-medium text-gray-700 mb-2">Weeks Free</label>
+                                <input type="number" name="weeks_free" id="edit_weeks_free" value="0"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                            <div>
+                                <label for="edit_flat_discount" class="block text-sm font-medium text-gray-700 mb-2">Flat Discount ($)</label>
+                                <input type="number" name="flat_discount" id="edit_flat_discount" value="0" step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                    <button type="submit" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-6 py-3 bg-brand-purple text-sm font-medium text-white hover:bg-brand-purple-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:ml-3 sm:w-auto">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Update Apartment
+                    </button>
+                    <button type="button" onclick="closeEditApartmentModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:mt-0 sm:w-auto">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 function toggleAdvancedOptions() {
     const advancedOptions = document.getElementById('advancedOptions');
@@ -472,12 +892,275 @@ function dismissSignupPrompt() {
     document.getElementById('signupPrompt')?.classList.add('hidden');
 }
 
+function openEditApartmentModal(apartmentData) {
+    const modal = document.getElementById('editApartmentModal');
+
+    // Populate form fields
+    document.getElementById('edit_apartment_id').value = apartmentData.pk || apartmentData.id || apartmentData.doc_id;
+    document.getElementById('edit_name').value = apartmentData.name;
+    document.getElementById('edit_price').value = apartmentData.price;
+    document.getElementById('edit_square_footage').value = apartmentData.square_footage;
+    document.getElementById('edit_lease_length_months').value = apartmentData.lease_length_months || 12;
+    document.getElementById('edit_months_free').value = apartmentData.months_free || 0;
+    document.getElementById('edit_weeks_free').value = apartmentData.weeks_free || 0;
+    document.getElementById('edit_flat_discount').value = apartmentData.flat_discount || 0;
+
+    // Show advanced options if any discount fields are set
+    if (apartmentData.months_free || apartmentData.weeks_free || apartmentData.flat_discount || apartmentData.lease_length_months != 12) {
+        const advancedOptions = document.getElementById('editAdvancedOptions');
+        const chevron = document.getElementById('editAdvancedChevron');
+        advancedOptions.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function closeEditApartmentModal() {
+    document.getElementById('editApartmentModal').classList.add('hidden');
+    // Reset form
+    document.getElementById('editApartmentForm').reset();
+    // Hide advanced options
+    const advancedOptions = document.getElementById('editAdvancedOptions');
+    const chevron = document.getElementById('editAdvancedChevron');
+    advancedOptions.classList.add('hidden');
+    chevron.classList.remove('rotate-180');
+}
+
+function toggleEditAdvancedOptions() {
+    const advancedOptions = document.getElementById('editAdvancedOptions');
+    const chevron = document.getElementById('editAdvancedChevron');
+
+    if (advancedOptions.classList.contains('hidden')) {
+        advancedOptions.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+    } else {
+        advancedOptions.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+    }
+}
+
+async function handleEditApartment(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const apartmentId = document.getElementById('edit_apartment_id').value;
+
+    try {
+        const response = await fetch(`/apartment/${apartmentId}/update/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        if (response.ok) {
+            // Success - reload the page to show the updated apartment
+            window.location.reload();
+        } else {
+            // Handle error
+            const errorText = await response.text();
+            alert('Failed to update apartment. Please check your inputs and try again.');
+            console.error('Error:', errorText);
+        }
+    } catch (error) {
+        alert('An error occurred while updating the apartment.');
+        console.error('Error:', error);
+    }
+}
+
+async function deleteSessionApartment(apartmentId) {
+    if (!confirm('Are you sure you want to delete this apartment?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/apartment/${apartmentId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to delete apartment.');
+        }
+    } catch (error) {
+        alert('An error occurred while deleting the apartment.');
+        console.error('Error:', error);
+    }
+}
+
 function openPreferencesModal() {
     document.getElementById('preferencesModal').classList.remove('hidden');
 }
 
 function closePreferencesModal() {
     document.getElementById('preferencesModal').classList.add('hidden');
+}
+
+function openAddApartmentModal() {
+    document.getElementById('addApartmentModal').classList.remove('hidden');
+}
+
+function closeAddApartmentModal() {
+    document.getElementById('addApartmentModal').classList.add('hidden');
+    // Reset form
+    document.getElementById('addApartmentForm').reset();
+    // Hide advanced options
+    const advancedOptions = document.getElementById('modalAdvancedOptions');
+    const chevron = document.getElementById('modalAdvancedChevron');
+    advancedOptions.classList.add('hidden');
+    chevron.classList.remove('rotate-180');
+}
+
+function toggleModalAdvancedOptions() {
+    const advancedOptions = document.getElementById('modalAdvancedOptions');
+    const chevron = document.getElementById('modalAdvancedChevron');
+
+    if (advancedOptions.classList.contains('hidden')) {
+        advancedOptions.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+    } else {
+        advancedOptions.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+    }
+}
+
+async function handleAddApartment(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('{% url "apartments:create_apartment" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        if (response.ok) {
+            // Success - reload the page to show the new apartment
+            window.location.reload();
+        } else {
+            // Handle error
+            const errorText = await response.text();
+            alert('Failed to add apartment. Please check your inputs and try again.');
+            console.error('Error:', errorText);
+        }
+    } catch (error) {
+        alert('An error occurred while adding the apartment.');
+        console.error('Error:', error);
+    }
+}
+
+// View Switching
+function switchView(view) {
+    const cardView = document.getElementById('cardView');
+    const tableView = document.getElementById('tableView');
+    const cardBtn = document.getElementById('cardViewBtn');
+    const tableBtn = document.getElementById('tableViewBtn');
+
+    if (view === 'cards') {
+        cardView.classList.remove('hidden');
+        tableView.classList.add('hidden');
+        cardBtn.classList.add('bg-brand-purple', 'text-white');
+        cardBtn.classList.remove('text-gray-700', 'hover:bg-gray-50');
+        tableBtn.classList.remove('bg-brand-purple', 'text-white');
+        tableBtn.classList.add('text-gray-700', 'hover:bg-gray-50');
+    } else {
+        cardView.classList.add('hidden');
+        tableView.classList.remove('hidden');
+        tableBtn.classList.add('bg-brand-purple', 'text-white');
+        tableBtn.classList.remove('text-gray-700', 'hover:bg-gray-50');
+        cardBtn.classList.remove('bg-brand-purple', 'text-white');
+        cardBtn.classList.add('text-gray-700', 'hover:bg-gray-50');
+    }
+
+    // Save preference to localStorage
+    localStorage.setItem('apartmentViewPreference', view);
+}
+
+// Table Sorting
+let sortDirection = {};
+const hasDiscounts = {{ has_discounts|yesno:"true,false" }};
+
+function sortTable(column) {
+    const tbody = document.getElementById('apartmentsTableBody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    // Toggle sort direction
+    sortDirection[column] = sortDirection[column] === 'asc' ? 'desc' : 'asc';
+    const direction = sortDirection[column];
+
+    rows.sort((a, b) => {
+        let aVal, bVal;
+
+        switch(column) {
+            case 'name':
+                aVal = a.querySelector('[data-field="name"]').textContent.trim();
+                bVal = b.querySelector('[data-field="name"]').textContent.trim();
+                return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+
+            case 'price':
+                aVal = parseFloat(a.querySelector('[data-field="price"]').textContent.replace(/[$,]/g, ''));
+                bVal = parseFloat(b.querySelector('[data-field="price"]').textContent.replace(/[$,]/g, ''));
+                break;
+
+            case 'net_price':
+                // Adjust column index based on whether has_discounts is true
+                const netPriceIndex = 2; // Net Effective is always the 3rd column (index 2) when it exists
+                aVal = parseFloat(a.querySelectorAll('td')[netPriceIndex].textContent.replace(/[$,]/g, ''));
+                bVal = parseFloat(b.querySelectorAll('td')[netPriceIndex].textContent.replace(/[$,]/g, ''));
+                break;
+
+            case 'square_footage':
+                aVal = parseFloat(a.querySelector('[data-field="square_footage"]').textContent.replace(/,/g, ''));
+                bVal = parseFloat(b.querySelector('[data-field="square_footage"]').textContent.replace(/,/g, ''));
+                break;
+
+            case 'price_per_sqft':
+                // Adjust column index based on whether Net Effective column exists
+                const pricePerSqftIndex = hasDiscounts ? 4 : 3;
+                aVal = parseFloat(a.querySelectorAll('td')[pricePerSqftIndex].textContent.replace(/[$,]/g, ''));
+                bVal = parseFloat(b.querySelectorAll('td')[pricePerSqftIndex].textContent.replace(/[$,]/g, ''));
+                break;
+        }
+
+        return direction === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+
+    // Re-append rows in sorted order
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Restore view preference (default to table)
+    const savedView = localStorage.getItem('apartmentViewPreference') || 'table';
+    switchView(savedView);
+});
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // Enhanced drag and drop for preferences

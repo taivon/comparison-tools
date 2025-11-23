@@ -551,19 +551,6 @@
             }
         }
         
-        // Before page unload - prompt anonymous users to save their data
-        window.addEventListener('beforeunload', function(event) {
-            // Check if user is anonymous and has apartments
-            const isAnonymous = document.body.dataset.isAnonymous === 'true';
-            const hasApartments = document.body.dataset.hasApartments === 'true';
-            
-            if (isAnonymous && hasApartments) {
-                const message = 'You have apartment comparisons that will be lost! Sign up to save your data.';
-                event.returnValue = message; // For older browsers
-                return message; // For modern browsers
-            }
-        });
-        
         // Check if signup prompt was dismissed and hide it on page load
         window.addEventListener('DOMContentLoaded', function() {
             const prompt = document.getElementById('signupPrompt');
