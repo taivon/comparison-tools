@@ -231,10 +231,9 @@ class FirestoreUser:
     def set_password(self, raw_password):
         """Hash and set password"""
         salt = secrets.token_hex(16)
-        password_hash = hashlib.pbkdf2_hmac('sha256', 
-                                           raw_password.encode('utf-8'), 
-                                           salt.encode('utf-8'), 
-                                           100000)
+        password_hash = hashlib.pbkdf2_hmac(
+            "sha256", raw_password.encode("utf-8"), salt.encode("utf-8"), 100000
+        )
         self.password_hash = salt + ":" + password_hash.hex()
 
     def check_password(self, raw_password):
@@ -243,17 +242,16 @@ class FirestoreUser:
             return False
         try:
             salt, stored_hash = self.password_hash.split(":", 1)
-            password_hash = hashlib.pbkdf2_hmac('sha256', 
-                                               raw_password.encode('utf-8'), 
-                                               salt.encode('utf-8'), 
-                                               100000)
+            password_hash = hashlib.pbkdf2_hmac(
+                "sha256", raw_password.encode("utf-8"), salt.encode("utf-8"), 100000
+            )
             return password_hash.hex() == stored_hash
         except ValueError:
             return False
 
     def get_full_name(self):
         """Return the first_name plus the last_name, with a space in between"""
-        full_name = f'{self.first_name} {self.last_name}'
+        full_name = f"{self.first_name} {self.last_name}"
         return full_name.strip()
 
     def get_short_name(self):
@@ -400,7 +398,7 @@ class FirestoreService:
         user = FirestoreUser(**user_data)
         user.set_password(password)
         user.date_joined = datetime.now()
-        
+
         doc_ref = self.db.collection("users").add(user.to_dict())
         user.doc_id = doc_ref[1].id
         return user
@@ -409,7 +407,7 @@ class FirestoreService:
         """Create a new user authenticated via Firebase (no password needed)"""
         user = FirestoreUser(**user_data)
         user.date_joined = datetime.now()
-        
+
         doc_ref = self.db.collection("users").add(user.to_dict())
         user.doc_id = doc_ref[1].id
         return user
@@ -429,7 +427,7 @@ class FirestoreService:
             .limit(1)
             .stream()
         )
-        
+
         if docs:
             doc = docs[0]
             return FirestoreUser.from_dict(doc.id, doc.to_dict())
@@ -438,12 +436,9 @@ class FirestoreService:
     def get_user_by_email(self, email):
         """Get a user by email"""
         docs = list(
-            self.db.collection("users")
-            .where("email", "==", email)
-            .limit(1)
-            .stream()
+            self.db.collection("users").where("email", "==", email).limit(1).stream()
         )
-        
+
         if docs:
             doc = docs[0]
             return FirestoreUser.from_dict(doc.id, doc.to_dict())
@@ -460,9 +455,9 @@ class FirestoreService:
 
     def update_user_last_login(self, user_id):
         """Update user's last login timestamp"""
-        self.db.collection("users").document(user_id).update({
-            "last_login": datetime.now()
-        })
+        self.db.collection("users").document(user_id).update(
+            {"last_login": datetime.now()}
+        )
 
     def update_user(self, user_id, user_data):
         """Update user data"""
@@ -488,10 +483,10 @@ class FirestoreService:
             apartments = self.get_user_apartments(user_id)
             for apartment in apartments:
                 self.delete_apartment(apartment.doc_id)
-            
+
             # Delete user's preferences
             self.delete_user_preferences(user_id)
-            
+
             # Delete user
             self.db.collection("users").document(user_id).delete()
             return True

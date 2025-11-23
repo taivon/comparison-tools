@@ -12,5 +12,7 @@ urlpatterns = [
     path("signup/", views.signup_view, name="signup"),
     path("logout/", views.logout_view, name="logout"),
     path("auth/callback/", views.google_oauth_callback, name="google_oauth_callback"),
-    path("api/sync-firebase-user/", views.sync_firebase_user, name="sync_firebase_user"),
+    path(
+        "api/sync-firebase-user/", views.sync_firebase_user, name="sync_firebase_user"
+    ),
 ]
