@@ -22,6 +22,37 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 
 
+def calculate_net_effective_price(apt_data, discount_calculation='monthly'):
+    """Calculate net effective price for session apartments"""
+    from decimal import Decimal
+
+    price = Decimal(str(apt_data.get('price', 0)))
+    lease_length_months = apt_data.get('lease_length_months', 12)
+    months_free = apt_data.get('months_free', 0)
+    weeks_free = apt_data.get('weeks_free', 0)
+    flat_discount = Decimal(str(apt_data.get('flat_discount', 0)))
+
+    total_discount = Decimal('0')
+
+    if discount_calculation == 'daily':
+        daily_rate = price * Decimal('12') / Decimal('365')
+        if weeks_free > 0:
+            total_discount += (daily_rate * Decimal('7') * Decimal(str(weeks_free)))
+    elif discount_calculation == 'weekly':
+        weekly_rate = price * Decimal('12') / Decimal('52')
+        if weeks_free > 0:
+            total_discount += (weekly_rate * Decimal(str(weeks_free)))
+    else:  # monthly
+        if months_free > 0:
+            total_discount += (price * Decimal(str(months_free)))
+        if weeks_free > 0:
+            total_discount += (price * Decimal(str(weeks_free / 4)))
+
+    total_discount += flat_discount
+    total_lease_value = price * Decimal(str(lease_length_months))
+    return float((total_lease_value - total_discount) / Decimal(str(lease_length_months)))
+
+
 def get_session_apartments(request):
     """Get apartments from session for anonymous users"""
     session_apartments = request.session.get("anonymous_apartments", [])
@@ -36,6 +67,8 @@ def get_session_apartments(request):
                 # Ensure we have a doc_id attribute
                 if not hasattr(self, "doc_id"):
                     self.doc_id = data.get("id", f"session_{len(apartments)}")
+                # Add price_per_sqft property
+                self.price_per_sqft = self.price / self.square_footage if self.square_footage > 0 else 0
 
         apartment = SessionApartment(apt_data)
         apartments.append(apartment)
@@ -102,12 +135,29 @@ def index(request):
             }
         form = UserPreferencesForm(initial=initial_data)
 
+    # Calculate net effective price for each apartment first
+    discount_calc_method = preferences.discount_calculation if preferences else 'monthly'
+    for apartment in apartments:
+        if hasattr(apartment, 'net_effective_price') and callable(apartment.net_effective_price):
+            # FirestoreApartment - call method with preferences
+            apartment.net_effective_price = apartment.net_effective_price(preferences)
+        else:
+            # Session apartment - calculate manually
+            apt_data = {
+                'price': getattr(apartment, 'price', 0),
+                'lease_length_months': getattr(apartment, 'lease_length_months', 12),
+                'months_free': getattr(apartment, 'months_free', 0),
+                'weeks_free': getattr(apartment, 'weeks_free', 0),
+                'flat_discount': getattr(apartment, 'flat_discount', 0),
+            }
+            apartment.net_effective_price = calculate_net_effective_price(apt_data, discount_calc_method)
+
     # Sort apartments based on user preferences
     if preferences and apartments:
         apartments = sorted(
             apartments,
             key=lambda x: (
-                (float(x.net_effective_price(preferences)) * preferences.price_weight)
+                (float(x.net_effective_price) * preferences.price_weight)
                 + (x.square_footage * preferences.sqft_weight)
                 + (0 * preferences.distance_weight)  # Distance is not implemented yet
             ),
