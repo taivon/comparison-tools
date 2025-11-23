@@ -298,12 +298,12 @@
                         <!-- Primary Price Info -->
                         <div class="flex items-baseline justify-between mb-4">
                             <div>
-                                <div class="text-3xl font-bold text-gray-900">${{ apartment.price|floatformat:0 }}</div>
+                                <div class="text-3xl font-bold text-gray-900">${{ apartment.price|floatformat:2 }}</div>
                                 <div class="text-sm text-gray-500">per month</div>
                             </div>
                             {% if apartment.net_effective_price != apartment.price %}
                                 <div class="text-right">
-                                    <div class="text-lg font-semibold text-brand-green">${{ apartment.net_effective_price|floatformat:0 }}</div>
+                                    <div class="text-lg font-semibold text-brand-green">${{ apartment.net_effective_price|floatformat:2 }}</div>
                                     <div class="text-xs text-gray-500">effective price</div>
                                 </div>
                             {% endif %}
@@ -343,7 +343,7 @@
                                     {% endif %}
                                     {% if apartment.flat_discount %}
                                         {% if apartment.months_free or apartment.weeks_free %} • {% endif %}
-                                        ${{ apartment.flat_discount }} discount
+                                        ${{ apartment.flat_discount|floatformat:2 }} discount
                                     {% endif %}
                                 </div>
                             </div>
@@ -462,14 +462,14 @@
                             <!-- Monthly Rent -->
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">
-                                    ${{ apartment.price|floatformat:0 }}
+                                    ${{ apartment.price|floatformat:2 }}
                                 </div>
                             </td>
                             <!-- Net Effective -->
                             {% if has_discounts %}
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-semibold text-green-600">
-                                    ${{ apartment.net_effective_price|floatformat:0 }}
+                                    ${{ apartment.net_effective_price|floatformat:2 }}
                                 </div>
                             </td>
                             {% endif %}
@@ -502,7 +502,7 @@
                                         <div>{{ apartment.weeks_free }}wk free</div>
                                     {% endif %}
                                     {% if apartment.flat_discount %}
-                                        <div>${{ apartment.flat_discount|floatformat:0 }} off</div>
+                                        <div>${{ apartment.flat_discount|floatformat:2 }} off</div>
                                     {% endif %}
                                     {% if not apartment.months_free and not apartment.weeks_free and not apartment.flat_discount %}
                                         <span class="text-gray-400">None</span>
@@ -628,38 +628,36 @@
                             <p class="text-xs text-gray-500 mt-2">Drag to reorder by importance</p>
                         </div>
 
-                        <!-- Net Effective Calculation Method -->
+                        <!-- Discount Calculation Method -->
                         <div class="border-t border-gray-200 pt-6">
                             <label class="block text-sm font-medium text-gray-900 mb-3">Net Effective Rent Calculation</label>
                             <div class="space-y-3">
+                                {% for radio in form.discount_calculation %}
                                 <label class="flex items-start p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                    <input type="radio" name="rent_calculation_method" value="daily" checked class="mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300">
+                                    {{ radio.tag }}
                                     <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">Daily Rate (365 days)</div>
-                                        <div class="text-xs text-gray-500">Calculate total rent for the lease, then divide by 365 days per year</div>
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {% if radio.choice_value == 'daily' %}
+                                                Daily Rate (365 days)
+                                            {% else %}
+                                                Monthly Rate
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            {% if radio.choice_value == 'daily' %}
+                                                Calculate total rent for the lease, then divide by 365 days per year
+                                            {% else %}
+                                                Use standard monthly rent calculation (4 weeks = 1 month)
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </label>
-                                <label class="flex items-start p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                    <input type="radio" name="rent_calculation_method" value="weekly" class="mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300">
-                                    <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">Weekly Rate (52 weeks)</div>
-                                        <div class="text-xs text-gray-500">Calculate total rent for the lease, then divide by 52 weeks per year</div>
-                                    </div>
-                                </label>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2">Changes how net effective monthly rent is calculated when discounts are applied</p>
-                        </div>
-
-                        <!-- Discount Calculation -->
-                        <div class="border-t border-gray-200 pt-6">
-                            <label for="{{ form.discount_calculation.id_for_label }}" class="block text-sm font-medium text-gray-900 mb-3">Discount Calculation Method</label>
-                            <div class="space-y-2">
-                                {{ form.discount_calculation }}
+                                {% endfor %}
                             </div>
                             {% if form.discount_calculation.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.discount_calculation.errors.0 }}</p>
                             {% endif %}
-                            <p class="text-xs text-gray-500 mt-2">How promotional discounts are applied to monthly rent</p>
+                            <p class="text-xs text-gray-500 mt-2">Changes how net effective monthly rent is calculated when discounts are applied</p>
                         </div>
 
                         <!-- Hidden weight fields -->
