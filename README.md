@@ -31,7 +31,6 @@ Each subdomain operates as an independent service while sharing the unified `com
 
 ### Prerequisites
 - Python 3.13.3 (managed with pyenv recommended)
-- Node.js 18+ (for Tailwind CSS compilation)
 - Git
 
 ### Setup
@@ -59,26 +58,17 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-5. Install Node.js dependencies and build Tailwind CSS:
-```bash
-cd theme/static_src
-npm install
-npm run build
-cd ../..
-```
-
-6. Run database migrations and collect static files:
+5. Run database migrations:
 ```bash
 python manage.py migrate
-python manage.py collectstatic --noinput
 ```
 
-7. Start the development server:
+6. Start the development server:
 ```bash
 python manage.py runserver
 ```
 
-8. Visit `http://localhost:8000` in your browser
+7. Visit `http://localhost:8000` in your browser
 
 ## Deployment
 
