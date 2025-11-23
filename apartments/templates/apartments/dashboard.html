@@ -711,6 +711,9 @@ function loadAnonymousApartments() {
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm text-gray-900">$${(parseFloat(apartment.price) / parseInt(apartment.square_footage)).toFixed(2)}</div>
                     </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${apartment.lease_length_months || 12} months</div>
+                    </td>
                     ${hasDiscounts ? `<td class="px-6 py-4">
                         <div class="text-sm text-gray-900">
                             ${apartment.months_free ? `${apartment.months_free} month${apartment.months_free > 1 ? 's' : ''} free<br>` : ''}
@@ -768,6 +771,10 @@ function loadAnonymousApartments() {
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-500">Price/sq ft</span>
                             <span class="text-sm font-medium text-gray-900">$${(parseFloat(apartment.price) / parseInt(apartment.square_footage)).toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Lease term</span>
+                            <span class="text-sm font-medium text-gray-900">${apartment.lease_length_months || 12} months</span>
                         </div>
                         ${hasDeal ? `<div class="pt-2 border-t border-gray-100">
                             <span class="text-xs text-gray-500">Discounts:</span>
