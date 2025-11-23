@@ -54,16 +54,13 @@
                     <div class="hidden md:block ml-10">
                         <div class="flex items-baseline space-x-8">
                             <a href="{% url 'apartments:index' %}" class="text-gray-900 dark:text-white hover:text-brand-purple px-3 py-2 text-sm font-medium">Dashboard</a>
-                            <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple px-3 py-2 text-sm font-medium">Explore</a>
-                            <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple px-3 py-2 text-sm font-medium">Alerts</a>
+                            <!-- Removed Explore and Alerts buttons with no links -->
                         </div>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <button onclick="openPreferencesModal()" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple px-3 py-2 text-sm font-medium">
-                            Preferences
-                        </button>
+                        <!-- Removed Preferences button with no link -->
                         <!-- Theme Toggle -->
                         <button onclick="toggleTheme()" class="p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
                             <!-- Moon icon (visible in light mode, click to go dark) -->
@@ -76,11 +73,7 @@
                             </svg>
                         </button>
                         <span class="text-sm text-gray-700 dark:text-gray-300">{{ user.first_name|default:user.username }}</span>
-                        {% if not user.is_staff %}
-                            <a href="#" class="bg-brand-purple text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-purple-light transition-colors">
-                                Upgrade
-                            </a>
-                        {% endif %}
+                        {# Removed Upgrade button with no link #}
                         <a href="{% url 'logout' %}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-3 py-2 text-sm font-medium">
                             Sign out
                         </a>
