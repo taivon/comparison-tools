@@ -337,10 +337,18 @@
                         <td class="px-6 py-4">
                             <div class="text-sm text-gray-900">
                                 {% if apartment.months_free %}
-                                    <div>{{ apartment.months_free }}mo free</div>
+                                    <div>{{ apartment.months_free }}mo free
+                                    <script>
+                                        document.write('($' + calculateDiscountAmount({{ apartment.price }}, {{ apartment.months_free }}, 'months', '{{ preferences.discount_calculation|default:"daily" }}').toFixed(2) + ')');
+                                    </script>
+                                    </div>
                                 {% endif %}
                                 {% if apartment.weeks_free %}
-                                    <div>{{ apartment.weeks_free }}wk free</div>
+                                    <div>{{ apartment.weeks_free }}wk free
+                                    <script>
+                                        document.write('($' + calculateDiscountAmount({{ apartment.price }}, {{ apartment.weeks_free }}, 'weeks', '{{ preferences.discount_calculation|default:"daily" }}').toFixed(2) + ')');
+                                    </script>
+                                    </div>
                                 {% endif %}
                                 {% if apartment.flat_discount %}
                                     <div>${{ apartment.flat_discount|floatformat:2 }} off</div>
@@ -740,6 +748,39 @@ function saveSessionApartments(apartments) {
     sessionStorage.setItem('anonymous_apartments', JSON.stringify(apartments));
 }
 
+// Calculate individual discount amount
+function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
+    const annualRent = price * 12;
+    let discountValue = 0;
+
+    if (discountCalcMethod === 'daily') {
+        const dailyRate = annualRent / 365;
+        if (type === 'months') {
+            const daysFromMonths = amount * (365 / 12);
+            discountValue = dailyRate * daysFromMonths;
+        } else if (type === 'weeks') {
+            discountValue = dailyRate * amount * 7;
+        }
+    } else if (discountCalcMethod === 'weekly') {
+        const weeklyRate = annualRent / 52;
+        if (type === 'months') {
+            const weeksFromMonths = amount * (52 / 12);
+            discountValue = weeklyRate * weeksFromMonths;
+        } else if (type === 'weeks') {
+            discountValue = weeklyRate * amount;
+        }
+    } else {
+        // Monthly fallback
+        if (type === 'months') {
+            discountValue = price * amount;
+        } else if (type === 'weeks') {
+            discountValue = price * (amount / 4);
+        }
+    }
+
+    return discountValue;
+}
+
 // Calculate net effective price
 function calculateNetEffectivePrice(apartment) {
     const price = parseFloat(apartment.price);
@@ -856,6 +897,7 @@ function loadAnonymousApartments() {
     // Render apartments in table view
     const tableBody = document.getElementById('apartmentsTableBody');
     if (tableBody) {
+        const discountCalcMethod = '{{ preferences.discount_calculation|default:"daily" }}';
         tableBody.innerHTML = apartments.map(apartment => {
             const netEffectivePrice = calculateNetEffectivePrice(apartment);
             const hasDeal = (apartment.months_free && apartment.months_free > 0) ||
@@ -887,8 +929,8 @@ function loadAnonymousApartments() {
                     </td>
                     ${hasDiscounts ? `<td class="px-6 py-4">
                         <div class="text-sm text-gray-900">
-                            ${apartment.months_free ? `${apartment.months_free} month${apartment.months_free > 1 ? 's' : ''} free<br>` : ''}
-                            ${apartment.weeks_free ? `${apartment.weeks_free} week${apartment.weeks_free > 1 ? 's' : ''} free<br>` : ''}
+                            ${apartment.months_free ? `${apartment.months_free} month${apartment.months_free > 1 ? 's' : ''} free ($${calculateDiscountAmount(apartment.price, apartment.months_free, 'months', discountCalcMethod).toFixed(2)})<br>` : ''}
+                            ${apartment.weeks_free ? `${apartment.weeks_free} week${apartment.weeks_free > 1 ? 's' : ''} free ($${calculateDiscountAmount(apartment.price, apartment.weeks_free, 'weeks', discountCalcMethod).toFixed(2)})<br>` : ''}
                             ${apartment.flat_discount ? `$${parseFloat(apartment.flat_discount).toFixed(2)} discount` : ''}
                         </div>
                     </td>` : ''}
@@ -912,6 +954,7 @@ function loadAnonymousApartments() {
     // Render apartments in card view
     const cardView = document.getElementById('cardView');
     if (cardView) {
+        const discountCalcMethod = '{{ preferences.discount_calculation|default:"daily" }}';
         const cardsHTML = apartments.map(apartment => {
             const netEffectivePrice = calculateNetEffectivePrice(apartment);
             const hasDeal = (apartment.months_free && apartment.months_free > 0) ||
@@ -950,8 +993,8 @@ function loadAnonymousApartments() {
                         ${hasDeal ? `<div class="pt-2 border-t border-gray-100">
                             <span class="text-xs text-gray-500">Discounts:</span>
                             <div class="text-sm text-gray-900">
-                                ${apartment.months_free ? `${apartment.months_free} month${apartment.months_free > 1 ? 's' : ''} free<br>` : ''}
-                                ${apartment.weeks_free ? `${apartment.weeks_free} week${apartment.weeks_free > 1 ? 's' : ''} free<br>` : ''}
+                                ${apartment.months_free ? `${apartment.months_free} month${apartment.months_free > 1 ? 's' : ''} free ($${calculateDiscountAmount(apartment.price, apartment.months_free, 'months', discountCalcMethod).toFixed(2)})<br>` : ''}
+                                ${apartment.weeks_free ? `${apartment.weeks_free} week${apartment.weeks_free > 1 ? 's' : ''} free ($${calculateDiscountAmount(apartment.price, apartment.weeks_free, 'weeks', discountCalcMethod).toFixed(2)})<br>` : ''}
                                 ${apartment.flat_discount ? `$${parseFloat(apartment.flat_discount).toFixed(2)} flat discount` : ''}
                             </div>
                         </div>` : ''}
