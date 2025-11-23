@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Find Your Perfect Apartment | Comparison Tools{% endblock %}</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
+    
     <!-- Use Tailwind CDN with seats.aero inspired configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -30,8 +36,8 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 font-sans">
-    <nav class="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
+<body class="bg-gray-50 dark:bg-neutral-900 font-sans">
+    <nav class="bg-white dark:bg-neutral-800 border-b border-gray-100 dark:border-neutral-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -59,14 +65,14 @@
                             Preferences
                         </button>
                         <!-- Theme Toggle -->
-                        <button onclick="toggleTheme()" class="p-2 text-gray-500 dark:text-gray-400 hover:text-brand-purple rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Toggle theme">
-                            <!-- Sun icon (visible in dark mode) -->
-                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        <button onclick="toggleTheme()" class="p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
+                            <!-- Moon icon (visible in light mode, click to go dark) -->
+                            <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                             </svg>
-                            <!-- Moon icon (visible in light mode) -->
-                            <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            <!-- Sun icon (visible in dark mode, click to go light) -->
+                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                         </button>
                         <span class="text-sm text-gray-700 dark:text-gray-300">{{ user.first_name|default:user.username }}</span>
@@ -79,15 +85,15 @@
                             Sign out
                         </a>
                     {% else %}
-                        <!-- Theme Toggle for non-authenticated users -->
-                        <button onclick="toggleTheme()" class="p-2 text-gray-500 dark:text-gray-400 hover:text-brand-purple rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Toggle theme">
-                            <!-- Sun icon (visible in dark mode) -->
-                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        <!-- Theme Toggle for non-authenticated users (identical to authenticated) -->
+                        <button onclick="toggleTheme()" class="p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
+                            <!-- Moon icon (visible in light mode, click to go dark) -->
+                            <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                             </svg>
-                            <!-- Moon icon (visible in light mode) -->
-                            <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            <!-- Sun icon (visible in dark mode, click to go light) -->
+                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                         </button>
                         <a href="{% url 'login' %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple px-3 py-2 text-sm font-medium">
@@ -173,16 +179,16 @@
                 --color-brand-purple-light: #B899D1;
                 --color-brand-green: #34d399;
                 --color-brand-gray: #9ca3af;
-                --color-brand-gray-light: #111827;
-                --color-text-primary: #f1f5f9;
-                --color-text-secondary: #94a3b8;
-                --color-bg-primary: #1f2937;
-                --color-bg-secondary: #111827;
-                --color-border: #374151;
-                --color-border-light: #4b5563;
-                --color-input-bg: #374151;
-                --color-input-border: #4b5563;
-                --color-shadow: rgba(0, 0, 0, 0.3);
+                --color-brand-gray-light: #1a1a1a;
+                --color-text-primary: #f5f5f5;
+                --color-text-secondary: #a3a3a3;
+                --color-bg-primary: #2a2a2a;
+                --color-bg-secondary: #1a1a1a;
+                --color-border: #404040;
+                --color-border-light: #525252;
+                --color-input-bg: #404040;
+                --color-input-border: #525252;
+                --color-shadow: rgba(0, 0, 0, 0.4);
             }
 
             /* Update Tailwind's brand colors for dark mode */
@@ -340,45 +346,197 @@
         *, *::before, *::after {
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
+
+        /* Explicit dark mode styles - these will definitely work */
+        html.dark {
+            color-scheme: dark;
+        }
+        
+        html.dark,
+        html.dark body {
+            background-color: #0a0a0a !important; /* Very dark background */
+            color: #f5f5f5 !important;
+        }
+        
+        html.dark nav {
+            background-color: #1f1f1f !important; /* Elevated surface */
+            border-bottom-color: #333333 !important;
+        }
+        
+        html.dark .bg-white {
+            background-color: #1f1f1f !important; /* Cards and elevated content */
+            color: #f5f5f5 !important;
+        }
+        
+        html.dark .bg-gray-50 {
+            background-color: #0a0a0a !important; /* Same as main background */
+        }
+        
+        html.dark .text-gray-900 {
+            color: #f5f5f5 !important;
+        }
+        
+        html.dark .text-gray-700,
+        html.dark .text-gray-600 {
+            color: #a3a3a3 !important;
+        }
+        
+        html.dark .text-gray-500,
+        html.dark .text-gray-400 {
+            color: #737373 !important;
+        }
+        
+        html.dark .border-gray-200,
+        html.dark .border-gray-100 {
+            border-color: #404040 !important;
+        }
+        
+        html.dark .border-gray-300 {
+            border-color: #525252 !important;
+        }
+        
+        /* Form inputs in dark mode */
+        html.dark input,
+        html.dark textarea,
+        html.dark select {
+            background-color: #2a2a2a !important; /* Slightly lighter than cards */
+            border-color: #404040 !important;
+            color: #f5f5f5 !important;
+        }
+        
+        html.dark input:focus,
+        html.dark textarea:focus,
+        html.dark select:focus {
+            border-color: #8160A9 !important;
+            box-shadow: 0 0 0 2px rgba(129, 96, 169, 0.2) !important;
+        }
+        
+        /* Additional dark mode refinements */
+        html.dark .border-gray-200,
+        html.dark .border-gray-100 {
+            border-color: #2a2a2a !important; /* Subtle borders */
+        }
+        
+        html.dark .border-gray-300 {
+            border-color: #404040 !important; /* More prominent borders */
+        }
+        
+        /* Explicit light mode styles */
+        html:not(.dark),
+        html:not(.dark) body {
+            background-color: #f8fafc !important; /* Light gray background */
+            color: #1e293b !important; /* Dark text */
+        }
+        
+        html:not(.dark) nav {
+            background-color: #ffffff !important; /* Pure white navigation */
+            border-bottom-color: #e2e8f0 !important; /* Light border */
+        }
+        
+        html:not(.dark) .bg-white {
+            background-color: #ffffff !important; /* Pure white cards */
+            color: #1e293b !important; /* Dark text */
+        }
+        
+        html:not(.dark) .bg-gray-50 {
+            background-color: #f8fafc !important; /* Light background */
+        }
+        
+        html:not(.dark) .text-gray-900 {
+            color: #1e293b !important; /* Dark text */
+        }
+        
+        html:not(.dark) .text-gray-700 {
+            color: #374151 !important; /* Medium gray text */
+        }
+        
+        html:not(.dark) .text-gray-600 {
+            color: #4b5563 !important; /* Lighter gray text */
+        }
+        
+        html:not(.dark) .text-gray-500 {
+            color: #6b7280 !important; /* Light gray text */
+        }
+        
+        html:not(.dark) .border-gray-200 {
+            border-color: #e5e7eb !important; /* Light borders */
+        }
+        
+        html:not(.dark) .border-gray-100 {
+            border-color: #f3f4f6 !important; /* Very light borders */
+        }
+        
+        html:not(.dark) .border-gray-300 {
+            border-color: #d1d5db !important; /* Medium borders */
+        }
+        
+        /* Form inputs in light mode */
+        html:not(.dark) input,
+        html:not(.dark) textarea,
+        html:not(.dark) select {
+            background-color: #ffffff !important; /* White inputs */
+            border-color: #d1d5db !important; /* Light gray borders */
+            color: #1e293b !important; /* Dark text */
+        }
+        
+        html:not(.dark) input:focus,
+        html:not(.dark) textarea:focus,
+        html:not(.dark) select:focus {
+            border-color: #8160A9 !important; /* Purple focus */
+            box-shadow: 0 0 0 2px rgba(129, 96, 169, 0.1) !important; /* Light purple glow */
+        }
+
+
+
+        /* Debug indicator */
+        /* Removed debug dark mode label */
     </style>
 
     <script>
-        // Theme toggle functionality
-        function initTheme() {
-            // Check if user has a saved preference
-            const savedTheme = localStorage.getItem('theme');
-            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        }
-        
+        // Theme toggle functionality (no logging)
         function toggleTheme() {
-            const isDark = document.documentElement.classList.contains('dark');
-            
+            const html = document.documentElement;
+            const body = document.body;
+            const isDark = html.classList.contains('dark');
             if (isDark) {
-                document.documentElement.classList.remove('dark');
+                html.classList.remove('dark');
+                body.classList.remove('dark');
                 localStorage.setItem('theme', 'light');
             } else {
-                document.documentElement.classList.add('dark');
+                html.classList.add('dark');
+                body.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
             }
+            // Force immediate style recalculation
+            html.style.display = 'none';
+            html.offsetHeight;
+            html.style.display = '';
         }
         
-        // Initialize theme on page load
-        initTheme();
+        // Initialize theme on page load (no logging)
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            // Apply theme
+            if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+            }
+        })();
         
-        // Listen for system theme changes (but only if user hasn't set a preference)
+        // Listen for system theme changes (no logging)
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             const savedTheme = localStorage.getItem('theme');
             if (!savedTheme) {
                 if (e.matches) {
                     document.documentElement.classList.add('dark');
+                    document.body.classList.add('dark');
                 } else {
                     document.documentElement.classList.remove('dark');
+                    document.body.classList.remove('dark');
                 }
             }
         });
