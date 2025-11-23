@@ -578,21 +578,27 @@
                     <!-- Discount Calculation Method -->
                     <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <h4 class="text-sm font-semibold text-gray-900 mb-3">Discount Calculation Method</h4>
-                        <div class="space-y-2">
-                            <label class="flex items-center">
+                        <p class="text-xs text-gray-600 mb-3">Choose how to calculate the value of free months/weeks when comparing apartments:</p>
+                        <div class="space-y-3">
+                            <label class="flex items-start">
                                 <input type="radio" name="discount_calculation" value="daily" checked
-                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300">
+                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 mt-0.5">
                                 <span class="ml-3 text-sm text-gray-700">
-                                    <span class="font-medium">Daily</span> - Spread discounts across all days of lease
+                                    <span class="font-medium">Daily Rate</span> - Divides annual rent by 365 days<br>
+                                    <span class="text-xs text-gray-500">More accurate for prorating discounts across the entire lease term</span>
                                 </span>
                             </label>
-                            <label class="flex items-center">
+                            <label class="flex items-start">
                                 <input type="radio" name="discount_calculation" value="monthly"
-                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300">
+                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 mt-0.5">
                                 <span class="ml-3 text-sm text-gray-700">
-                                    <span class="font-medium">Monthly</span> - Apply free months at end of lease
+                                    <span class="font-medium">Monthly Rate</span> - Divides annual rent by 12 months<br>
+                                    <span class="text-xs text-gray-500">Treats each month as equal, regardless of actual days</span>
                                 </span>
                             </label>
+                        </div>
+                        <div class="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+                            <strong>Note:</strong> Changing this will recalculate the Net Effective Rent for all apartments with discounts
                         </div>
                     </div>
                 </div>
