@@ -3,6 +3,40 @@
 {% block title %}Dashboard - Your Apartments{% endblock %}
 
 {% block extra_head %}
+<script>
+// Calculate individual discount amount - defined early so it can be used inline
+function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
+    const annualRent = price * 12;
+    let discountValue = 0;
+
+    if (discountCalcMethod === 'daily') {
+        const dailyRate = annualRent / 365;
+        if (type === 'months') {
+            const daysFromMonths = amount * (365 / 12);
+            discountValue = dailyRate * daysFromMonths;
+        } else if (type === 'weeks') {
+            discountValue = dailyRate * amount * 7;
+        }
+    } else if (discountCalcMethod === 'weekly') {
+        const weeklyRate = annualRent / 52;
+        if (type === 'months') {
+            const weeksFromMonths = amount * (52 / 12);
+            discountValue = weeklyRate * weeksFromMonths;
+        } else if (type === 'weeks') {
+            discountValue = weeklyRate * amount;
+        }
+    } else {
+        // Monthly fallback
+        if (type === 'months') {
+            discountValue = price * amount;
+        } else if (type === 'weeks') {
+            discountValue = price * (amount / 4);
+        }
+    }
+
+    return discountValue;
+}
+</script>
 {% endblock %}
 
 {% block content %}
@@ -755,39 +789,6 @@ function getSessionApartments() {
 
 function saveSessionApartments(apartments) {
     sessionStorage.setItem('anonymous_apartments', JSON.stringify(apartments));
-}
-
-// Calculate individual discount amount
-function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
-    const annualRent = price * 12;
-    let discountValue = 0;
-
-    if (discountCalcMethod === 'daily') {
-        const dailyRate = annualRent / 365;
-        if (type === 'months') {
-            const daysFromMonths = amount * (365 / 12);
-            discountValue = dailyRate * daysFromMonths;
-        } else if (type === 'weeks') {
-            discountValue = dailyRate * amount * 7;
-        }
-    } else if (discountCalcMethod === 'weekly') {
-        const weeklyRate = annualRent / 52;
-        if (type === 'months') {
-            const weeksFromMonths = amount * (52 / 12);
-            discountValue = weeklyRate * weeksFromMonths;
-        } else if (type === 'weeks') {
-            discountValue = weeklyRate * amount;
-        }
-    } else {
-        // Monthly fallback
-        if (type === 'months') {
-            discountValue = price * amount;
-        } else if (type === 'weeks') {
-            discountValue = price * (amount / 4);
-        }
-    }
-
-    return discountValue;
 }
 
 // Calculate net effective price
