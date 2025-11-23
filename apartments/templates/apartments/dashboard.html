@@ -396,4 +396,235 @@
 
 </div>
 
+<script>
+// SessionStorage management for anonymous users
+function getSessionApartments() {
+    const apartments = sessionStorage.getItem('anonymous_apartments');
+    return apartments ? JSON.parse(apartments) : [];
+}
+
+function saveSessionApartments(apartments) {
+    sessionStorage.setItem('anonymous_apartments', JSON.stringify(apartments));
+}
+
+// Calculate net effective price
+function calculateNetEffectivePrice(apartment) {
+    const price = parseFloat(apartment.price);
+    const leaseLength = parseInt(apartment.lease_length_months || 12);
+    const monthsFree = parseInt(apartment.months_free || 0);
+    const weeksFree = parseInt(apartment.weeks_free || 0);
+    const flatDiscount = parseFloat(apartment.flat_discount || 0);
+
+    const totalMonthsFree = monthsFree + (weeksFree / 4);
+    const totalRent = price * leaseLength;
+    const discountFromFreeMonths = price * totalMonthsFree;
+    const netTotal = totalRent - discountFromFreeMonths - flatDiscount;
+    const netEffectivePrice = netTotal / leaseLength;
+
+    return netEffectivePrice;
+}
+
+// Load and display apartments for anonymous users
+function loadAnonymousApartments() {
+    const isAnonymous = {{ is_anonymous|yesno:"true,false" }};
+    if (!isAnonymous) return;
+
+    const apartments = getSessionApartments();
+    const apartmentCount = apartments.length;
+
+    // Update apartment count display
+    const countText = document.getElementById('apartmentCountText');
+    if (countText) {
+        countText.textContent = `${apartmentCount} apartment${apartmentCount !== 1 ? 's' : ''} compared`;
+    }
+
+    // Update apartment count badge
+    const badge = document.getElementById('apartmentCountBadge');
+    const badgeText = document.getElementById('apartmentCountBadgeText');
+    if (badge && badgeText) {
+        if (apartmentCount >= 2) {
+            badge.className = 'ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
+            badgeText.textContent = 'Limit reached';
+        } else if (apartmentCount >= 1) {
+            badge.className = 'ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800';
+            badgeText.textContent = `${apartmentCount}/2 used`;
+        } else {
+            badge.className = 'ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+            badgeText.textContent = 'Free tier';
+        }
+    }
+
+    // Check if any apartment has discounts
+    const hasDiscounts = apartments.some(apt =>
+        (apt.months_free && apt.months_free > 0) ||
+        (apt.weeks_free && apt.weeks_free > 0) ||
+        (apt.flat_discount && apt.flat_discount > 0)
+    );
+
+    // Render apartments in table view
+    const tableBody = document.getElementById('apartmentsTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = apartments.map(apartment => {
+            const netEffectivePrice = calculateNetEffectivePrice(apartment);
+            const hasDeal = (apartment.months_free && apartment.months_free > 0) ||
+                           (apartment.weeks_free && apartment.weeks_free > 0) ||
+                           (apartment.flat_discount && apartment.flat_discount > 0);
+
+            return `
+                <tr class="hover:bg-gray-50 divide-x divide-gray-200" data-apartment-id="${apartment.id}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="text-sm font-medium text-gray-900">${apartment.name}</div>
+                            ${hasDeal ? '<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Deal</span>' : ''}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">$${parseFloat(apartment.price).toFixed(2)}</div>
+                    </td>
+                    ${hasDiscounts ? `<td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-semibold text-green-600">$${netEffectivePrice.toFixed(2)}</div>
+                    </td>` : ''}
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${apartment.square_footage} sq ft</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">$${(parseFloat(apartment.price) / parseInt(apartment.square_footage)).toFixed(2)}</div>
+                    </td>
+                    ${hasDiscounts ? `<td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">
+                            ${apartment.months_free ? `${apartment.months_free} month${apartment.months_free > 1 ? 's' : ''} free<br>` : ''}
+                            ${apartment.weeks_free ? `${apartment.weeks_free} week${apartment.weeks_free > 1 ? 's' : ''} free<br>` : ''}
+                            ${apartment.flat_discount ? `$${parseFloat(apartment.flat_discount).toFixed(2)} discount` : ''}
+                        </div>
+                    </td>` : ''}
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="deleteSessionApartment('${apartment.id}')" class="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Render apartments in card view
+    const cardView = document.getElementById('cardView');
+    if (cardView) {
+        const cardsHTML = apartments.map(apartment => {
+            const netEffectivePrice = calculateNetEffectivePrice(apartment);
+            const hasDeal = (apartment.months_free && apartment.months_free > 0) ||
+                           (apartment.weeks_free && apartment.weeks_free > 0) ||
+                           (apartment.flat_discount && apartment.flat_discount > 0);
+
+            return `
+                <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 hover:shadow-md transition-shadow duration-200">
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${apartment.name}</h3>
+                            ${hasDeal ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Deal</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Monthly Rent</span>
+                            <span class="text-lg font-semibold text-gray-900">$${parseFloat(apartment.price).toFixed(2)}</span>
+                        </div>
+                        ${hasDiscounts ? `<div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Net Effective</span>
+                            <span class="text-lg font-semibold text-green-600">$${netEffectivePrice.toFixed(2)}</span>
+                        </div>` : ''}
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Square Footage</span>
+                            <span class="text-sm font-medium text-gray-900">${apartment.square_footage} sq ft</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Price/sq ft</span>
+                            <span class="text-sm font-medium text-gray-900">$${(parseFloat(apartment.price) / parseInt(apartment.square_footage)).toFixed(2)}</span>
+                        </div>
+                        ${hasDeal ? `<div class="pt-2 border-t border-gray-100">
+                            <span class="text-xs text-gray-500">Discounts:</span>
+                            <div class="text-sm text-gray-900">
+                                ${apartment.months_free ? `${apartment.months_free} month${apartment.months_free > 1 ? 's' : ''} free<br>` : ''}
+                                ${apartment.weeks_free ? `${apartment.weeks_free} week${apartment.weeks_free > 1 ? 's' : ''} free<br>` : ''}
+                                ${apartment.flat_discount ? `$${parseFloat(apartment.flat_discount).toFixed(2)} flat discount` : ''}
+                            </div>
+                        </div>` : ''}
+                    </div>
+                    <div class="px-6 py-3 bg-gray-50 dark:bg-neutral-700 border-t border-gray-100 dark:border-neutral-600">
+                        <button onclick="deleteSessionApartment('${apartment.id}')" class="w-full text-center text-sm text-red-600 hover:text-red-900 font-medium">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Replace the Django-rendered cards with sessionStorage apartments
+        cardView.innerHTML = cardsHTML;
+    }
+}
+
+// Delete apartment from sessionStorage
+async function deleteSessionApartment(apartmentId) {
+    if (!confirm('Are you sure you want to delete this apartment?')) {
+        return;
+    }
+
+    const apartments = getSessionApartments();
+    const filtered = apartments.filter(apt => apt.id !== apartmentId);
+    saveSessionApartments(filtered);
+
+    // Reload the page to update the view
+    window.location.reload();
+}
+
+// View switching functionality
+function switchView(viewType) {
+    const cardView = document.getElementById('cardView');
+    const tableView = document.getElementById('tableView');
+    const cardBtn = document.getElementById('cardViewBtn');
+    const tableBtn = document.getElementById('tableViewBtn');
+
+    if (viewType === 'cards') {
+        cardView.classList.remove('hidden');
+        cardView.classList.add('grid');
+        tableView.classList.add('hidden');
+        cardBtn.classList.add('bg-gray-100', 'text-gray-900');
+        tableBtn.classList.remove('bg-gray-100', 'text-gray-900');
+        localStorage.setItem('preferredView', 'cards');
+    } else {
+        cardView.classList.add('hidden');
+        cardView.classList.remove('grid');
+        tableView.classList.remove('hidden');
+        tableBtn.classList.add('bg-gray-100', 'text-gray-900');
+        cardBtn.classList.remove('bg-gray-100', 'text-gray-900');
+        localStorage.setItem('preferredView', 'table');
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadAnonymousApartments();
+
+    // Set default view
+    const preferredView = localStorage.getItem('preferredView') || 'table';
+    switchView(preferredView);
+});
+
+// Preferences modal functions (placeholders for now)
+function openPreferencesModal() {
+    alert('Preferences functionality coming soon!');
+}
+
+function closePreferencesModal() {
+    // Placeholder
+}
+
+function dismissSignupPrompt() {
+    const prompt = document.getElementById('signupPrompt');
+    if (prompt) {
+        prompt.style.display = 'none';
+        sessionStorage.setItem('signupPromptDismissed', 'true');
+    }
+}
+</script>
+
 {% endblock %}
