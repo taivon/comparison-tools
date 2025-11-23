@@ -1,0 +1,196 @@
+{% extends 'apartments/base.html' %}
+
+{% block title %}Terms of Service - Apartment Comparison Tool{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-white dark:bg-neutral-900 py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-8">Terms of Service</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-8">Last updated: {{ current_date }}</p>
+
+        <div class="prose prose-lg dark:prose-invert max-w-none">
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Agreement to Terms</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    By accessing or using Apartment Comparison Tool ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you disagree with any part of these terms, you may not access the Service.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Description of Service</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Apartment Comparison Tool is a rent concession calculator and apartment comparison platform that helps users calculate net effective rent and compare multiple apartment listings based on various factors including price, square footage, lease terms, and rental concessions.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">User Accounts</h2>
+
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">Account Creation</h3>
+                <ul class="list-disc pl-6 text-gray-600 dark:text-gray-300 mb-4">
+                    <li>You may use the Service without an account (guest mode) with limited features</li>
+                    <li>To access premium features, you must create an account</li>
+                    <li>You must provide accurate and complete information</li>
+                    <li>You are responsible for maintaining the security of your account</li>
+                    <li>You must be at least 18 years old to create an account</li>
+                </ul>
+
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">Account Tiers</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4"><strong>Free Tier:</strong></p>
+                <ul class="list-disc pl-6 text-gray-600 dark:text-gray-300 mb-4">
+                    <li>Compare up to 2 apartments</li>
+                    <li>Net effective rent calculation</li>
+                    <li>Basic comparison features</li>
+                </ul>
+                <p class="text-gray-600 dark:text-gray-300 mb-4"><strong>Premium Tier ($4.99/month):</strong></p>
+                <ul class="list-disc pl-6 text-gray-600 dark:text-gray-300 mb-4">
+                    <li>Unlimited apartment comparisons</li>
+                    <li>Advanced filtering and sorting</li>
+                    <li>Priority support</li>
+                </ul>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Acceptable Use</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">You agree NOT to:</p>
+                <ul class="list-disc pl-6 text-gray-600 dark:text-gray-300 mb-4">
+                    <li>Use the Service for any illegal purpose</li>
+                    <li>Violate any laws or regulations</li>
+                    <li>Infringe on intellectual property rights</li>
+                    <li>Transmit viruses, malware, or harmful code</li>
+                    <li>Attempt to gain unauthorized access to the Service</li>
+                    <li>Interfere with or disrupt the Service</li>
+                    <li>Use automated tools to access the Service (bots, scrapers)</li>
+                    <li>Impersonate another person or entity</li>
+                    <li>Share your account credentials with others</li>
+                </ul>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">User Content</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    You retain all rights to the apartment data you input into the Service. By using the Service, you grant us a license to store, process, and display your data solely for the purpose of providing the Service to you.
+                </p>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    You are responsible for the accuracy of the data you input. We do not verify apartment information you provide.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Payment and Billing</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    <strong>Premium Subscriptions:</strong>
+                </p>
+                <ul class="list-disc pl-6 text-gray-600 dark:text-gray-300 mb-4">
+                    <li>Billed monthly at $4.99/month</li>
+                    <li>Automatically renews unless cancelled</li>
+                    <li>You may cancel at any time</li>
+                    <li>No refunds for partial months</li>
+                    <li>Price changes will be communicated 30 days in advance</li>
+                </ul>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Disclaimers and Limitations</h2>
+
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">No Warranty</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+                </p>
+
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">Accuracy of Information</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    We do not guarantee the accuracy, completeness, or reliability of any calculations, comparisons, or information provided by the Service. Rent concession calculations are estimates based on the data you provide. Always verify lease terms and pricing directly with property owners or managers.
+                </p>
+
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">Not Financial or Legal Advice</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    The Service provides informational tools only and does not constitute financial, legal, or professional advice. Consult with qualified professionals before making rental decisions.
+                </p>
+
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">Limitation of Liability</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES RESULTING FROM:
+                </p>
+                <ul class="list-disc pl-6 text-gray-600 dark:text-gray-300 mb-4">
+                    <li>Your use or inability to use the Service</li>
+                    <li>Any unauthorized access to or use of our servers</li>
+                    <li>Any bugs, viruses, or harmful code transmitted through the Service</li>
+                    <li>Any errors or omissions in calculations or content</li>
+                    <li>Rental decisions made based on information from the Service</li>
+                </ul>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Intellectual Property</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    The Service, including its design, features, text, graphics, logos, and software, is owned by us and protected by copyright, trademark, and other intellectual property laws.
+                </p>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    You may not copy, modify, distribute, sell, or lease any part of the Service without our express written permission.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Termination</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    We reserve the right to suspend or terminate your account at any time for:
+                </p>
+                <ul class="list-disc pl-6 text-gray-600 dark:text-gray-300 mb-4">
+                    <li>Violation of these Terms</li>
+                    <li>Fraudulent or illegal activity</li>
+                    <li>Non-payment of fees</li>
+                    <li>At our sole discretion</li>
+                </ul>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Upon termination, your right to use the Service will immediately cease. You may delete your account at any time through your account settings.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Changes to Terms</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    We reserve the right to modify these Terms at any time. We will notify you of material changes by posting the new Terms on this page and updating the "Last updated" date. Your continued use of the Service after changes constitutes acceptance of the new Terms.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Governing Law</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    These Terms shall be governed by and construed in accordance with the laws of the United States, without regard to its conflict of law provisions.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Dispute Resolution</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Any disputes arising from these Terms or your use of the Service shall be resolved through binding arbitration in accordance with the rules of the American Arbitration Association.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Severability</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    If any provision of these Terms is found to be unenforceable or invalid, that provision will be limited or eliminated to the minimum extent necessary so that these Terms will otherwise remain in full force and effect.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Contact Us</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    If you have questions about these Terms, please contact us at:
+                </p>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Email: <a href="mailto:legal@apartmentcompare.com" class="text-brand-purple hover:text-brand-purple-light">legal@apartmentcompare.com</a>
+                </p>
+            </section>
+        </div>
+
+        <div class="mt-12 pt-8 border-t border-gray-200 dark:border-neutral-700">
+            <a href="{% url 'apartments:index' %}" class="text-brand-purple hover:text-brand-purple-light font-medium">
+                ← Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

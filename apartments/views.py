@@ -607,3 +607,19 @@ def sync_firebase_user(request):
     except Exception as e:
         logger.error(f"Error syncing Firebase user: {e}")
         return JsonResponse({"error": "Internal server error"}, status=500)
+
+
+def privacy_policy(request):
+    """Display privacy policy page"""
+    from datetime import datetime
+    return render(request, "apartments/privacy.html", {
+        "current_date": datetime.now().strftime("%B %d, %Y")
+    })
+
+
+def terms_of_service(request):
+    """Display terms of service page"""
+    from datetime import datetime
+    return render(request, "apartments/terms.html", {
+        "current_date": datetime.now().strftime("%B %d, %Y")
+    })
