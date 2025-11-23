@@ -173,9 +173,10 @@
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Your Apartments</h1>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            {{ apartment_count }} apartment{{ apartment_count|pluralize }} compared
+                            <span id="apartmentCountText">{{ apartment_count }} apartment{{ apartment_count|pluralize }} compared</span>
                             {% if not is_premium %}
-                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if apartment_count >= apartment_limit %}bg-red-100 text-red-800{% elif apartment_count >= 1 %}bg-amber-100 text-amber-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                <span id="apartmentCountBadge" class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if apartment_count >= apartment_limit %}bg-red-100 text-red-800{% elif apartment_count >= 1 %}bg-amber-100 text-amber-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                    <span id="apartmentCountBadgeText">
                                     {% if apartment_count >= apartment_limit %}
                                         Limit reached
                                     {% elif apartment_count >= 1 %}
@@ -183,6 +184,7 @@
                                     {% else %}
                                         Free tier
                                     {% endif %}
+                                    </span>
                                 </span>
                             {% else %}
                                 <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -1315,6 +1317,33 @@ function renderSessionApartments(apartments) {
     // Clear existing content
     tableBody.innerHTML = '';
     cardView.innerHTML = '';
+
+    // Update apartment count
+    const count = apartments.length;
+    const countText = document.getElementById('apartmentCountText');
+    const countBadge = document.getElementById('apartmentCountBadge');
+    const countBadgeText = document.getElementById('apartmentCountBadgeText');
+
+    if (countText) {
+        countText.textContent = `${count} apartment${count !== 1 ? 's' : ''} compared`;
+    }
+
+    if (countBadge && countBadgeText) {
+        // Update badge styling based on count
+        const limit = 2;
+        countBadge.className = 'ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+
+        if (count >= limit) {
+            countBadge.classList.add('bg-red-100', 'text-red-800');
+            countBadgeText.textContent = 'Limit reached';
+        } else if (count >= 1) {
+            countBadge.classList.add('bg-amber-100', 'text-amber-800');
+            countBadgeText.textContent = `${count}/${limit} used`;
+        } else {
+            countBadge.classList.add('bg-green-100', 'text-green-800');
+            countBadgeText.textContent = 'Free tier';
+        }
+    }
 
     // Calculate if any apartment has discounts
     const hasDiscounts = apartments.some(apt =>
