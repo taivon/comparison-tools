@@ -217,17 +217,27 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             <div class="text-xs font-medium text-brand-green mb-1">Special Offers</div>
                             <div class="text-sm text-gray-700">
                                 {% if apartment.months_free %}
-                                    <div>{{ apartment.months_free }} month{{ apartment.months_free|pluralize }} free
-                                    <script>
-                                        document.write('($' + calculateDiscountAmount({{ apartment.price }}, {{ apartment.months_free }}, 'months', '{{ preferences.discount_calculation|default:"daily" }}').toFixed(2) + ')');
-                                    </script>
+                                    <div>
+                                        {{ apartment.months_free }} month{{ apartment.months_free|pluralize }} free
+                                        <span id="card-discount-months-{{ apartment.pk|default:forloop.counter }}"></span>
+                                        <script>
+                                            (function() {
+                                                var amount = calculateDiscountAmount({{ apartment.price }}, {{ apartment.months_free }}, 'months', '{{ preferences.discount_calculation|default:"daily" }}');
+                                                document.getElementById('card-discount-months-{{ apartment.pk|default:forloop.counter }}').textContent = '($' + amount.toFixed(2) + ')';
+                                            })();
+                                        </script>
                                     </div>
                                 {% endif %}
                                 {% if apartment.weeks_free %}
-                                    <div>{{ apartment.weeks_free }} week{{ apartment.weeks_free|pluralize }} free
-                                    <script>
-                                        document.write('($' + calculateDiscountAmount({{ apartment.price }}, {{ apartment.weeks_free }}, 'weeks', '{{ preferences.discount_calculation|default:"daily" }}').toFixed(2) + ')');
-                                    </script>
+                                    <div>
+                                        {{ apartment.weeks_free }} week{{ apartment.weeks_free|pluralize }} free
+                                        <span id="card-discount-weeks-{{ apartment.pk|default:forloop.counter }}"></span>
+                                        <script>
+                                            (function() {
+                                                var amount = calculateDiscountAmount({{ apartment.price }}, {{ apartment.weeks_free }}, 'weeks', '{{ preferences.discount_calculation|default:"daily" }}');
+                                                document.getElementById('card-discount-weeks-{{ apartment.pk|default:forloop.counter }}').textContent = '($' + amount.toFixed(2) + ')';
+                                            })();
+                                        </script>
                                     </div>
                                 {% endif %}
                                 {% if apartment.flat_discount %}
@@ -380,17 +390,27 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         <td class="px-6 py-4">
                             <div class="text-sm text-gray-900">
                                 {% if apartment.months_free %}
-                                    <div>{{ apartment.months_free }}mo free
-                                    <script>
-                                        document.write('($' + calculateDiscountAmount({{ apartment.price }}, {{ apartment.months_free }}, 'months', '{{ preferences.discount_calculation|default:"daily" }}').toFixed(2) + ')');
-                                    </script>
+                                    <div>
+                                        {{ apartment.months_free }}mo free
+                                        <span id="discount-months-{{ apartment.pk|default:forloop.counter }}"></span>
+                                        <script>
+                                            (function() {
+                                                var amount = calculateDiscountAmount({{ apartment.price }}, {{ apartment.months_free }}, 'months', '{{ preferences.discount_calculation|default:"daily" }}');
+                                                document.getElementById('discount-months-{{ apartment.pk|default:forloop.counter }}').textContent = '($' + amount.toFixed(2) + ')';
+                                            })();
+                                        </script>
                                     </div>
                                 {% endif %}
                                 {% if apartment.weeks_free %}
-                                    <div>{{ apartment.weeks_free }}wk free
-                                    <script>
-                                        document.write('($' + calculateDiscountAmount({{ apartment.price }}, {{ apartment.weeks_free }}, 'weeks', '{{ preferences.discount_calculation|default:"daily" }}').toFixed(2) + ')');
-                                    </script>
+                                    <div>
+                                        {{ apartment.weeks_free }}wk free
+                                        <span id="discount-weeks-{{ apartment.pk|default:forloop.counter }}"></span>
+                                        <script>
+                                            (function() {
+                                                var amount = calculateDiscountAmount({{ apartment.price }}, {{ apartment.weeks_free }}, 'weeks', '{{ preferences.discount_calculation|default:"daily" }}');
+                                                document.getElementById('discount-weeks-{{ apartment.pk|default:forloop.counter }}').textContent = '($' + amount.toFixed(2) + ')';
+                                            })();
+                                        </script>
                                     </div>
                                 {% endif %}
                                 {% if apartment.flat_discount %}
