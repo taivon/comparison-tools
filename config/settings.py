@@ -291,10 +291,11 @@ def get_oauth_credentials():
             key_name = f"projects/comparison-tools-479102/secrets/google-oauth2-key/versions/latest"
             key_response = client.access_secret_version(request={"name": key_name})
             oauth_key = key_response.payload.data.decode("UTF-8")
-
-            # Debug: Print OAuth key value
-            print(f"DEBUG: oauth_key = '{oauth_key}'")
-            print(f"DEBUG: oauth_key length = {len(oauth_key)}")
+            
+            # Debug: Log OAuth key value
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"DEBUG_OAUTH_KEY: '{oauth_key}' (length: {len(oauth_key)})")
 
             # Fetch OAuth secret
             secret_name = f"projects/comparison-tools-479102/secrets/google-oauth2-secret/versions/latest"
@@ -302,12 +303,9 @@ def get_oauth_credentials():
                 request={"name": secret_name}
             )
             oauth_secret = secret_response.payload.data.decode("UTF-8")
-
-            # Debug: Print OAuth secret value
-            print(f"DEBUG: oauth_secret = '{oauth_secret}'")
-            print(f"DEBUG: oauth_secret length = {len(oauth_secret)}")
-
-            # Validate that credentials are not empty or None
+            
+            # Debug: Log OAuth secret value
+            logger.error(f"DEBUG_OAUTH_SECRET: '{oauth_secret}' (length: {len(oauth_secret)})")            # Validate that credentials are not empty or None
             if not oauth_key or not oauth_key.strip():
                 raise ValueError("OAuth key is empty or contains only whitespace")
 
