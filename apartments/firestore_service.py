@@ -282,7 +282,7 @@ class FirestoreService:
                 .limit(1)
                 .stream()
             )
-            
+
             if docs:
                 doc = docs[0]
                 self.db.collection("user_preferences").document(doc.id).delete()

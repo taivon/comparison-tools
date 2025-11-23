@@ -299,7 +299,14 @@ def get_oauth_credentials():
             )
             oauth_secret = secret_response.payload.data.decode("UTF-8")
 
-            return {"key": oauth_key, "secret": oauth_secret}
+            # Validate that credentials are not empty or None
+            if not oauth_key or not oauth_key.strip():
+                raise ValueError("OAuth key is empty or contains only whitespace")
+            
+            if not oauth_secret or not oauth_secret.strip():
+                raise ValueError("OAuth secret is empty or contains only whitespace")
+
+            return {"key": oauth_key.strip(), "secret": oauth_secret.strip()}
 
         except Exception as e:
             import logging
@@ -385,23 +392,23 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ["first_name", "last_name"]
 
 # Cache Configuration
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
     }
 }
 
 # Session Configuration
 if not DEBUG:
     # On App Engine (production), use cache-based sessions to avoid SQLite database writes
-    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-    SESSION_CACHE_ALIAS = 'default'
-    
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
+
     # Also configure messages to not use database
-    MESSAGE_STORAGE = 'django.contrib.messages.storage.fallback.FallbackStorage'
+    MESSAGE_STORAGE = "django.contrib.messages.storage.fallback.FallbackStorage"
 else:
     # In development, use default database sessions
-    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 # Session security settings
 SESSION_COOKIE_SECURE = not DEBUG  # Use secure cookies in production
