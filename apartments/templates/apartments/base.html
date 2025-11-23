@@ -653,7 +653,76 @@
                     }, 300);
                 }, 5000); // 5 seconds
             });
+
+            // Transfer apartments from sessionStorage to Firestore after login
+            transferSessionApartmentsIfAuthenticated();
         });
+
+        // Transfer apartments from sessionStorage to Firestore if user is authenticated
+        async function transferSessionApartmentsIfAuthenticated() {
+            const isAuthenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
+
+            if (!isAuthenticated) {
+                return;
+            }
+
+            // Check if there are apartments in sessionStorage
+            const apartments = sessionStorage.getItem('anonymous_apartments');
+            if (!apartments) {
+                return;
+            }
+
+            const apartmentList = JSON.parse(apartments);
+            if (apartmentList.length === 0) {
+                sessionStorage.removeItem('anonymous_apartments');
+                return;
+            }
+
+            // Transfer apartments to Firestore
+            try {
+                const response = await fetch('{% url "apartments:transfer_apartments" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ apartments: apartmentList })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log(`Successfully transferred ${result.transferred_count} apartments to your account`);
+
+                    // Clear sessionStorage after successful transfer
+                    sessionStorage.removeItem('anonymous_apartments');
+
+                    // Redirect to dashboard if apartments were transferred and not already there
+                    if (result.transferred_count > 0 && !window.location.pathname.includes('/dashboard/')) {
+                        window.location.href = '{% url "apartments:dashboard" %}';
+                    }
+                } else {
+                    console.error('Failed to transfer apartments');
+                }
+            } catch (error) {
+                console.error('Error transferring apartments:', error);
+            }
+        }
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
 
 </body>
