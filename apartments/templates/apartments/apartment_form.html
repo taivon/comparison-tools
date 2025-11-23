@@ -62,13 +62,8 @@
                         </div>
 
                         <div class="col-span-6 sm:col-span-3">
-                            <label for="{{ form.square_footage.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Square Footage</label>
-                            <div class="relative">
-                                {{ form.square_footage }}
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 dark:text-gray-400 text-sm">sq ft</span>
-                                </div>
-                            </div>
+                            <label for="{{ form.square_footage.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Square Footage (sq ft)</label>
+                            {{ form.square_footage }}
                             {% if form.square_footage.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.square_footage.errors.0 }}</p>
                             {% endif %}
@@ -76,13 +71,8 @@
                         </div>
 
                         <div class="col-span-6 sm:col-span-3">
-                            <label for="{{ form.lease_length_months.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Lease Length</label>
-                            <div class="relative">
-                                {{ form.lease_length_months }}
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 dark:text-gray-400 text-sm">months</span>
-                                </div>
-                            </div>
+                            <label for="{{ form.lease_length_months.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Lease Length (months)</label>
+                            {{ form.lease_length_months }}
                             {% if form.lease_length_months.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.lease_length_months.errors.0 }}</p>
                             {% endif %}

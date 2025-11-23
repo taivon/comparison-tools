@@ -235,15 +235,18 @@ LOGGING = {
     },
 }
 
-# Social Authentication Settings
-AUTHENTICATION_BACKENDS = [
-    "social_core.backends.google.GoogleOAuth2",
-    "django.contrib.auth.backends.ModelBackend",
-]
-
 # Google OAuth2 Settings
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("GOOGLE_OAUTH2_KEY", "")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("GOOGLE_OAUTH2_SECRET", "")
+
+# Social Authentication Settings
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# Only add Google OAuth backend if credentials are available
+if SOCIAL_AUTH_GOOGLE_OAUTH2_KEY and SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET:
+    AUTHENTICATION_BACKENDS.insert(0, "social_core.backends.google.GoogleOAuth2")
 
 # Security validation for OAuth credentials
 if not DEBUG and (
@@ -253,11 +256,15 @@ if not DEBUG and (
     import logging
 
     logger = logging.getLogger(__name__)
-    logger.error("CRITICAL: Google OAuth credentials not configured for production!")
-    logger.error("Set GOOGLE_OAUTH2_KEY and GOOGLE_OAUTH2_SECRET environment variables")
-    if "runserver" in sys.argv or "migrate" not in sys.argv:
-        # Don't fail on migrations, but fail on server startup
-        raise ValueError("Google OAuth credentials required for production deployment")
+    logger.warning("WARNING: Google OAuth credentials not configured for production!")
+    logger.warning(
+        "Google Sign-In will not be available. Set GOOGLE_OAUTH2_KEY and GOOGLE_OAUTH2_SECRET environment variables"
+    )
+    logger.warning("App will continue to run with Django authentication only")
+    # Comment out the error raising to allow app to start without OAuth
+    # if "runserver" in sys.argv or "migrate" not in sys.argv:
+    #     # Don't fail on migrations, but fail on server startup
+    #     raise ValueError("Google OAuth credentials required for production deployment")
 
 # Development warning for missing credentials
 if DEBUG and (
