@@ -249,8 +249,7 @@
                             </svg>
                         </button>
                     </th>
-                    {% if has_discounts %}
-                    <th scope="col" class="px-6 py-3 text-left">
+                    <th scope="col" id="netEffectiveHeader" class="px-6 py-3 text-left {% if not has_discounts and not is_anonymous %}hidden{% endif %}">
                         <button onclick="sortTable('net_price')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
                             Net Effective
                             <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +257,6 @@
                             </svg>
                         </button>
                     </th>
-                    {% endif %}
                     <th scope="col" class="px-6 py-3 text-left">
                         <button onclick="sortTable('square_footage')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
                             Sq Ft
@@ -278,11 +276,9 @@
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Lease Term
                     </th>
-                    {% if has_discounts %}
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" id="discountsHeader" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider {% if not has_discounts and not is_anonymous %}hidden{% endif %}">
                         Discounts
                     </th>
-                    {% endif %}
                     <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                     </th>
@@ -681,6 +677,19 @@ function loadAnonymousApartments() {
         (apt.weeks_free && apt.weeks_free > 0) ||
         (apt.flat_discount && apt.flat_discount > 0)
     );
+
+    // Show/hide discount columns in table header based on whether any apartment has discounts
+    const netEffectiveHeader = document.getElementById('netEffectiveHeader');
+    const discountsHeader = document.getElementById('discountsHeader');
+    if (netEffectiveHeader && discountsHeader) {
+        if (hasDiscounts) {
+            netEffectiveHeader.classList.remove('hidden');
+            discountsHeader.classList.remove('hidden');
+        } else {
+            netEffectiveHeader.classList.add('hidden');
+            discountsHeader.classList.add('hidden');
+        }
+    }
 
     // Render apartments in table view
     const tableBody = document.getElementById('apartmentsTableBody');
