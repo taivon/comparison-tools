@@ -518,7 +518,14 @@ def login_view(request):
             if user:
                 firestore_login(request, user)
                 messages.success(request, f"Welcome back, {user.username}!")
-                return redirect("apartments:index")
+
+                # Check if user has apartments and redirect accordingly
+                firestore_service = FirestoreService()
+                apartments = firestore_service.get_user_apartments(user.id)
+                if apartments:
+                    return redirect("apartments:dashboard")
+                else:
+                    return redirect("apartments:index")
             else:
                 messages.error(request, "Invalid username or password.")
     else:
@@ -544,7 +551,14 @@ def google_oauth_callback(request):
     if user_id and hasattr(request, "user") and request.user.is_authenticated:
         logger.info(f"OAuth callback successful for user: {request.user.username}")
         messages.success(request, f"Welcome back, {request.user.username}!")
-        return redirect("apartments:index")
+
+        # Check if user has apartments and redirect accordingly
+        firestore_service = FirestoreService()
+        apartments = firestore_service.get_user_apartments(user_id)
+        if apartments:
+            return redirect("apartments:dashboard")
+        else:
+            return redirect("apartments:index")
     else:
         logger.warning(
             f"OAuth callback failed - user_id: {user_id}, user authenticated: {hasattr(request, 'user') and request.user.is_authenticated}"
