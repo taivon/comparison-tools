@@ -15,4 +15,5 @@ urlpatterns = [
     path(
         "api/sync-firebase-user/", views.sync_firebase_user, name="sync_firebase_user"
     ),
+    path("api/transfer-apartments/", views.transfer_apartments, name="transfer_apartments"),
 ]

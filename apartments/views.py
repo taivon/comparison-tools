@@ -133,9 +133,10 @@ def index(request):
         apartments = firestore_service.get_user_apartments(request.user.id)
         preferences = firestore_service.get_user_preferences(request.user.id)
     else:
-        # Anonymous user - get data from session
-        apartments = get_session_apartments(request)
-        # Get anonymous user preferences from session
+        # Anonymous user - apartments stored in sessionStorage (client-side)
+        # Return empty list; JavaScript will load from sessionStorage
+        apartments = []
+        # Get anonymous user preferences from session (still server-side)
         session_prefs = request.session.get('anonymous_preferences', {})
         if session_prefs:
             # Create a simple preferences object
@@ -262,55 +263,35 @@ def create_apartment(request):
                 "flat_discount": float(form.cleaned_data["flat_discount"]),
             }
 
-            if request.user.is_authenticated:
-                # Authenticated user - save to Firestore
-                firestore_service = FirestoreService()
+            # Only authenticated users should reach this endpoint
+            # Anonymous users store apartments in sessionStorage (client-side)
+            if not request.user.is_authenticated:
+                return JsonResponse({"success": False, "error": "Authentication required"}, status=401)
 
-                # Check free tier limit for authenticated users
-                if (
-                    not request.user.is_staff
-                    and len(firestore_service.get_user_apartments(request.user.id)) >= 2
-                ):
-                    messages.error(
-                        request,
-                        "Free tier limit reached. Upgrade to premium to add more apartments.",
-                    )
-                    return redirect("apartments:index")
+            # Authenticated user - save to Firestore
+            firestore_service = FirestoreService()
 
-                try:
-                    apartment_data["user_id"] = str(request.user.id)
-                    firestore_service.create_apartment(apartment_data)
-                    messages.success(request, "Apartment added successfully!")
-                    return redirect("apartments:index")
-                except Exception as e:
-                    logger.error(f"Error saving apartment: {str(e)}")
-                    messages.error(
-                        request, "An error occurred while saving the apartment."
-                    )
-            else:
-                # Anonymous user - check limit and either save to session or prompt signup
-                current_apartments = get_session_apartments(request)
+            # Check free tier limit for authenticated users
+            if (
+                not request.user.is_staff
+                and len(firestore_service.get_user_apartments(request.user.id)) >= 2
+            ):
+                messages.error(
+                    request,
+                    "Free tier limit reached. Upgrade to premium to add more apartments.",
+                )
+                return redirect("apartments:index")
 
-                if len(current_apartments) >= 2:
-                    # At limit - prompt for signup
-                    messages.info(
-                        request,
-                        "You've reached the 2-apartment limit for guest users. Sign up to save and compare more apartments!",
-                    )
-                    # Store the apartment data in session for after signup
-                    request.session["pending_apartment"] = apartment_data
-                    return redirect("signup")
-                else:
-                    # Save to session
-                    try:
-                        save_session_apartment(request, apartment_data)
-                        messages.success(request, "Apartment added successfully!")
-                        return redirect("apartments:index")
-                    except Exception as e:
-                        logger.error(f"Error saving apartment to session: {str(e)}")
-                        messages.error(
-                            request, "An error occurred while saving the apartment."
-                        )
+            try:
+                apartment_data["user_id"] = str(request.user.id)
+                firestore_service.create_apartment(apartment_data)
+                messages.success(request, "Apartment added successfully!")
+                return redirect("apartments:index")
+            except Exception as e:
+                logger.error(f"Error saving apartment: {str(e)}")
+                messages.error(
+                    request, "An error occurred while saving the apartment."
+                )
         else:
             logger.error(f"Form errors: {form.errors}")
             messages.error(request, "Please correct the errors below.")
@@ -425,6 +406,45 @@ def update_preferences(request):
     return render(request, "apartments/preferences_form.html", {"form": form})
 
 
+@require_http_methods(["POST"])
+def transfer_apartments(request):
+    """Transfer apartments from sessionStorage to Firestore after user signs up"""
+    if not request.user.is_authenticated:
+        return JsonResponse({"success": False, "error": "Authentication required"}, status=401)
+
+    try:
+        data = json.loads(request.body)
+        apartments = data.get("apartments", [])
+
+        firestore_service = FirestoreService()
+        transferred_count = 0
+
+        for apartment in apartments:
+            try:
+                apartment_data = {
+                    "name": apartment["name"],
+                    "price": float(apartment["price"]),
+                    "square_footage": int(apartment["square_footage"]),
+                    "lease_length_months": int(apartment.get("lease_length_months", 12)),
+                    "months_free": int(apartment.get("months_free", 0)),
+                    "weeks_free": int(apartment.get("weeks_free", 0)),
+                    "flat_discount": float(apartment.get("flat_discount", 0)),
+                    "user_id": str(request.user.id),
+                }
+                firestore_service.create_apartment(apartment_data)
+                transferred_count += 1
+            except Exception as e:
+                logger.error(f"Error transferring apartment: {e}")
+
+        return JsonResponse({
+            "success": True,
+            "transferred_count": transferred_count
+        })
+    except Exception as e:
+        logger.error(f"Error in transfer_apartments: {e}")
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
 def signup_view(request):
     """Handle user registration"""
     if request.method == "POST":
@@ -434,56 +454,11 @@ def signup_view(request):
                 user = form.save()
                 firestore_login(request, user)
 
-                # Transfer any session apartments to the new user account
-                session_apartments = get_session_apartments(request)
-                pending_apartment = request.session.get("pending_apartment")
-
-                firestore_service = FirestoreService()
-                transferred_count = 0
-
-                # Transfer existing session apartments
-                for apartment in session_apartments:
-                    try:
-                        apartment_data = {
-                            "name": apartment.name,
-                            "price": float(apartment.price) if hasattr(apartment.price, '__float__') else apartment.price,
-                            "square_footage": apartment.square_footage,
-                            "lease_length_months": apartment.lease_length_months,
-                            "months_free": apartment.months_free,
-                            "weeks_free": apartment.weeks_free,
-                            "flat_discount": float(apartment.flat_discount) if hasattr(apartment.flat_discount, '__float__') else apartment.flat_discount,
-                            "user_id": str(user.id),
-                        }
-                        firestore_service.create_apartment(apartment_data)
-                        transferred_count += 1
-                    except Exception as e:
-                        logger.error(
-                            f"Error transferring apartment {apartment.name}: {e}"
-                        )
-
-                # Add the pending apartment if exists
-                if pending_apartment:
-                    try:
-                        pending_apartment["user_id"] = str(user.id)
-                        firestore_service.create_apartment(pending_apartment)
-                        transferred_count += 1
-                        del request.session["pending_apartment"]
-                    except Exception as e:
-                        logger.error(f"Error saving pending apartment: {e}")
-
-                # Clear session apartments
-                clear_session_apartments(request)
-
-                if transferred_count > 0:
-                    messages.success(
-                        request,
-                        f"Welcome {user.first_name or user.username}! Your account has been created and {transferred_count} apartment{'s' if transferred_count != 1 else ''} saved.",
-                    )
-                else:
-                    messages.success(
-                        request,
-                        f"Welcome {user.first_name or user.username}! Your account has been created successfully.",
-                    )
+                # Frontend will transfer apartments from sessionStorage via API call
+                messages.success(
+                    request,
+                    f"Welcome {user.first_name or user.username}! Your account has been created successfully.",
+                )
 
                 return redirect("apartments:index")
             except Exception as e:
@@ -495,10 +470,8 @@ def signup_view(request):
     else:
         form = CustomUserCreationForm()
 
-    # Show message if there are apartments to save
-    session_apartments = get_session_apartments(request)
-    pending_apartment = request.session.get("pending_apartment")
-    apartment_count = len(session_apartments) + (1 if pending_apartment else 0)
+    # Check if there are apartments in sessionStorage (client-side check)
+    apartment_count = 0  # Will be checked by JavaScript
 
     context = {
         "form": form,
