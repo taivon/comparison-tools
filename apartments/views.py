@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
 from django.contrib import messages
 from django.http import JsonResponse
 from .models import Apartment, UserPreferences
-from .forms import ApartmentForm, UserPreferencesForm
+from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm
 from django.db.models import Q
 import logging
 
@@ -110,3 +111,16 @@ def update_preferences(request):
         form = UserPreferencesForm(instance=preferences)
     
     return render(request, 'apartments/preferences_form.html', {'form': form})
+
+def signup(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Account created successfully! Welcome!")
+            return redirect('apartments:index')
+    else:
+        form = CustomUserCreationForm()
+    
+    return render(request, 'apartments/signup.html', {'form': form})
