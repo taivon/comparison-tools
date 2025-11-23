@@ -6,9 +6,9 @@
 {% endblock %}
 
 {% block content %}
-{% if not apartments %}
-    <!-- Hero Section with Inline Search -->
-    <div class="bg-white">
+<!-- Hero Section - shown for anonymous users without apartments -->
+{% if is_anonymous %}
+<div id="heroSection" class="bg-white" style="display: block;">
         <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
                 <h1 class="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
@@ -161,9 +161,12 @@
             </div>
         </div>
     </div>
-{% else %}
-    <!-- Dashboard Header -->
-    <div class="bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
+</div>
+{% endif %}
+
+<!-- Dashboard Section - shown for authenticated users with apartments OR anonymous users with sessionStorage apartments -->
+{% if apartments or is_anonymous %}
+<div id="dashboardSection" {% if is_anonymous %}style="display: none;"{% endif %} class="bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="py-6">
                 <div class="flex justify-between items-center">
@@ -550,6 +553,7 @@
         </div>
 
     </div>
+</div>
 {% endif %}
 
     </div>
@@ -1248,10 +1252,151 @@ function sortTable(column) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    const isAnonymous = {{ is_anonymous|yesno:"true,false" }};
+
+    // Load sessionStorage apartments for anonymous users
+    if (isAnonymous) {
+        const apartments = getSessionApartments();
+
+        if (apartments.length > 0) {
+            // Hide hero section, show dashboard
+            const heroSection = document.getElementById('heroSection');
+            const dashboardSection = document.getElementById('dashboardSection');
+
+            if (heroSection && dashboardSection) {
+                heroSection.style.display = 'none';
+                dashboardSection.style.display = 'block';
+
+                // Render apartments
+                renderSessionApartments(apartments);
+            }
+        }
+    }
+
     // Restore view preference (default to table)
     const savedView = localStorage.getItem('apartmentViewPreference') || 'table';
     switchView(savedView);
 });
+
+function renderSessionApartments(apartments) {
+    const tableBody = document.getElementById('apartmentsTableBody');
+    const cardView = document.getElementById('cardView');
+
+    if (!tableBody || !cardView) return;
+
+    // Clear existing content
+    tableBody.innerHTML = '';
+    cardView.innerHTML = '';
+
+    // Calculate if any apartment has discounts
+    const hasDiscounts = apartments.some(apt =>
+        apt.months_free > 0 || apt.weeks_free > 0 || apt.flat_discount > 0
+    );
+
+    apartments.forEach(apt => {
+        // Calculate net effective price
+        const netEffective = calculateNetEffective(apt);
+        const pricePerSqft = apt.square_footage > 0 ? apt.price / apt.square_footage : 0;
+
+        // Render table row
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 divide-x divide-gray-200';
+        tr.dataset.apartmentId = apt.id;
+
+        tr.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="text-sm font-medium text-gray-900">${apt.name}</div>
+                    ${hasDiscounts && (apt.months_free || apt.weeks_free || apt.flat_discount) ?
+                        '<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Deal</span>' : ''}
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900" data-field="price">$${apt.price.toFixed(2)}</div>
+            </td>
+            ${hasDiscounts ? `<td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-semibold text-green-600">$${netEffective.toFixed(2)}</div>
+            </td>` : ''}
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900" data-field="square_footage">${apt.square_footage.toLocaleString()}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">$${pricePerSqft.toFixed(2)}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${apt.lease_length_months} months
+            </td>
+            ${hasDiscounts ? `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${apt.months_free > 0 ? `${apt.months_free} mo. free` : ''}
+                ${apt.weeks_free > 0 ? `${apt.weeks_free} wk. free` : ''}
+                ${apt.flat_discount > 0 ? `$${apt.flat_discount} off` : ''}
+            </td>` : ''}
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button onclick="deleteSessionApartment('${apt.id}')" class="text-red-600 hover:text-red-900">Delete</button>
+            </td>
+        `;
+
+        tableBody.appendChild(tr);
+
+        // Render card
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow';
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">${apt.name}</h3>
+                    ${hasDiscounts && (apt.months_free || apt.weeks_free || apt.flat_discount) ?
+                        '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mt-1">Deal</span>' : ''}
+                </div>
+                <button onclick="deleteSessionApartment('${apt.id}')" class="text-red-600 hover:text-red-900 ml-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Monthly Rent</span>
+                    <span class="text-sm font-medium text-gray-900">$${apt.price.toFixed(2)}</span>
+                </div>
+                ${hasDiscounts ? `<div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Net Effective</span>
+                    <span class="text-sm font-semibold text-green-600">$${netEffective.toFixed(2)}</span>
+                </div>` : ''}
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Square Footage</span>
+                    <span class="text-sm font-medium text-gray-900">${apt.square_footage.toLocaleString()} sq ft</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Price/Sq Ft</span>
+                    <span class="text-sm font-medium text-gray-900">$${pricePerSqft.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Lease Term</span>
+                    <span class="text-sm font-medium text-gray-900">${apt.lease_length_months} months</span>
+                </div>
+            </div>
+        `;
+
+        cardView.appendChild(card);
+    });
+}
+
+function calculateNetEffective(apt) {
+    const monthlyRent = apt.price;
+    const leaseMonths = apt.lease_length_months;
+    const monthsFree = apt.months_free || 0;
+    const weeksFree = apt.weeks_free || 0;
+    const flatDiscount = apt.flat_discount || 0;
+
+    const monthsFreeFromWeeks = weeksFree / 4;
+    const totalMonthsFree = monthsFree + monthsFreeFromWeeks;
+
+    const totalCost = (monthlyRent * leaseMonths) - (monthlyRent * totalMonthsFree) - flatDiscount;
+    const netEffectiveMonthly = totalCost / leaseMonths;
+
+    return netEffectiveMonthly;
+}
 
 // Helper function to get CSRF token
 function getCookie(name) {
