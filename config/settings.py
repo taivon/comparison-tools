@@ -33,7 +33,7 @@ if os.path.isfile(env_file):
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-e&f)15o0*-pg2ul$(w&on#i5kz+a-(kk=hvyff3wg%k&!pqsor'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-e&f)15o0*-pg2ul$(w&on#i5kz+a-(kk=hvyff3wg%k&!pqsor')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Set DEBUG to False if running in Google App Engine
@@ -46,7 +46,7 @@ if DEBUG:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
     CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
 else:
-    APPENGINE_URL = env.str("APPENGINE_URL", default=env.NOTSET)
+    APPENGINE_URL = os.environ.get("APPENGINE_URL", "")
     if APPENGINE_URL:
         # Ensure a scheme is present in the URL before it's processed.
         if not urlparse(APPENGINE_URL).scheme:
@@ -65,10 +65,18 @@ else:
         ]
         SECURE_SSL_REDIRECT = True
     else:
-        ALLOWED_HOSTS = ["*"]
+        ALLOWED_HOSTS = [
+            'apartments.comparison.tools',
+            'comparison-tools-479102.uc.r.appspot.com',
+        ]
+        CSRF_TRUSTED_ORIGINS = [
+            'https://apartments.comparison.tools',
+        ]
+        SECURE_SSL_REDIRECT = True
 
 # Application definition
 
+# Conditional apps based on environment
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -76,13 +84,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tailwind',
-    'theme',
-    'django_browser_reload',
     'apartments',
 ]
 
-TAILWIND_APP_NAME = 'theme'
+# Only add development apps in DEBUG mode
+if DEBUG:
+    INSTALLED_APPS.extend([
+        'tailwind',
+        'theme',
+        'django_browser_reload',
+    ])
+    TAILWIND_APP_NAME = 'theme'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -92,8 +104,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_browser_reload.middleware.BrowserReloadMiddleware'
 ]
+
+# Only add browser reload middleware in DEBUG mode
+if DEBUG:
+    MIDDLEWARE.append('django_browser_reload.middleware.BrowserReloadMiddleware')
 
 ROOT_URLCONF = 'config.urls'
 
@@ -178,14 +193,21 @@ LOGOUT_REDIRECT_URL = 'login'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': 'DEBUG',
+        'level': 'INFO' if not DEBUG else 'DEBUG',
     },
     'loggers': {
         'django': {
@@ -195,7 +217,7 @@ LOGGING = {
         },
         'apartments': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO' if not DEBUG else 'DEBUG',
             'propagate': False,
         },
     },

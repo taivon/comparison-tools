@@ -6,3 +6,16 @@ __pycache__/
 .Python
 db.sqlite3
 .env
+.git/
+.gitignore
+README.md
+*.log
+node_modules/
+theme/static_src/node_modules/
+theme/static_src/package-lock.json
+.DS_Store
+*.swp
+*.swo
+.pytest_cache/
+.coverage
+htmlcov/
