@@ -84,7 +84,8 @@ jobs:
         DJANGO_SETTINGS_MODULE: config.settings
         SECRET_KEY: 'django-insecure-temp-key-for-build-only'
       run: |
-        python manage.py collectstatic --noinput
+        mkdir -p static
+        python manage.py collectstatic --noinput --clear
     
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
@@ -94,7 +95,14 @@ jobs:
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
     
+    - name: Enable Required APIs
+      run: |
+        gcloud services enable cloudbuild.googleapis.com --project=comparison-tools-479102 || true
+        gcloud services enable appengine.googleapis.com --project=comparison-tools-479102 || true
+        gcloud services enable cloudresourcemanager.googleapis.com --project=comparison-tools-479102 || true
+        gcloud services enable storage-component.googleapis.com --project=comparison-tools-479102 || true
+    
     - name: Deploy to App Engine
       run: |
         gcloud config set project comparison-tools-479102
-        gcloud app deploy app.yaml --quiet
+        gcloud app deploy app.yaml --quiet --verbosity=debug
