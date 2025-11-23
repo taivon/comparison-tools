@@ -371,22 +371,18 @@ if DEBUG and (
 # Social Auth URLs
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/auth/callback/"
 SOCIAL_AUTH_LOGOUT_REDIRECT_URL = "/login/"
-LOGIN_URL = "/accounts/login/"
+SOCIAL_AUTH_LOGIN_ERROR_URL = "/login/"
+LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/login/"
 
 # Social Auth Pipeline (customize user creation)
 SOCIAL_AUTH_PIPELINE = [
     "social_core.pipeline.social_auth.social_details",
-    "social_core.pipeline.social_auth.social_uid",
+    "social_core.pipeline.social_auth.social_uid",  
     "social_core.pipeline.social_auth.auth_allowed",
-    # Skip social_user lookup since we don't use Django users
-    # "social_core.pipeline.social_auth.social_user",
-    # Custom pipeline steps for Firestore users
+    # Custom pipeline step for Firestore users
     "apartments.social_auth_pipeline.create_firestore_user",
-    # Skip Django user creation and association
-    # "apartments.social_auth_pipeline.associate_firestore_user",
-    "social_core.pipeline.social_auth.load_extra_data",
 ]
 
 # Additional Social Auth Settings

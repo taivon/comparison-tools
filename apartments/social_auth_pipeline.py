@@ -1,5 +1,6 @@
 from apartments.firestore_service import FirestoreService
 from apartments.auth_utils import firestore_login
+from django.shortcuts import redirect
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,9 +25,11 @@ def create_firestore_user(strategy, details, backend, user=None, *args, **kwargs
     if existing_user:
         # User exists, log them into Django session
         request = strategy.request
-        firestore_login(request, existing_user)
-        logger.info(f"Existing Firestore user logged in: {existing_user.username}")
-        return {'is_new': False, 'user': existing_user}
+        login_success = firestore_login(request, existing_user)
+        logger.info(f"Existing Firestore user login attempt: {existing_user.username}, success: {login_success}")
+        logger.info(f"Session after login: user_id = {request.session.get('user_id')}")
+        # Return redirect to force redirect to main page
+        return redirect("/")
     
     # Create new Firestore user
     first_name = details.get('first_name', '')
@@ -63,11 +66,13 @@ def create_firestore_user(strategy, details, backend, user=None, *args, **kwargs
         
         # Log user into Django session
         request = strategy.request
-        firestore_login(request, firestore_user)
+        login_success = firestore_login(request, firestore_user)
         
-        logger.info(f"Created new Firestore user: {firestore_user.username} ({firestore_user.email})")
+        logger.info(f"Created new Firestore user: {firestore_user.username} ({firestore_user.email}), login success: {login_success}")
+        logger.info(f"Session after login: user_id = {request.session.get('user_id')}")
         
-        return {'is_new': True, 'user': firestore_user}
+        # Return redirect to force redirect to main page
+        return redirect("/")
         
     except Exception as e:
         logger.error(f"Error creating Firestore user: {e}")
