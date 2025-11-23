@@ -30,7 +30,7 @@ Each subdomain operates as an independent service while sharing the unified `com
 ## Local Development
 
 ### Prerequisites
-- Python 3.13.3 (managed with pyenv)
+- Python 3.13.3 (managed with pyenv recommended)
 - Git
 
 ### Setup
@@ -41,28 +41,34 @@ git clone https://github.com/taivon/comparison-tools.git
 cd comparison-tools
 ```
 
-2. Create and activate virtual environment:
+2. Ensure correct Python version (if using pyenv):
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# The project includes a .python-version file, so pyenv will automatically use Python 3.13.3
+pyenv install 3.13.3  # Only if not already installed
 ```
 
-3. Install dependencies:
+3. Create and activate virtual environment:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+4. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Run database migrations:
+5. Run database migrations:
 ```bash
 python manage.py migrate
 ```
 
-5. Start the development server:
+6. Start the development server:
 ```bash
 python manage.py runserver
 ```
 
-6. Visit `http://localhost:8000` in your browser
+7. Visit `http://localhost:8000` in your browser
 
 ## Deployment
 
