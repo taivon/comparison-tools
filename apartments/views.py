@@ -250,6 +250,19 @@ def logout_view(request):
     return redirect("login")
 
 
+def google_oauth_callback(request):
+    """Handle Google OAuth callback and redirect after social auth"""
+    # This view is called after successful social auth
+    # The pipeline should have already logged the user in
+    
+    if hasattr(request, 'user') and request.user.is_authenticated:
+        messages.success(request, f"Welcome back, {request.user.username}!")
+        return redirect("apartments:index")
+    else:
+        messages.error(request, "Authentication failed. Please try again.")
+        return redirect("login")
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def sync_firebase_user(request):

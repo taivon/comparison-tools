@@ -15,19 +15,25 @@ class FirestoreSessionMiddleware:
     def __call__(self, request):
         # Get user from session
         user_id = request.session.get('user_id')
+        logger.debug(f"Session user_id: {user_id}")
+        
         if user_id:
             try:
                 firestore_service = FirestoreService()
                 request.user = firestore_service.get_user(user_id)
                 if request.user is None:
                     # User not found, clear session
+                    logger.warning(f"User {user_id} not found in Firestore, clearing session")
                     request.session.flush()
                     request.user = AnonymousFirestoreUser()
+                else:
+                    logger.debug(f"Loaded user: {request.user.username} ({request.user.email})")
             except Exception as e:
                 logger.error(f"Error loading user from session: {e}")
                 request.user = AnonymousFirestoreUser()
         else:
             request.user = AnonymousFirestoreUser()
+            logger.debug("No user_id in session, using anonymous user")
             
         response = self.get_response(request)
         return response

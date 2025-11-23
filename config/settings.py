@@ -369,8 +369,8 @@ if DEBUG and (
     logger.warning("See ENVIRONMENT_SECURITY.md for setup instructions")
 
 # Social Auth URLs
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"
-SOCIAL_AUTH_LOGOUT_REDIRECT_URL = "/"
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/auth/callback/"
+SOCIAL_AUTH_LOGOUT_REDIRECT_URL = "/login/"
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
@@ -380,10 +380,12 @@ SOCIAL_AUTH_PIPELINE = [
     "social_core.pipeline.social_auth.social_details",
     "social_core.pipeline.social_auth.social_uid",
     "social_core.pipeline.social_auth.auth_allowed",
-    "social_core.pipeline.social_auth.social_user",
+    # Skip social_user lookup since we don't use Django users
+    # "social_core.pipeline.social_auth.social_user",
     # Custom pipeline steps for Firestore users
     "apartments.social_auth_pipeline.create_firestore_user",
-    "apartments.social_auth_pipeline.associate_firestore_user",
+    # Skip Django user creation and association
+    # "apartments.social_auth_pipeline.associate_firestore_user",
     "social_core.pipeline.social_auth.load_extra_data",
 ]
 
@@ -393,6 +395,11 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     "https://www.googleapis.com/auth/userinfo.profile",
 ]
 SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ["first_name", "last_name"]
+
+# Disable creating Django User objects since we use Firestore
+SOCIAL_AUTH_USER_MODEL = None
+SOCIAL_AUTH_CREATE_USERS = False
+SOCIAL_AUTH_ASSOCIATE_BY_EMAIL = False
 
 # Cache Configuration
 CACHES = {
