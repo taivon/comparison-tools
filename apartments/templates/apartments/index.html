@@ -165,15 +165,19 @@
                     <!-- Card Footer -->
                     <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
                         <div class="flex items-center justify-between">
-                            <a href="{% url 'apartments:update_apartment' apartment.pk %}" class="text-brand-purple hover:text-brand-purple-light text-sm font-medium">
-                                Edit details
-                            </a>
-                            <form action="{% url 'apartments:delete_apartment' apartment.pk %}" method="post" class="inline">
-                                {% csrf_token %}
-                                <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium" onclick="return confirm('Are you sure you want to delete {{ apartment.name }}?')">
-                                    Remove
-                                </button>
-                            </form>
+                            {% if apartment.pk %}
+                                <a href="{% url 'apartments:update_apartment' apartment.pk %}" class="text-brand-purple hover:text-brand-purple-light text-sm font-medium">
+                                    Edit details
+                                </a>
+                                <form action="{% url 'apartments:delete_apartment' apartment.pk %}" method="post" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium" onclick="return confirm('Are you sure you want to delete {{ apartment.name }}?')">
+                                        Remove
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-gray-500 text-sm">Invalid apartment data</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

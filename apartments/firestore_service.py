@@ -90,6 +90,11 @@ class FirestoreApartment:
         )
 
     @property
+    def pk(self):
+        """Return doc_id as pk for Django template compatibility"""
+        return self.doc_id or ""
+
+    @property
     def price_per_sqft(self):
         return (
             self.price / Decimal(str(self.square_footage))
