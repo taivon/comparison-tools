@@ -22,7 +22,7 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 
 
-def calculate_net_effective_price(apt_data, discount_calculation='monthly'):
+def calculate_net_effective_price(apt_data, discount_calculation='daily'):
     """Calculate net effective price for session apartments"""
     from decimal import Decimal
 
@@ -35,22 +35,36 @@ def calculate_net_effective_price(apt_data, discount_calculation='monthly'):
     total_discount = Decimal('0')
 
     if discount_calculation == 'daily':
+        # Calculate annual rent divided by 365 days
         daily_rate = price * Decimal('12') / Decimal('365')
+        # Convert months_free to days (using 365/12 for precision)
+        if months_free > 0:
+            days_free_from_months = Decimal(str(months_free)) * Decimal('365') / Decimal('12')
+            total_discount += daily_rate * days_free_from_months
+        # Convert weeks_free to days
         if weeks_free > 0:
-            total_discount += (daily_rate * Decimal('7') * Decimal(str(weeks_free)))
+            total_discount += daily_rate * Decimal('7') * Decimal(str(weeks_free))
     elif discount_calculation == 'weekly':
+        # Calculate annual rent divided by 52 weeks
         weekly_rate = price * Decimal('12') / Decimal('52')
+        # Convert months_free to weeks (using 52/12 for precision)
+        if months_free > 0:
+            weeks_free_from_months = Decimal(str(months_free)) * Decimal('52') / Decimal('12')
+            total_discount += weekly_rate * weeks_free_from_months
+        # Add weeks_free directly
         if weeks_free > 0:
-            total_discount += (weekly_rate * Decimal(str(weeks_free)))
+            total_discount += weekly_rate * Decimal(str(weeks_free))
     else:  # monthly
         if months_free > 0:
-            total_discount += (price * Decimal(str(months_free)))
+            total_discount += price * Decimal(str(months_free))
         if weeks_free > 0:
-            total_discount += (price * Decimal(str(weeks_free / 4)))
+            total_discount += price * Decimal(str(weeks_free / 4))
 
     total_discount += flat_discount
     total_lease_value = price * Decimal(str(lease_length_months))
-    return float((total_lease_value - total_discount) / Decimal(str(lease_length_months)))
+    net_price = (total_lease_value - total_discount) / Decimal(str(lease_length_months))
+    # Round to 2 decimal places and return as float
+    return float(round(net_price, 2))
 
 
 def get_session_apartments(request):
@@ -67,8 +81,8 @@ def get_session_apartments(request):
                 # Ensure we have a doc_id attribute
                 if not hasattr(self, "doc_id"):
                     self.doc_id = data.get("id", f"session_{len(apartments)}")
-                # Add price_per_sqft property
-                self.price_per_sqft = self.price / self.square_footage if self.square_footage > 0 else 0
+                # Add price_per_sqft property (rounded to 2 decimals)
+                self.price_per_sqft = round(self.price / self.square_footage, 2) if self.square_footage > 0 else 0
 
         apartment = SessionApartment(apt_data)
         apartments.append(apartment)
@@ -136,7 +150,7 @@ def index(request):
         form = UserPreferencesForm(initial=initial_data)
 
     # Calculate net effective price for each apartment first
-    discount_calc_method = preferences.discount_calculation if preferences else 'monthly'
+    discount_calc_method = preferences.discount_calculation if preferences else 'daily'
     for apartment in apartments:
         if hasattr(apartment, 'net_effective_price') and callable(apartment.net_effective_price):
             # FirestoreApartment - call method with preferences

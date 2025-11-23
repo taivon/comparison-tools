@@ -98,29 +98,38 @@ class FirestoreApartment:
 
     @property
     def price_per_sqft(self):
-        return (
-            self.price / Decimal(str(self.square_footage))
-            if self.square_footage > 0
-            else Decimal("0")
-        )
+        if self.square_footage > 0:
+            return round(self.price / Decimal(str(self.square_footage)), 2)
+        else:
+            return Decimal("0")
 
     def net_effective_price(self, user_preferences=None):
         if user_preferences is None:
             # Default preferences
-            discount_calculation = "monthly"
+            discount_calculation = "daily"
         else:
             discount_calculation = user_preferences.discount_calculation
 
         total_discount = Decimal("0")
 
         if discount_calculation == "daily":
+            # Calculate annual rent divided by 365 days
             daily_rate = self.price * Decimal("12") / Decimal("365")
+            # Convert months_free to days (using 365/12 for precision)
+            if self.months_free > 0:
+                days_free_from_months = Decimal(str(self.months_free)) * Decimal("365") / Decimal("12")
+                total_discount += daily_rate * days_free_from_months
+            # Convert weeks_free to days
             if self.weeks_free > 0:
-                total_discount += (
-                    daily_rate * Decimal("7") * Decimal(str(self.weeks_free))
-                )
+                total_discount += daily_rate * Decimal("7") * Decimal(str(self.weeks_free))
         elif discount_calculation == "weekly":
+            # Calculate annual rent divided by 52 weeks
             weekly_rate = self.price * Decimal("12") / Decimal("52")
+            # Convert months_free to weeks (using 52/12 for precision)
+            if self.months_free > 0:
+                weeks_free_from_months = Decimal(str(self.months_free)) * Decimal("52") / Decimal("12")
+                total_discount += weekly_rate * weeks_free_from_months
+            # Add weeks_free directly
             if self.weeks_free > 0:
                 total_discount += weekly_rate * Decimal(str(self.weeks_free))
         else:  # monthly
@@ -131,9 +140,9 @@ class FirestoreApartment:
 
         total_discount += self.flat_discount
         total_lease_value = self.price * Decimal(str(self.lease_length_months))
-        return (total_lease_value - total_discount) / Decimal(
-            str(self.lease_length_months)
-        )
+        net_price = (total_lease_value - total_discount) / Decimal(str(self.lease_length_months))
+        # Round to 2 decimal places
+        return round(net_price, 2)
 
 
 class FirestoreUserPreferences:
@@ -143,7 +152,7 @@ class FirestoreUserPreferences:
         self.price_weight = kwargs.get("price_weight", 50)
         self.sqft_weight = kwargs.get("sqft_weight", 50)
         self.distance_weight = kwargs.get("distance_weight", 50)
-        self.discount_calculation = kwargs.get("discount_calculation", "monthly")
+        self.discount_calculation = kwargs.get("discount_calculation", "daily")
 
     def to_dict(self):
         return {
@@ -162,7 +171,7 @@ class FirestoreUserPreferences:
             price_weight=data.get("price_weight", 50),
             sqft_weight=data.get("sqft_weight", 50),
             distance_weight=data.get("distance_weight", 50),
-            discount_calculation=data.get("discount_calculation", "monthly"),
+            discount_calculation=data.get("discount_calculation", "daily"),
         )
 
 
@@ -343,7 +352,7 @@ class FirestoreService:
                     "price_weight": 50,
                     "sqft_weight": 50,
                     "distance_weight": 50,
-                    "discount_calculation": "monthly",
+                    "discount_calculation": "daily",
                 }
             )
 
