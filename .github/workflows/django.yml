@@ -81,13 +81,25 @@ jobs:
         mkdir -p static
         python manage.py collectstatic --noinput --clear
     
+    - name: Check for required secrets
+      run: |
+        if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+          echo "Error: GCP_SA_KEY secret is not set. Please add the Google Cloud service account key to your repository secrets."
+          exit 1
+        fi
+    
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
       with:
         credentials_json: ${{ secrets.GCP_SA_KEY }}
+        project_id: comparison-tools-479102
+        create_credentials_file: true
+        export_environment_variables: true
     
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: comparison-tools-479102
     
     - name: Enable Required APIs
       run: |
