@@ -3,21 +3,21 @@
 {% block title %}{% if form.instance.pk %}Edit Apartment{% else %}Add New Apartment{% endif %}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-brand-gray-light">
+<div class="min-h-screen bg-gray-50 dark:bg-neutral-900">
     <!-- Header -->
-    <div class="bg-white border-b border-gray-200">
+    <div class="bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex items-center space-x-3">
-                <a href="{% url 'apartments:index' %}" class="text-gray-400 hover:text-gray-500">
+                <a href="{% url 'apartments:index' %}" class="text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </a>
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
                         {% if form.instance.pk %}Edit {{ form.instance.name }}{% else %}Add New Apartment{% endif %}
                     </h1>
-                    <p class="text-sm text-gray-500">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
                         {% if form.instance.pk %}Update apartment details and pricing{% else %}Enter apartment details to start comparing{% endif %}
                     </p>
                 </div>
@@ -31,15 +31,15 @@
             {% csrf_token %}
             
             <!-- Basic Information -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-100">
-                    <h3 class="text-lg font-medium text-gray-900">Basic Information</h3>
-                    <p class="text-sm text-gray-500">The essential details about this apartment</p>
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Basic Information</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">The essential details about this apartment</p>
                 </div>
                 <div class="px-6 py-6">
                     <div class="grid grid-cols-6 gap-6">
                         <div class="col-span-6">
-                            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-900 mb-2">Apartment Name</label>
+                            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Apartment Name</label>
                             {{ form.name }}
                             {% if form.name.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.name.errors.0 }}</p>
@@ -48,97 +48,97 @@
                         </div>
 
                         <div class="col-span-6 sm:col-span-3">
-                            <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-900 mb-2">Monthly Rent</label>
+                            <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Monthly Rent</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 text-sm">$</span>
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">$</span>
                                 </div>
                                 {{ form.price }}
                             </div>
                             {% if form.price.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.price.errors.0 }}</p>
                             {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Base monthly rent before any discounts</p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Base monthly rent before any discounts</p>
                         </div>
 
                         <div class="col-span-6 sm:col-span-3">
-                            <label for="{{ form.square_footage.id_for_label }}" class="block text-sm font-medium text-gray-900 mb-2">Square Footage</label>
+                            <label for="{{ form.square_footage.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Square Footage</label>
                             <div class="relative">
                                 {{ form.square_footage }}
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 text-sm">sq ft</span>
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">sq ft</span>
                                 </div>
                             </div>
                             {% if form.square_footage.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.square_footage.errors.0 }}</p>
                             {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Total apartment square footage</p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Total apartment square footage</p>
                         </div>
 
                         <div class="col-span-6 sm:col-span-3">
-                            <label for="{{ form.lease_length_months.id_for_label }}" class="block text-sm font-medium text-gray-900 mb-2">Lease Length</label>
+                            <label for="{{ form.lease_length_months.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Lease Length</label>
                             <div class="relative">
                                 {{ form.lease_length_months }}
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 text-sm">months</span>
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">months</span>
                                 </div>
                             </div>
                             {% if form.lease_length_months.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.lease_length_months.errors.0 }}</p>
                             {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Required lease commitment period</p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Required lease commitment period</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Special Offers -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-100">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
                     <div class="flex items-center">
-                        <div class="w-8 h-8 bg-brand-green/10 rounded-lg flex items-center justify-center mr-3">
+                        <div class="w-8 h-8 bg-brand-green/10 dark:bg-brand-green/20 rounded-lg flex items-center justify-center mr-3">
                             <svg class="w-4 h-4 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-lg font-medium text-gray-900">Special Offers</h3>
-                            <p class="text-sm text-gray-500">Promotions and discounts available</p>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Special Offers</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Promotions and discounts available</p>
                         </div>
                     </div>
                 </div>
                 <div class="px-6 py-6">
                     <div class="grid grid-cols-6 gap-6">
                         <div class="col-span-6 sm:col-span-2">
-                            <label for="{{ form.months_free.id_for_label }}" class="block text-sm font-medium text-gray-900 mb-2">Free Months</label>
+                            <label for="{{ form.months_free.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Free Months</label>
                             {{ form.months_free }}
                             {% if form.months_free.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.months_free.errors.0 }}</p>
                             {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Months with no rent</p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Months with no rent</p>
                         </div>
 
                         <div class="col-span-6 sm:col-span-2">
-                            <label for="{{ form.weeks_free.id_for_label }}" class="block text-sm font-medium text-gray-900 mb-2">Free Weeks</label>
+                            <label for="{{ form.weeks_free.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Free Weeks</label>
                             {{ form.weeks_free }}
                             {% if form.weeks_free.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.weeks_free.errors.0 }}</p>
                             {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Weeks with no rent</p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Weeks with no rent</p>
                         </div>
 
                         <div class="col-span-6 sm:col-span-2">
-                            <label for="{{ form.flat_discount.id_for_label }}" class="block text-sm font-medium text-gray-900 mb-2">Cash Discount</label>
+                            <label for="{{ form.flat_discount.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Cash Discount</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 text-sm">$</span>
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">$</span>
                                 </div>
                                 {{ form.flat_discount }}
                             </div>
                             {% if form.flat_discount.errors %}
                                 <p class="mt-2 text-sm text-red-600">{{ form.flat_discount.errors.0 }}</p>
                             {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">One-time discount amount</p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">One-time discount amount</p>
                         </div>
                     </div>
                 </div>
@@ -146,7 +146,7 @@
 
             <!-- Actions -->
             <div class="flex justify-end space-x-3">
-                <a href="{% url 'apartments:index' %}" class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors">
+                <a href="{% url 'apartments:index' %}" class="px-4 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors">
                     Cancel
                 </a>
                 <button type="submit" class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-purple hover:bg-brand-purple-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors">
