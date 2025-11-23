@@ -11,3 +11,6 @@ handlers:
 
 - url: /.*
   script: auto
+
+env_variables:
+    APPENGINE_URL: https://analyze-apartments.wl.r.appspot.com

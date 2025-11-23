@@ -31,12 +31,31 @@ class Apartment(models.Model):
     @property
     def net_effective_price(self):
         total_discount = Decimal('0')
-        if self.months_free > 0:
-            total_discount += (self.price * Decimal(str(self.months_free)))
-        if self.weeks_free > 0:
-            total_discount += (self.price * Decimal(str(self.weeks_free / 4)))
-        total_discount += self.flat_discount
+        user_preferences, _ = UserPreferences.objects.get_or_create(
+            user=self.user,
+            defaults={
+                'price_weight': 50,
+                'sqft_weight': 50,
+                'distance_weight': 50,
+                'discount_calculation': 'monthly'
+            }
+        )
         
+        if user_preferences.discount_calculation == 'daily':
+            daily_rate = self.price * Decimal('12') / Decimal('365')
+            if self.weeks_free > 0:
+                total_discount += (daily_rate * Decimal('7') * Decimal(str(self.weeks_free)))
+        elif user_preferences.discount_calculation == 'weekly':
+            weekly_rate = self.price * Decimal('12') / Decimal('52')
+            if self.weeks_free > 0:
+                total_discount += (weekly_rate * Decimal(str(self.weeks_free)))
+        else:  # monthly
+            if self.months_free > 0:
+                total_discount += (self.price * Decimal(str(self.months_free)))
+            if self.weeks_free > 0:
+                total_discount += (self.price * Decimal(str(self.weeks_free / 4)))
+        
+        total_discount += self.flat_discount
         total_lease_value = self.price * Decimal(str(self.lease_length_months))
         return (total_lease_value - total_discount) / Decimal(str(self.lease_length_months))
 

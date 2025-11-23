@@ -9,8 +9,29 @@ class ApartmentForm(forms.ModelForm):
             'months_free', 'weeks_free', 'flat_discount'
         ]
         widgets = {
-            'price': forms.NumberInput(attrs={'step': '0.01'}),
-            'flat_discount': forms.NumberInput(attrs={'step': '0.01'}),
+            'name': forms.TextInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary'
+            }),
+            'price': forms.NumberInput(attrs={
+                'step': '0.01',
+                'class': 'mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary'
+            }),
+            'square_footage': forms.NumberInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary'
+            }),
+            'lease_length_months': forms.NumberInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary'
+            }),
+            'months_free': forms.NumberInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary'
+            }),
+            'weeks_free': forms.NumberInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary'
+            }),
+            'flat_discount': forms.NumberInput(attrs={
+                'step': '0.01',
+                'class': 'mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary'
+            }),
         }
 
 class UserPreferencesForm(forms.ModelForm):
@@ -21,4 +42,7 @@ class UserPreferencesForm(forms.ModelForm):
             'price_weight': forms.HiddenInput(),
             'sqft_weight': forms.HiddenInput(),
             'distance_weight': forms.HiddenInput(),
+            'discount_calculation': forms.Select(attrs={
+                'class': 'mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary'
+            }),
         } 

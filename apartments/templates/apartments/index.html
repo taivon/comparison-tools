@@ -4,12 +4,12 @@
 
 {% block content %}
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Apartment Comparison</h1>
+    <h1 class="text-2xl font-bold text-secondary">Apartment Comparison</h1>
     <div class="space-x-4">
-        <a href="{% url 'apartments:create_apartment' %}" class="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+        <a href="{% url 'apartments:create_apartment' %}" class="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90">
             Add Apartment
         </a>
-        <button onclick="openPreferencesModal()" class="bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700">
+        <button onclick="openPreferencesModal()" class="bg-secondary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-secondary/90">
             Update Preferences
         </button>
     </div>
@@ -17,65 +17,35 @@
 
 {% if apartments %}
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+        <table class="min-w-full divide-y divide-secondary/20">
+            <thead class="bg-secondary/5">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button class="flex items-center space-x-1" onclick="sortTable(0)">
-                            <span>Name</span>
-                            <span class="sort-icon">↕️</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button class="flex items-center space-x-1" onclick="sortTable(1)">
-                            <span>Price</span>
-                            <span class="sort-icon">↕️</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button class="flex items-center space-x-1" onclick="sortTable(2)">
-                            <span>Net Effective</span>
-                            <span class="sort-icon">↕️</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button class="flex items-center space-x-1" onclick="sortTable(3)">
-                            <span>Sqft</span>
-                            <span class="sort-icon">↕️</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button class="flex items-center space-x-1" onclick="sortTable(4)">
-                            <span>Price/Sqft</span>
-                            <span class="sort-icon">↕️</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button class="flex items-center space-x-1" onclick="sortTable(5)">
-                            <span>Lease</span>
-                            <span class="sort-icon">↕️</span>
-                        </button>
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discounts</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Name</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Price</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Net Effective</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Square Footage</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Price/sqft</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Lease Length</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Discounts</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200" id="apartmentTable">
+            <tbody class="bg-white divide-y divide-secondary/20">
                 {% for apartment in apartments %}
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ apartment.name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-value="{{ apartment.price }}">${{ apartment.price }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-value="{{ apartment.net_effective_price }}">${{ apartment.net_effective_price|floatformat:2 }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-value="{{ apartment.square_footage }}">{{ apartment.square_footage }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-value="{{ apartment.price_per_sqft }}">${{ apartment.price_per_sqft|floatformat:2 }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-value="{{ apartment.lease_length_months }}">{{ apartment.lease_length_months }} months</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-black">{{ apartment.name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-black" data-value="{{ apartment.price }}">${{ apartment.price }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-black" data-value="{{ apartment.net_effective_price }}">${{ apartment.net_effective_price|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-black" data-value="{{ apartment.square_footage }}">{{ apartment.square_footage }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-black" data-value="{{ apartment.price_per_sqft }}">${{ apartment.price_per_sqft|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-black" data-value="{{ apartment.lease_length_months }}">{{ apartment.lease_length_months }} months</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-black">
                             {% if apartment.months_free %} {{ apartment.months_free }} months free{% endif %}
                             {% if apartment.weeks_free %} {{ apartment.weeks_free }} weeks free{% endif %}
                             {% if apartment.flat_discount %} ${{ apartment.flat_discount }} off{% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <a href="{% url 'apartments:update_apartment' apartment.pk %}" class="text-primary hover:text-blue-700 mr-3">Edit</a>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-black">
+                            <a href="{% url 'apartments:update_apartment' apartment.pk %}" class="text-primary hover:text-primary/80 mr-3">Edit</a>
                             <form action="{% url 'apartments:delete_apartment' apartment.pk %}" method="post" class="inline">
                                 {% csrf_token %}
                                 <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to delete this apartment?')">Delete</button>
@@ -88,10 +58,10 @@
     </div>
 {% else %}
     <div class="text-center py-12">
-        <h3 class="text-lg font-medium text-gray-900">No apartments added yet</h3>
-        <p class="mt-2 text-sm text-gray-500">Get started by adding your first apartment listing.</p>
+        <h3 class="text-lg font-medium text-secondary">No apartments added yet</h3>
+        <p class="mt-2 text-sm text-secondary/70">Get started by adding your first apartment listing.</p>
         <div class="mt-6">
-            <a href="{% url 'apartments:create_apartment' %}" class="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+            <a href="{% url 'apartments:create_apartment' %}" class="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90">
                 Add Your First Apartment
             </a>
         </div>

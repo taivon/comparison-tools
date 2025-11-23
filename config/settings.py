@@ -12,10 +12,22 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+from urllib.parse import urlparse
+import environ
+
+# Initialize environ
+env = environ.Env()
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env_file = os.path.join(BASE_DIR, ".env")
+
+if os.path.isfile(env_file):
+    # Use a local secret file, if provided
+
+    env.read_env(env_file)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -27,8 +39,25 @@ SECRET_KEY = 'django-insecure-e&f)15o0*-pg2ul$(w&on#i5kz+a-(kk=hvyff3wg%k&!pqsor
 # Set DEBUG to False if running in Google App Engine
 DEBUG = 'GAE_ENV' not in os.environ
 
-ALLOWED_HOSTS = ['analyze.apartments', 'localhost', '127.0.0.1', 'analyze-apartments.wl.r.appspot.com']
+# ALLOWED_HOSTS = ['analyze.apartments', 'localhost', '127.0.0.1', 'analyze-apartments.wl.r.appspot.com']
+# SECURITY WARNING: It's recommended that you use this when
+# running in production. The URL will be known once you first deploy
+# to App Engine. This code takes the URL and converts it to both these settings formats.
+if DEBUG:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+    CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
+else:
+    APPENGINE_URL = env.str("APPENGINE_URL", default=env.NOTSET)
+    if APPENGINE_URL:
+        # Ensure a scheme is present in the URL before it's processed.
+        if not urlparse(APPENGINE_URL).scheme:
+            APPENGINE_URL = f"https://{APPENGINE_URL}"
 
+        ALLOWED_HOSTS = [urlparse(APPENGINE_URL).netloc]
+        CSRF_TRUSTED_ORIGINS = [APPENGINE_URL]
+        SECURE_SSL_REDIRECT = True
+    else:
+        ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -129,9 +158,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-ALLOWED_HOSTS = ['analyze.apartments', 'localhost', '127.0.0.1']
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
