@@ -1,0 +1,399 @@
+{% extends 'apartments/base.html' %}
+
+{% block title %}Dashboard - Your Apartments{% endblock %}
+
+{% block extra_head %}
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Section -->
+<div class="bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Your Apartments</h1>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        <span id="apartmentCountText">{{ apartment_count }} apartment{{ apartment_count|pluralize }} compared</span>
+                        {% if not is_premium %}
+                            <span id="apartmentCountBadge" class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if apartment_count >= apartment_limit %}bg-red-100 text-red-800{% elif apartment_count >= 1 %}bg-amber-100 text-amber-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                <span id="apartmentCountBadgeText">
+                                {% if apartment_count >= apartment_limit %}
+                                    Limit reached
+                                {% elif apartment_count >= 1 %}
+                                    {{ apartment_count }}/{{ apartment_limit }} used
+                                {% else %}
+                                    Free tier
+                                {% endif %}
+                                </span>
+                            </span>
+                        {% else %}
+                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                Premium
+                            </span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <!-- Preferences/Settings Icon -->
+                    <button onclick="openPreferencesModal()" class="p-2 text-gray-700 hover:text-brand-purple hover:bg-gray-50 rounded-lg border border-gray-300 transition-colors" title="Calculation Settings">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </button>
+
+                    <!-- View Toggle -->
+                    <div class="inline-flex rounded-lg border border-gray-300 bg-white">
+                        <button id="cardViewBtn" onclick="switchView('cards')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-l-lg transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                            </svg>
+                        </button>
+                        <button id="tableViewBtn" onclick="switchView('table')" class="px-3 py-2 text-sm font-medium text-white bg-brand-purple rounded-r-lg transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    {% if can_add_apartment %}
+                        <button onclick="openAddApartmentModal()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Add Apartment
+                        </button>
+                    {% else %}
+                        <div class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-gray-100 cursor-not-allowed">
+                            <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Limit Reached ({{ apartment_count }}/{{ apartment_limit }})
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Anonymous User Signup Prompt -->
+{% if is_anonymous %}
+    <div id="signupPrompt" class="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-purple-900">
+                            {% if apartment_count >= 2 %}
+                                You've reached the guest limit! Sign up to save your comparisons and add unlimited apartments.
+                            {% else %}
+                                Trying out our apartment comparison? Sign up to save your data and compare unlimited apartments!
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'login' %}" class="text-sm font-medium text-purple-700 hover:text-purple-900">
+                        Sign In
+                    </a>
+                    <a href="{% url 'signup' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors">
+                        Sign Up Free
+                    </a>
+                    <button onclick="dismissSignupPrompt()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Apartments Views Container -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Card View -->
+    <div id="cardView" class="hidden grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {% for apartment in apartments %}
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 hover:shadow-md transition-shadow duration-200">
+                <!-- Card Header -->
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">{{ apartment.name }}</h3>
+                        <div class="flex items-center space-x-2">
+                            {% if apartment.months_free or apartment.weeks_free or apartment.flat_discount %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-green/10 text-brand-green">
+                                    Deal
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="px-6 py-4">
+                    <!-- Primary Price Info -->
+                    <div class="flex items-baseline justify-between mb-4">
+                        <div>
+                            <div class="text-3xl font-bold text-gray-900">${{ apartment.price|floatformat:2 }}</div>
+                            <div class="text-sm text-gray-500">per month</div>
+                        </div>
+                        {% if apartment.net_effective_price != apartment.price %}
+                            <div class="text-right">
+                                <div class="text-lg font-semibold text-brand-green">${{ apartment.net_effective_price|floatformat:2 }}</div>
+                                <div class="text-xs text-gray-500">effective price</div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Key Metrics -->
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="text-sm font-medium text-gray-900">{{ apartment.square_footage }}</div>
+                            <div class="text-xs text-gray-500">sq ft</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="text-sm font-medium text-gray-900">${{ apartment.price_per_sqft|floatformat:2 }}</div>
+                            <div class="text-xs text-gray-500">per sq ft</div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Details -->
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-500">Lease term</span>
+                            <span class="font-medium text-gray-900">{{ apartment.lease_length_months }} months</span>
+                        </div>
+                    </div>
+
+                    <!-- Discounts -->
+                    {% if apartment.months_free or apartment.weeks_free or apartment.flat_discount %}
+                        <div class="bg-brand-green/5 rounded-lg p-3 mb-4">
+                            <div class="text-xs font-medium text-brand-green mb-1">Special Offers</div>
+                            <div class="text-sm text-gray-700">
+                                {% if apartment.months_free %}
+                                    {{ apartment.months_free }} month{{ apartment.months_free|pluralize }} free
+                                {% endif %}
+                                {% if apartment.weeks_free %}
+                                    {% if apartment.months_free %} • {% endif %}
+                                    {{ apartment.weeks_free }} week{{ apartment.weeks_free|pluralize }} free
+                                {% endif %}
+                                {% if apartment.flat_discount %}
+                                    {% if apartment.months_free or apartment.weeks_free %} • {% endif %}
+                                    ${{ apartment.flat_discount|floatformat:2 }} discount
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Card Footer -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
+                    <div class="flex items-center justify-between">
+                        <button onclick="openEditApartmentModal({
+                            pk: '{{ apartment.pk|default:apartment.id|default:apartment.doc_id }}',
+                            name: '{{ apartment.name|escapejs }}',
+                            price: {{ apartment.price }},
+                            square_footage: {{ apartment.square_footage }},
+                            lease_length_months: {{ apartment.lease_length_months|default:12 }},
+                            months_free: {{ apartment.months_free|default:0 }},
+                            weeks_free: {{ apartment.weeks_free|default:0 }},
+                            flat_discount: {{ apartment.flat_discount|default:0 }}
+                        })" class="text-brand-purple hover:text-brand-purple-light text-sm font-medium">
+                            Edit details
+                        </button>
+                        {% if apartment.pk %}
+                            <form action="{% url 'apartments:delete_apartment' apartment.pk %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium" onclick="return confirm('Are you sure you want to delete {{ apartment.name }}?')">
+                                    Remove
+                                </button>
+                            </form>
+                        {% else %}
+                            <button onclick='deleteSessionApartment("{{ apartment.id }}")' class="text-red-600 hover:text-red-700 text-sm font-medium">
+                                Remove
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Table View -->
+    <div id="tableView" class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr class="divide-x divide-gray-200">
+                    <th scope="col" class="px-6 py-3 text-left">
+                        <button onclick="sortTable('name')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                            Name
+                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                            </svg>
+                        </button>
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left">
+                        <button onclick="sortTable('price')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                            Monthly Rent
+                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                            </svg>
+                        </button>
+                    </th>
+                    {% if has_discounts %}
+                    <th scope="col" class="px-6 py-3 text-left">
+                        <button onclick="sortTable('net_price')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                            Net Effective
+                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                            </svg>
+                        </button>
+                    </th>
+                    {% endif %}
+                    <th scope="col" class="px-6 py-3 text-left">
+                        <button onclick="sortTable('square_footage')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                            Sq Ft
+                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                            </svg>
+                        </button>
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left">
+                        <button onclick="sortTable('price_per_sqft')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                            $/Sq Ft
+                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                            </svg>
+                        </button>
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Lease Term
+                    </th>
+                    {% if has_discounts %}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Discounts
+                    </th>
+                    {% endif %}
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="apartmentsTableBody">
+                {% for apartment in apartments %}
+                    <tr class="hover:bg-gray-50 divide-x divide-gray-200" data-apartment-id="{{ apartment.pk|default:apartment.doc_id }}" data-field="name">
+                        <!-- Name -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="text-sm font-medium text-gray-900" data-field="name">
+                                    {{ apartment.name }}
+                                </div>
+                                {% if apartment.months_free or apartment.weeks_free or apartment.flat_discount %}
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                        Deal
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <!-- Monthly Rent -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900" data-field="price">
+                                ${{ apartment.price|floatformat:2 }}
+                            </div>
+                        </td>
+                        <!-- Net Effective -->
+                        {% if has_discounts %}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-semibold text-green-600">
+                                ${{ apartment.net_effective_price|floatformat:2 }}
+                            </div>
+                        </td>
+                        {% endif %}
+                        <!-- Square Footage -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900" data-field="square_footage">
+                                {{ apartment.square_footage }}
+                            </div>
+                        </td>
+                        <!-- Price per Sq Ft -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                                ${{ apartment.price_per_sqft|floatformat:2 }}
+                            </div>
+                        </td>
+                        <!-- Lease Term -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                                {{ apartment.lease_length_months }} months
+                            </div>
+                        </td>
+                        <!-- Discounts -->
+                        {% if has_discounts %}
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900">
+                                {% if apartment.months_free %}
+                                    <div>{{ apartment.months_free }}mo free</div>
+                                {% endif %}
+                                {% if apartment.weeks_free %}
+                                    <div>{{ apartment.weeks_free }}wk free</div>
+                                {% endif %}
+                                {% if apartment.flat_discount %}
+                                    <div>${{ apartment.flat_discount|floatformat:2 }} off</div>
+                                {% endif %}
+                                {% if not apartment.months_free and not apartment.weeks_free and not apartment.flat_discount %}
+                                    <span class="text-gray-400">None</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
+                        <!-- Actions -->
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="openEditApartmentModal({
+                                pk: '{{ apartment.pk|default:apartment.id|default:apartment.doc_id }}',
+                                name: '{{ apartment.name|escapejs }}',
+                                price: {{ apartment.price }},
+                                square_footage: {{ apartment.square_footage }},
+                                lease_length_months: {{ apartment.lease_length_months|default:12 }},
+                                months_free: {{ apartment.months_free|default:0 }},
+                                weeks_free: {{ apartment.weeks_free|default:0 }},
+                                flat_discount: {{ apartment.flat_discount|default:0 }}
+                            })" class="text-brand-purple hover:text-brand-purple-light mr-3">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            {% if apartment.pk %}
+                                <form action="{% url 'apartments:delete_apartment' apartment.pk %}" method="post" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Are you sure you want to delete {{ apartment.name }}?')">
+                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button onclick='deleteSessionApartment("{{ apartment.id }}")' class="text-red-600 hover:text-red-700">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

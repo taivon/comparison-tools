@@ -125,6 +125,29 @@ def delete_session_apartment_by_id(request, apartment_id):
 
 
 def index(request):
+    """Homepage - landing page with form and features"""
+    firestore_service = FirestoreService()
+
+    # Simple apartment count check for form availability
+    if request.user.is_authenticated:
+        apartments = firestore_service.get_user_apartments(request.user.id)
+        apartment_count = len(apartments)
+        # Authenticated users: staff = unlimited, others = 2
+        can_add_apartment = request.user.is_staff or apartment_count < 2
+    else:
+        # Anonymous users - will check via JavaScript/sessionStorage
+        apartment_count = 0
+        can_add_apartment = True  # JavaScript will enforce the 2-apartment limit
+
+    context = {
+        "can_add_apartment": can_add_apartment,
+        "is_anonymous": not request.user.is_authenticated,
+    }
+    return render(request, "apartments/index.html", context)
+
+
+def dashboard(request):
+    """Dashboard view showing user's apartments in table/card format"""
     firestore_service = FirestoreService()
 
     # Handle both authenticated and anonymous users
@@ -170,7 +193,7 @@ def index(request):
                 request.session.modified = True
 
             messages.success(request, "Preferences updated successfully!")
-            return redirect("apartments:index")
+            return redirect("apartments:dashboard")
     else:
         # Create form with current preferences values
         initial_data = {}
@@ -243,7 +266,7 @@ def index(request):
         "is_anonymous": not request.user.is_authenticated,
         "has_discounts": has_discounts,
     }
-    return render(request, "apartments/index.html", context)
+    return render(request, "apartments/dashboard.html", context)
 
 
 def create_apartment(request):
@@ -286,7 +309,7 @@ def create_apartment(request):
                 apartment_data["user_id"] = str(request.user.id)
                 firestore_service.create_apartment(apartment_data)
                 messages.success(request, "Apartment added successfully!")
-                return redirect("apartments:index")
+                return redirect("apartments:dashboard")
             except Exception as e:
                 logger.error(f"Error saving apartment: {str(e)}")
                 messages.error(

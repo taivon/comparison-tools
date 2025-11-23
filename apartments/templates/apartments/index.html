@@ -741,7 +741,7 @@ async function handleInlineApartmentSubmit(event) {
         };
 
         addSessionApartment(apartmentData);
-        window.location.reload();
+        window.location.href = '{% url "apartments:dashboard" %}';
     } else {
         // Authenticated user - submit form normally
         form.submit();
@@ -778,7 +778,7 @@ async function handleAddApartment(event) {
 
         addSessionApartment(apartmentData);
         closeAddApartmentModal();
-        window.location.reload();
+        window.location.href = '{% url "apartments:dashboard" %}';
     } else {
         // Authenticated user - save to server
         try {
@@ -791,7 +791,7 @@ async function handleAddApartment(event) {
             });
 
             if (response.ok) {
-                window.location.reload();
+                window.location.href = '{% url "apartments:dashboard" %}';
             } else {
                 const errorText = await response.text();
                 alert('Failed to add apartment. Please check your inputs and try again.');
