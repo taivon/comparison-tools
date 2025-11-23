@@ -182,6 +182,18 @@ class FirestoreService:
             return FirestoreApartment.from_dict(doc.id, doc.to_dict())
         return None
 
+    def get_all_apartments(self):
+        """Get all apartments in the system"""
+        docs = (
+            self.db.collection("apartments")
+            .order_by("created_at", direction=firestore.Query.DESCENDING)
+            .stream()
+        )
+        apartments = []
+        for doc in docs:
+            apartments.append(FirestoreApartment.from_dict(doc.id, doc.to_dict()))
+        return apartments
+
     def get_user_apartments(self, user_id):
         """Get all apartments for a specific user"""
         docs = (
@@ -203,7 +215,12 @@ class FirestoreService:
 
     def delete_apartment(self, doc_id):
         """Delete an apartment"""
-        self.db.collection("apartments").document(doc_id).delete()
+        try:
+            self.db.collection("apartments").document(doc_id).delete()
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting apartment {doc_id}: {e}")
+            return False
 
     # User preferences operations
     def get_user_preferences(self, user_id):
@@ -255,3 +272,22 @@ class FirestoreService:
         else:
             preferences_data["user_id"] = str(user_id)
             return self.create_user_preferences(preferences_data)
+
+    def delete_user_preferences(self, user_id):
+        """Delete user preferences"""
+        try:
+            docs = list(
+                self.db.collection("user_preferences")
+                .where("user_id", "==", str(user_id))
+                .limit(1)
+                .stream()
+            )
+            
+            if docs:
+                doc = docs[0]
+                self.db.collection("user_preferences").document(doc.id).delete()
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Error deleting preferences for user {user_id}: {e}")
+            return False

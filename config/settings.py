@@ -145,14 +145,28 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# SQLite is used only for Django admin, auth, and sessions
+# SQLite is used only for Django admin and auth (not sessions in production)
 # Application data (apartments, user preferences) is stored in Firestore
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if not DEBUG:
+    # On App Engine, we'll create a minimal database setup in /tmp
+    # Since /tmp is writable but not persistent on App Engine
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": "/tmp/db.sqlite3",
+            "OPTIONS": {
+                "timeout": 30,
+            },
+        }
     }
-}
+else:
+    # In development, use regular file-based SQLite
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # Firestore Configuration
 # Firestore is used for all application data (apartments, user preferences)
@@ -368,3 +382,28 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     "https://www.googleapis.com/auth/userinfo.profile",
 ]
 SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ["first_name", "last_name"]
+
+# Cache Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+# Session Configuration
+if not DEBUG:
+    # On App Engine (production), use cache-based sessions to avoid SQLite database writes
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
+    
+    # Also configure messages to not use database
+    MESSAGE_STORAGE = 'django.contrib.messages.storage.fallback.FallbackStorage'
+else:
+    # In development, use default database sessions
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# Session security settings
+SESSION_COOKIE_SECURE = not DEBUG  # Use secure cookies in production
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE = 86400  # 1 day
