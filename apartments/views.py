@@ -394,8 +394,19 @@ def delete_apartment(request, pk):
 
         # Return JSON for AJAX requests, redirect for form submissions
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({"success": True})
-        return redirect("apartments:index")
+            # Check remaining apartments count
+            remaining_apartments = firestore_service.get_user_apartments(request.user.id)
+            return JsonResponse({
+                "success": True,
+                "remaining_count": len(remaining_apartments)
+            })
+
+        # For non-AJAX: Check if user still has apartments
+        remaining_apartments = firestore_service.get_user_apartments(request.user.id)
+        if remaining_apartments:
+            return redirect("apartments:dashboard")
+        else:
+            return redirect("apartments:index")
 
 
 @login_required_firestore

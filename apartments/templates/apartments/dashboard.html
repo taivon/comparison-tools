@@ -572,8 +572,14 @@ async function deleteSessionApartment(apartmentId) {
     const filtered = apartments.filter(apt => apt.id !== apartmentId);
     saveSessionApartments(filtered);
 
-    // Reload the page to update the view
-    window.location.reload();
+    // Check if there are remaining apartments
+    if (filtered.length > 0) {
+        // Stay on dashboard - reload to update view
+        window.location.reload();
+    } else {
+        // No apartments left - redirect to homepage
+        window.location.href = '{% url "apartments:index" %}';
+    }
 }
 
 // View switching functionality
