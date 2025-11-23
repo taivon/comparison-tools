@@ -98,6 +98,10 @@ jobs:
         gcloud services enable storage-component.googleapis.com --project=comparison-tools-479102 || true
     
     - name: Deploy to App Engine
+      env:
+        GOOGLE_OAUTH2_KEY: ${{ secrets.GOOGLE_OAUTH2_KEY }}
+        GOOGLE_OAUTH2_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
       run: |
         gcloud config set project comparison-tools-479102
-        gcloud app deploy app.yaml --quiet --verbosity=debug
+        gcloud app deploy app.yaml --quiet --verbosity=debug \
+          --set-env-vars GOOGLE_OAUTH2_KEY="${GOOGLE_OAUTH2_KEY}",GOOGLE_OAUTH2_SECRET="${GOOGLE_OAUTH2_SECRET}"
