@@ -549,7 +549,7 @@ def logout_view(request):
     """Handle user logout with GET and POST requests"""
     firestore_logout(request)
     messages.success(request, "You have been successfully logged out.")
-    return redirect("login")
+    return redirect("apartments:index")
 
 
 def google_oauth_callback(request):
