@@ -39,10 +39,9 @@ SECRET_KEY = 'django-insecure-e&f)15o0*-pg2ul$(w&on#i5kz+a-(kk=hvyff3wg%k&!pqsor
 # Set DEBUG to False if running in Google App Engine
 DEBUG = 'GAE_ENV' not in os.environ
 
-# ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'comparison-tools-479102.uc.r.appspot.com']
-# SECURITY WARNING: It's recommended that you use this when
-# running in production. The URL will be known once you first deploy
-# to App Engine. This code takes the URL and converts it to both these settings formats.
+# ALLOWED_HOSTS configuration
+# In production, uses APPENGINE_URL from environment variable (set in app.yaml)
+# Supports custom domain: apartments.comparison.tools
 if DEBUG:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
     CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
@@ -53,8 +52,17 @@ else:
         if not urlparse(APPENGINE_URL).scheme:
             APPENGINE_URL = f"https://{APPENGINE_URL}"
 
-        ALLOWED_HOSTS = [urlparse(APPENGINE_URL).netloc]
-        CSRF_TRUSTED_ORIGINS = [APPENGINE_URL]
+        domain = urlparse(APPENGINE_URL).netloc
+        # Allow both custom domain and App Engine default domain
+        ALLOWED_HOSTS = [
+            domain,
+            'apartments.comparison.tools',
+            'comparison-tools-479102.uc.r.appspot.com',  # Fallback to App Engine URL
+        ]
+        CSRF_TRUSTED_ORIGINS = [
+            APPENGINE_URL,
+            'https://apartments.comparison.tools',
+        ]
         SECURE_SSL_REDIRECT = True
     else:
         ALLOWED_HOSTS = ["*"]
