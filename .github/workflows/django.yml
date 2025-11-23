@@ -98,6 +98,13 @@ jobs:
         gcloud services enable storage-component.googleapis.com --project=comparison-tools-479102 || true
         gcloud services enable secretmanager.googleapis.com --project=comparison-tools-479102 || true
     
+    - name: Grant Secret Manager permissions to service account
+      run: |
+        # Grant the GitHub Actions service account permission to manage secrets
+        gcloud projects add-iam-policy-binding comparison-tools-479102 \
+          --member="serviceAccount:github-actions-deploy@comparison-tools-479102.iam.gserviceaccount.com" \
+          --role="roles/secretmanager.admin" || true
+    
     - name: Create Google Secret for OAuth
       env:
         GOOGLE_OAUTH2_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
