@@ -111,6 +111,19 @@ def clear_session_apartments(request):
         request.session.modified = True
 
 
+def delete_session_apartment_by_id(request, apartment_id):
+    """Delete a single session apartment by ID"""
+    session_apartments = request.session.get("anonymous_apartments", [])
+
+    # Filter out the apartment with the matching ID
+    updated_apartments = [apt for apt in session_apartments if apt.get("id") != apartment_id]
+
+    request.session["anonymous_apartments"] = updated_apartments
+    request.session.modified = True
+
+    return len(session_apartments) != len(updated_apartments)  # Return True if apartment was found and deleted
+
+
 def index(request):
     firestore_service = FirestoreService()
 
@@ -346,18 +359,38 @@ def update_apartment(request, pk):
     return render(request, "apartments/apartment_form.html", {"form": form})
 
 
-@login_required_firestore
 def delete_apartment(request, pk):
-    firestore_service = FirestoreService()
-    apartment = firestore_service.get_apartment(pk)
+    """Delete an apartment - handles both authenticated users and anonymous session apartments"""
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Method not allowed"}, status=405)
 
-    if not apartment or apartment.user_id != str(request.user.id):
-        raise Http404("Apartment not found")
+    # Check if this is a session apartment (starts with "session_")
+    if pk.startswith("session_"):
+        # Anonymous user deleting session apartment
+        deleted = delete_session_apartment_by_id(request, pk)
+        if deleted:
+            return JsonResponse({"success": True})
+        else:
+            return JsonResponse({"success": False, "error": "Apartment not found"}, status=404)
+    else:
+        # Authenticated user deleting Firestore apartment
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return JsonResponse({"success": False, "error": "Authentication required"}, status=401)
 
-    if request.method == "POST":
+        firestore_service = FirestoreService()
+        apartment = firestore_service.get_apartment(pk)
+
+        if not apartment or apartment.user_id != str(request.user.id):
+            return JsonResponse({"success": False, "error": "Apartment not found"}, status=404)
+
         firestore_service.delete_apartment(pk)
         messages.success(request, "Apartment deleted successfully!")
-    return redirect("apartments:index")
+
+        # Return JSON for AJAX requests, redirect for form submissions
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({"success": True})
+        return redirect("apartments:index")
 
 
 @login_required_firestore
