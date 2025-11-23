@@ -21,3 +21,6 @@ handlers:
 
 env_variables:
     APPENGINE_URL: https://apartments.comparison.tools
+    # OAuth credentials are set via gcloud or GitHub Actions
+    # Never hardcode secrets in this file!
+    # Set these via: gcloud app deploy --set-env-vars GOOGLE_OAUTH2_KEY=xxx,GOOGLE_OAUTH2_SECRET=yyy

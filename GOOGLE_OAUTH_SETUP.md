@@ -20,23 +20,40 @@ To enable Google Sign-In, you need to create OAuth credentials in the Google Clo
 ## 3. Set Environment Variables
 
 ### Local Development
-Create a `.env` file in your project root:
+⚠️ **SECURITY WARNING**: Never commit actual credentials to git!
+
+1. Copy the environment template:
 ```bash
-GOOGLE_OAUTH2_KEY=your_client_id_here
-GOOGLE_OAUTH2_SECRET=your_client_secret_here
+cp .env.example .env
+```
+
+2. Edit `.env` with your actual credentials:
+```bash
+GOOGLE_OAUTH2_KEY=your_actual_client_id_here.apps.googleusercontent.com
+GOOGLE_OAUTH2_SECRET=your_actual_client_secret_here
+```
+
+3. Set secure permissions:
+```bash
+chmod 600 .env  # Unix/macOS only
 ```
 
 ### Production (Google App Engine)
-Add to your app.yaml:
-```yaml
-env_variables:
-  GOOGLE_OAUTH2_KEY: your_client_id_here
-  GOOGLE_OAUTH2_SECRET: your_client_secret_here
+🚫 **NEVER put actual secrets in app.yaml!**
+
+Set via gcloud command:
+```bash
+gcloud app deploy --set-env-vars \
+  GOOGLE_OAUTH2_KEY=your-prod-client-id,\
+  GOOGLE_OAUTH2_SECRET=your-prod-client-secret
 ```
 
-Or set via GitHub Secrets for CI/CD:
+### CI/CD (GitHub Actions)
+Add these as Repository Secrets in GitHub:
 - `GOOGLE_OAUTH2_KEY`
 - `GOOGLE_OAUTH2_SECRET`
+
+📖 **For detailed security practices, see `ENVIRONMENT_SECURITY.md`**
 
 ## 4. Test the Setup
 

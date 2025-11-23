@@ -245,6 +245,31 @@ AUTHENTICATION_BACKENDS = [
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("GOOGLE_OAUTH2_KEY", "")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv("GOOGLE_OAUTH2_SECRET", "")
 
+# Security validation for OAuth credentials
+if not DEBUG and (
+    not SOCIAL_AUTH_GOOGLE_OAUTH2_KEY or not SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
+):
+    import sys
+    import logging
+
+    logger = logging.getLogger(__name__)
+    logger.error("CRITICAL: Google OAuth credentials not configured for production!")
+    logger.error("Set GOOGLE_OAUTH2_KEY and GOOGLE_OAUTH2_SECRET environment variables")
+    if "runserver" in sys.argv or "migrate" not in sys.argv:
+        # Don't fail on migrations, but fail on server startup
+        raise ValueError("Google OAuth credentials required for production deployment")
+
+# Development warning for missing credentials
+if DEBUG and (
+    not SOCIAL_AUTH_GOOGLE_OAUTH2_KEY or not SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
+):
+    import logging
+
+    logger = logging.getLogger(__name__)
+    logger.warning("Google OAuth credentials not configured.")
+    logger.warning("Create .env file with GOOGLE_OAUTH2_KEY and GOOGLE_OAUTH2_SECRET")
+    logger.warning("See ENVIRONMENT_SECURITY.md for setup instructions")
+
 # Social Auth URLs
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"
 SOCIAL_AUTH_LOGOUT_REDIRECT_URL = "/"
