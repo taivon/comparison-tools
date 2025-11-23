@@ -15,7 +15,9 @@ To enable Google Sign-In, you need to create OAuth credentials in the Google Clo
 3. Choose **Web application**
 4. Add authorized redirect URIs:
    - For development: `http://localhost:8000/accounts/complete/google-oauth2/`
-   - For production: `https://apartments.comparison.tools/accounts/complete/google-oauth2/`
+   - For development (127.0.0.1): `http://127.0.0.1:8000/accounts/complete/google-oauth2/`
+   - For App Engine: `https://comparison-tools-479102.uc.r.appspot.com/accounts/complete/google-oauth2/`
+   - For custom domain: `https://apartments.comparison.tools/accounts/complete/google-oauth2/`
 
 ## 3. Set Environment Variables
 
