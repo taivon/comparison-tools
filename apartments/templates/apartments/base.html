@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Comparison Tools{% endblock %}</title>
+    <title>{% block title %}Apartment Comparison | Comparison Tools{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -24,7 +24,8 @@
             <div class="flex justify-between h-16">
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <a href="{% url 'apartments:index' %}" class="text-xl font-bold text-primary">Comparison Tools</a>
+                        <a href="{% url 'apartments:index' %}" class="text-xl font-bold text-primary">Apartment Comparison</a>
+                        <span class="text-xs text-gray-500 ml-2">by comparison.tools</span>
                     </div>
                 </div>
                 <div class="flex items-center">
