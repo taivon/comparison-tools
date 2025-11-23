@@ -199,7 +199,7 @@ class ApartmentForm(forms.Form):
 class UserPreferencesForm(forms.Form):
     DISCOUNT_CHOICES = [
         ("daily", "Daily"),
-        ("monthly", "Monthly"),
+        ("weekly", "Weekly"),
     ]
 
     price_weight = forms.IntegerField(
