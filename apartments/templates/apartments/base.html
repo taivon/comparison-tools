@@ -78,8 +78,24 @@
                             Sign out
                         </a>
                     {% else %}
-                        <!-- Theme Toggle for non-authenticated users (identical to authenticated) -->
-                        <button onclick="toggleTheme()" class="p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
+                        <!-- Person icon dropdown for login/signup -->
+                        <div class="relative group">
+                            <button id="user-menu-button" type="button" class="flex items-center px-4 py-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-brand-purple" aria-expanded="false">
+                                <span class="mr-2">Log In</span>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-40 rounded-lg shadow-lg bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-50 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
+                                <a href="{% url 'login' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-t-lg">Login</a>
+                                <a href="{% url 'signup' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-b-lg">Sign Up</a>
+                            </div>
+                        </div>
+                        <!-- Theme Toggle remains outside -->
+                        <button onclick="toggleTheme()" class="ml-2 p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
                             <!-- Moon icon (visible in light mode, click to go dark) -->
                             <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
@@ -89,12 +105,6 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                         </button>
-                        <a href="{% url 'login' %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple px-3 py-2 text-sm font-medium">
-                            Sign in
-                        </a>
-                        <a href="{% url 'signup' %}" class="bg-brand-purple text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-purple-light transition-colors">
-                            Get started
-                        </a>
                     {% endif %}
                 </div>
             </div>
