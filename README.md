@@ -91,13 +91,35 @@ comparison-tools/
 └── manage.py          # Django management script
 ```
 
+## Environment Setup
+
+### Security First! 🔒
+Before development, set up your environment securely:
+
+```bash
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Get OAuth credentials from Google Cloud Console
+# See GOOGLE_OAUTH_SETUP.md for detailed instructions
+
+# 3. Update .env with your actual credentials
+nano .env  # Never commit this file!
+
+# 4. Validate security setup
+./scripts/validate-env-security.sh
+```
+
+📖 **Read `ENVIRONMENT_SECURITY.md` for complete security guidelines**
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes and commit: `git commit -m "Add feature"`
-4. Push to the branch: `git push origin feature-name`
-5. Submit a pull request
+3. **Run security validation**: `./scripts/validate-env-security.sh`
+4. Make your changes and commit: `git commit -m "Add feature"`
+5. Push to the branch: `git push origin feature-name`
+6. Submit a pull request
 
 ## License
 

@@ -1,0 +1,46 @@
+{
+    "python.defaultInterpreterPath": "./venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.formatting.provider": "black",
+    "python.testing.unittestEnabled": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./",
+        "-p",
+        "test*.py"
+    ],
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/node_modules": true,
+        "**/.DS_Store": true
+    },
+    "emmet.includeLanguages": {
+        "django-html": "html"
+    },
+    "files.associations": {
+        "**/*.html": "django-html"
+    },
+    "[django-html]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true
+    },
+    "[python]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true
+    },
+    "terminal.integrated.env.osx": {
+        "DJANGO_SETTINGS_MODULE": "config.settings"
+    },
+    "terminal.integrated.env.linux": {
+        "DJANGO_SETTINGS_MODULE": "config.settings"
+    },
+    "terminal.integrated.env.windows": {
+        "DJANGO_SETTINGS_MODULE": "config.settings"
+    }
+}
