@@ -36,7 +36,7 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-50 dark:bg-neutral-900 font-sans">
+<body class="bg-gray-50 dark:bg-neutral-900 font-sans" data-is-anonymous="{% if not user.is_authenticated %}true{% else %}false{% endif %}" data-has-apartments="{% if apartments %}true{% else %}false{% endif %}">
     <nav class="bg-white dark:bg-neutral-800 border-b border-gray-100 dark:border-neutral-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
@@ -540,6 +540,85 @@
                 }
             }
         });
+        
+        // Anonymous user functionality
+        function dismissSignupPrompt() {
+            const prompt = document.getElementById('signupPrompt');
+            if (prompt) {
+                prompt.style.display = 'none';
+                // Store dismissal in sessionStorage (only for this session)
+                sessionStorage.setItem('signupPromptDismissed', 'true');
+            }
+        }
+        
+        // Before page unload - prompt anonymous users to save their data
+        window.addEventListener('beforeunload', function(event) {
+            // Check if user is anonymous and has apartments
+            const isAnonymous = document.body.dataset.isAnonymous === 'true';
+            const hasApartments = document.body.dataset.hasApartments === 'true';
+            
+            if (isAnonymous && hasApartments) {
+                const message = 'You have apartment comparisons that will be lost! Sign up to save your data.';
+                event.returnValue = message; // For older browsers
+                return message; // For modern browsers
+            }
+        });
+        
+        // Check if signup prompt was dismissed and hide it on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const prompt = document.getElementById('signupPrompt');
+            if (prompt && sessionStorage.getItem('signupPromptDismissed')) {
+                prompt.style.display = 'none';
+            }
+        });
+        
+        // Auto-show signup prompt after user spends time comparing (anonymous users only)
+        if (document.body.dataset.isAnonymous === 'true' && document.body.dataset.hasApartments === 'true') {
+            // Show signup prompt after 2 minutes of viewing apartments
+            setTimeout(function() {
+                if (!sessionStorage.getItem('signupPromptDismissed') && !sessionStorage.getItem('signupModalShown')) {
+                    showSignupModal();
+                }
+            }, 120000); // 2 minutes
+        }
+        
+        function showSignupModal() {
+            // Create and show a modal encouraging signup
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 max-w-md mx-4">
+                    <div class="text-center">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 mb-4">
+                            <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Save Your Apartment Comparisons!</h3>
+                        <p class="text-gray-500 mb-6">You've been comparing apartments for a while. Sign up free to save your data and access more features!</p>
+                        <div class="flex space-x-3">
+                            <button onclick="closeSignupModal()" class="px-4 py-2 text-gray-500 hover:text-gray-700">
+                                Maybe Later
+                            </button>
+                            <a href="/signup/" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                                Sign Up Free
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Store that we've shown the modal
+            sessionStorage.setItem('signupModalShown', 'true');
+        }
+        
+        function closeSignupModal() {
+            const modal = document.querySelector('.fixed.inset-0');
+            if (modal) {
+                modal.remove();
+            }
+        }
     </script>
 
 </body>
