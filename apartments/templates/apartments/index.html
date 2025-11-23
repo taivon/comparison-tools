@@ -4,10 +4,10 @@
 
 {% block content %}
 {% if not apartments %}
-    <!-- Hero Section for Empty State -->
+    <!-- Hero Section with Inline Search -->
     <div class="bg-white">
         <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
+            <div class="text-center mb-12">
                 <h1 class="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
                     Find your perfect
                     <span class="text-brand-purple">apartment</span>
@@ -15,31 +15,108 @@
                 <p class="mt-6 max-w-2xl mx-auto text-xl text-gray-500">
                     Compare rent, amenities, and location data to make the smartest choice for your next home.
                 </p>
-                <div class="mt-8">
-                    {% if can_add_apartment %}
-                        <a href="{% url 'apartments:create_apartment' %}" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors">
-                            Add Your First Apartment
-                            <svg class="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                            </svg>
-                        </a>
-                    {% else %}
-                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-md mx-auto">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-5 w-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                    </svg>
+                {% if is_anonymous %}
+                    <p class="mt-2 text-sm text-gray-500">No account needed to try! Compare up to 2 apartments as a guest.</p>
+                {% endif %}
+            </div>
+
+            <!-- Inline Apartment Entry Form -->
+            {% if can_add_apartment %}
+                <div class="max-w-4xl mx-auto">
+                    <form method="post" action="{% url 'apartments:create_apartment' %}" class="bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl p-8 shadow-lg">
+                        {% csrf_token %}
+
+                        <!-- Basic Fields -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label for="id_name" class="block text-sm font-medium text-gray-700 mb-2">Apartment Name</label>
+                                <input type="text" name="name" id="id_name" required
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="e.g., The Grand at 5th">
+                            </div>
+                            <div>
+                                <label for="id_price" class="block text-sm font-medium text-gray-700 mb-2">Monthly Rent ($)</label>
+                                <input type="number" name="price" id="id_price" required step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="e.g., 2500">
+                            </div>
+                            <div>
+                                <label for="id_square_footage" class="block text-sm font-medium text-gray-700 mb-2">Square Footage</label>
+                                <input type="number" name="square_footage" id="id_square_footage" required
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="e.g., 850">
+                            </div>
+                        </div>
+
+                        <!-- Advanced Options Toggle -->
+                        <div class="mb-6">
+                            <button type="button" onclick="toggleAdvancedOptions()"
+                                    class="flex items-center text-sm font-medium text-brand-purple hover:text-brand-purple-light transition-colors">
+                                <svg id="advancedChevron" class="w-4 h-4 mr-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                                More options (lease length, discounts)
+                            </button>
+                        </div>
+
+                        <!-- Advanced Fields (Hidden by Default) -->
+                        <div id="advancedOptions" class="hidden mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                            <h3 class="text-sm font-semibold text-gray-900 mb-4">Additional Details</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="id_lease_length_months" class="block text-sm font-medium text-gray-700 mb-2">Lease Length (months)</label>
+                                    <input type="number" name="lease_length_months" id="id_lease_length_months" value="12"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                           placeholder="12">
                                 </div>
-                                <div class="ml-3">
-                                    <h3 class="text-sm font-medium text-amber-800">Free Tier Limit Reached</h3>
-                                    <p class="mt-1 text-sm text-amber-700">You've reached the 2-apartment limit for free accounts. Upgrade to premium to add unlimited apartments.</p>
+                                <div>
+                                    <label for="id_months_free" class="block text-sm font-medium text-gray-700 mb-2">Months Free</label>
+                                    <input type="number" name="months_free" id="id_months_free" value="0"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                           placeholder="0">
+                                </div>
+                                <div>
+                                    <label for="id_weeks_free" class="block text-sm font-medium text-gray-700 mb-2">Weeks Free</label>
+                                    <input type="number" name="weeks_free" id="id_weeks_free" value="0"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                           placeholder="0">
+                                </div>
+                                <div>
+                                    <label for="id_flat_discount" class="block text-sm font-medium text-gray-700 mb-2">Flat Discount ($)</label>
+                                    <input type="number" name="flat_discount" id="id_flat_discount" value="0" step="0.01"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                           placeholder="0">
                                 </div>
                             </div>
                         </div>
-                    {% endif %}
+
+                        <!-- Submit Button -->
+                        <div class="flex justify-center">
+                            <button type="submit"
+                                    class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors shadow-md hover:shadow-lg">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                Add & Compare
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </div>
+            {% else %}
+                <div class="max-w-md mx-auto bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-amber-800">Free Tier Limit Reached</h3>
+                            <p class="mt-1 text-sm text-amber-700">You've reached the 2-apartment limit for free accounts. Upgrade to premium to add unlimited apartments.</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 
@@ -128,6 +205,45 @@
             </div>
         </div>
     </div>
+
+    <!-- Anonymous User Signup Prompt -->
+    {% if is_anonymous and apartments %}
+        <div id="signupPrompt" class="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-purple-900">
+                                {% if apartment_count >= 2 %}
+                                    You've reached the guest limit! Sign up to save your comparisons and add unlimited apartments.
+                                {% else %}
+                                    Trying out our apartment comparison? Sign up to save your data and compare unlimited apartments!
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'login' %}" class="text-sm font-medium text-purple-700 hover:text-purple-900">
+                            Sign In
+                        </a>
+                        <a href="{% url 'signup' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors">
+                            Sign Up Free
+                        </a>
+                        <button onclick="dismissSignupPrompt()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 
     <!-- Apartments Grid -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -339,6 +455,23 @@
 </div>
 
 <script>
+function toggleAdvancedOptions() {
+    const advancedOptions = document.getElementById('advancedOptions');
+    const chevron = document.getElementById('advancedChevron');
+
+    if (advancedOptions.classList.contains('hidden')) {
+        advancedOptions.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+    } else {
+        advancedOptions.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+    }
+}
+
+function dismissSignupPrompt() {
+    document.getElementById('signupPrompt')?.classList.add('hidden');
+}
+
 function openPreferencesModal() {
     document.getElementById('preferencesModal').classList.remove('hidden');
 }
