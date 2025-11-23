@@ -5,7 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Apartment Comparison | Comparison Tools{% endblock %}</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/dist/styles.css' %}">
+    
+    {% if debug %}
+        <!-- Development: Use local compiled CSS -->
+        <link rel="stylesheet" type="text/css" href="{% static 'css/dist/styles.css' %}">
+    {% else %}
+        <!-- Production: Use CDN for faster loading and smaller deployment -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: '#3B82F6',
+                            secondary: '#10B981',
+                        }
+                    }
+                }
+            }
+        </script>
+    {% endif %}
 </head>
 <body class="bg-gray-50">
     <nav class="bg-white shadow-lg">
