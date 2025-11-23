@@ -4,47 +4,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Apartment Comparison | Comparison Tools{% endblock %}</title>
+    <title>{% block title %}Find Your Perfect Apartment | Comparison Tools{% endblock %}</title>
     
-    <!-- Use Tailwind CDN for both development and production -->
+    <!-- Use Tailwind CDN with seats.aero inspired configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class', // Enables manual dark mode control via 'dark' class
             theme: {
                 extend: {
                     colors: {
-                        primary: '#3B82F6',
-                        secondary: '#10B981',
+                        'brand-purple': '#8160A9',
+                        'brand-purple-light': '#9B7CB8',
+                        'brand-purple-dark': '#6B4F8A',
+                        'brand-green': '#10b981',
+                        'brand-gray': '#64748b',
+                        'brand-gray-light': '#f8fafc',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
                     }
                 }
             }
         }
     </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
+<body class="bg-gray-50 dark:bg-gray-900 font-sans">
+    <nav class="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <a href="{% url 'apartments:index' %}" class="text-xl font-bold text-primary">Apartment Comparison</a>
-                        <span class="text-xs text-gray-500 ml-2">by comparison.tools</span>
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <a href="{% url 'apartments:index' %}" class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-brand-purple rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                            </div>
+                            <span class="text-xl font-bold text-gray-900 dark:text-white">CompareHomes</span>
+                        </a>
+                    </div>
+                    <div class="hidden md:block ml-10">
+                        <div class="flex items-baseline space-x-8">
+                            <a href="{% url 'apartments:index' %}" class="text-gray-900 dark:text-white hover:text-brand-purple px-3 py-2 text-sm font-medium">Dashboard</a>
+                            <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple px-3 py-2 text-sm font-medium">Explore</a>
+                            <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple px-3 py-2 text-sm font-medium">Alerts</a>
+                        </div>
                     </div>
                 </div>
-                <div class="flex items-center">
+                <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <span class="text-gray-700 mr-4">Welcome, {{ user.first_name|default:user.username }}</span>
+                        <button onclick="openPreferencesModal()" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple px-3 py-2 text-sm font-medium">
+                            Preferences
+                        </button>
+                        <!-- Theme Toggle -->
+                        <button onclick="toggleTheme()" class="p-2 text-gray-500 dark:text-gray-400 hover:text-brand-purple rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Toggle theme">
+                            <!-- Sun icon (visible in dark mode) -->
+                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            <!-- Moon icon (visible in light mode) -->
+                            <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                        </button>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ user.first_name|default:user.username }}</span>
                         {% if not user.is_staff %}
-                            <a href="#" class="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
-                                Upgrade to Premium
+                            <a href="#" class="bg-brand-purple text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-purple-light transition-colors">
+                                Upgrade
                             </a>
                         {% endif %}
-                        <a href="{% url 'logout' %}" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                            Logout
+                        <a href="{% url 'logout' %}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-3 py-2 text-sm font-medium">
+                            Sign out
                         </a>
                     {% else %}
-                        <a href="{% url 'login' %}" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                            Login
+                        <!-- Theme Toggle for non-authenticated users -->
+                        <button onclick="toggleTheme()" class="p-2 text-gray-500 dark:text-gray-400 hover:text-brand-purple rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Toggle theme">
+                            <!-- Sun icon (visible in dark mode) -->
+                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            <!-- Moon icon (visible in light mode) -->
+                            <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                        </button>
+                        <a href="{% url 'login' %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple px-3 py-2 text-sm font-medium">
+                            Sign in
+                        </a>
+                        <a href="{% url 'signup' %}" class="bg-brand-purple text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-purple-light transition-colors">
+                            Get started
                         </a>
                     {% endif %}
                 </div>
@@ -52,25 +102,287 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <main>
         {% if messages %}
-            {% for message in messages %}
-                <div class="mb-4 p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                {% for message in messages %}
+                    <div class="mb-4 p-4 rounded-lg shadow-sm {% if message.tags == 'success' %}bg-brand-green/10 border border-brand-green/20 text-brand-green{% else %}bg-red-50 border border-red-200 text-red-800{% endif %}">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'success' %}
+                                    <svg class="h-5 w-5 text-brand-green" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                {% else %}
+                                    <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">{{ message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
         {% block content %}
         {% endblock %}
     </main>
 
-    <footer class="bg-white shadow-lg mt-8">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-gray-500 text-sm">
-                &copy; 2024 Comparison Tools. All rights reserved.
-            </p>
+    <footer class="bg-white border-t border-gray-200 mt-16">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <p class="text-gray-400 text-sm">
+                    &copy; 2025 CompareHomes. Making apartment hunting smarter.
+                </p>
+                <div class="mt-4 flex justify-center space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-gray-500 text-sm">Privacy Policy</a>
+                    <a href="#" class="text-gray-400 hover:text-gray-500 text-sm">Terms of Service</a>
+                    <a href="#" class="text-gray-400 hover:text-gray-500 text-sm">Contact</a>
+                </div>
+            </div>
         </div>
     </footer>
+
+    <style>
+        /* CSS Custom Properties for Theme Support */
+        :root {
+            --color-brand-purple: #8160A9;
+            --color-brand-purple-light: #9B7CB8;
+            --color-brand-green: #10b981;
+            --color-brand-gray: #64748b;
+            --color-brand-gray-light: #f8fafc;
+            --color-text-primary: #1e293b;
+            --color-text-secondary: #64748b;
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f8fafc;
+            --color-border: #e2e8f0;
+            --color-border-light: #f1f5f9;
+            --color-input-bg: #ffffff;
+            --color-input-border: #d1d5db;
+            --color-shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Dark Theme Variables */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-brand-purple: #9B7CB8;
+                --color-brand-purple-light: #B899D1;
+                --color-brand-green: #34d399;
+                --color-brand-gray: #9ca3af;
+                --color-brand-gray-light: #111827;
+                --color-text-primary: #f1f5f9;
+                --color-text-secondary: #94a3b8;
+                --color-bg-primary: #1f2937;
+                --color-bg-secondary: #111827;
+                --color-border: #374151;
+                --color-border-light: #4b5563;
+                --color-input-bg: #374151;
+                --color-input-border: #4b5563;
+                --color-shadow: rgba(0, 0, 0, 0.3);
+            }
+
+            /* Update Tailwind's brand colors for dark mode */
+            .brand-purple { background-color: var(--color-brand-purple) !important; }
+            .text-brand-purple { color: var(--color-brand-purple) !important; }
+            .bg-brand-purple { background-color: var(--color-brand-purple) !important; }
+            .border-brand-purple { border-color: var(--color-brand-purple) !important; }
+            
+            .brand-green { background-color: var(--color-brand-green) !important; }
+            .text-brand-green { color: var(--color-brand-green) !important; }
+            .bg-brand-green { background-color: var(--color-brand-green) !important; }
+        }
+
+        /* Global Dark Mode Styles */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--color-bg-secondary) !important;
+                color: var(--color-text-primary) !important;
+            }
+
+            /* Navigation */
+            nav {
+                background-color: var(--color-bg-primary) !important;
+                border-bottom-color: var(--color-border) !important;
+            }
+
+            /* Cards and containers */
+            .bg-white {
+                background-color: var(--color-bg-primary) !important;
+                color: var(--color-text-primary) !important;
+            }
+
+            .bg-gray-50, .bg-brand-gray-light {
+                background-color: var(--color-bg-secondary) !important;
+            }
+
+            /* Text colors */
+            .text-gray-900 {
+                color: var(--color-text-primary) !important;
+            }
+
+            .text-gray-700, .text-gray-600 {
+                color: var(--color-text-secondary) !important;
+            }
+
+            .text-gray-500, .text-gray-400 {
+                color: var(--color-brand-gray) !important;
+            }
+
+            /* Borders */
+            .border-gray-200, .border-gray-100 {
+                border-color: var(--color-border) !important;
+            }
+
+            .border-gray-300 {
+                border-color: var(--color-border-light) !important;
+            }
+
+            /* Shadows */
+            .shadow-sm, .shadow, .shadow-md, .shadow-lg, .shadow-xl {
+                box-shadow: 0 1px 3px 0 var(--color-shadow), 0 1px 2px 0 var(--color-shadow) !important;
+            }
+
+            /* Special backgrounds */
+            .bg-gray-100 {
+                background-color: var(--color-border) !important;
+            }
+
+            /* Alert and message backgrounds */
+            .bg-red-50 {
+                background-color: #7f1d1d !important;
+            }
+
+            .bg-red-100 {
+                background-color: #991b1b !important;
+            }
+
+            .text-red-600, .text-red-700, .text-red-800 {
+                color: #fca5a5 !important;
+            }
+
+            .bg-green-50, .bg-brand-green\\/10 {
+                background-color: #064e3b !important;
+            }
+
+            .text-green-700 {
+                color: #6ee7b7 !important;
+            }
+        }
+
+        /* Form Input Styling with Dark Mode Support */
+        input[type="text"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
+            @apply mt-1 block w-full rounded-lg shadow-sm focus:ring-brand-purple focus:border-brand-purple text-sm;
+            background-color: var(--color-input-bg);
+            border-color: var(--color-input-border);
+            color: var(--color-text-primary);
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-brand-purple);
+            ring: 2px;
+            ring-color: rgba(129, 96, 169, 0.2);
+        }
+
+        /* Placeholder styling for dark mode */
+        @media (prefers-color-scheme: dark) {
+            input::placeholder, textarea::placeholder {
+                color: var(--color-brand-gray);
+            }
+        }
+        
+        /* Special handling for inputs with $ prefix */
+        input[id*="price"], input[id*="discount"] {
+            padding-left: 28px;
+        }
+        
+        /* Special handling for inputs with suffix */
+        input[id*="square_footage"], input[id*="lease_length"] {
+            padding-right: 48px;
+        }
+        
+        /* Radio button and checkbox styling */
+        input[type="radio"], input[type="checkbox"] {
+            @apply focus:ring-brand-purple h-4 w-4 text-brand-purple rounded;
+            border-color: var(--color-input-border);
+        }
+        
+        /* Select dropdown styling with dark mode */
+        select {
+            @apply pr-10;
+            background-color: var(--color-input-bg);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 8px center;
+            background-repeat: no-repeat;
+            background-size: 16px 12px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            select {
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            }
+        }
+        
+        /* Button hover effects */
+        .transition-colors {
+            transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out;
+        }
+
+        /* Smooth theme transitions */
+        *, *::before, *::after {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+    </style>
+
+    <script>
+        // Theme toggle functionality
+        function initTheme() {
+            // Check if user has a saved preference
+            const savedTheme = localStorage.getItem('theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            if (isDark) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        
+        // Initialize theme on page load
+        initTheme();
+        
+        // Listen for system theme changes (but only if user hasn't set a preference)
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            const savedTheme = localStorage.getItem('theme');
+            if (!savedTheme) {
+                if (e.matches) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+        });
+    </script>
+
 </body>
 </html> 
