@@ -16,7 +16,7 @@ node_modules/
 theme/static_src/node_modules/
 theme/static/css/
 theme/node_modules/
-theme/static_src/package-lock.json
+# package-lock.json should be committed for reproducible builds
 
 # OS
 .DS_Store
