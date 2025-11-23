@@ -396,6 +396,116 @@
 
 </div>
 
+<!-- Add Apartment Modal -->
+<div id="addApartmentModal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" aria-hidden="true" onclick="closeAddApartmentModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <form id="addApartmentForm" onsubmit="handleAddApartment(event)">
+                {% csrf_token %}
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-brand-purple/10 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Add New Apartment</h3>
+                                    <p class="text-sm text-gray-500">Enter apartment details to compare</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="closeAddApartmentModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Basic Fields -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="modal_name" class="block text-sm font-medium text-gray-700 mb-2">Apartment Name</label>
+                            <input type="text" name="name" id="modal_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., The Grand at 5th">
+                        </div>
+                        <div>
+                            <label for="modal_price" class="block text-sm font-medium text-gray-700 mb-2">Monthly Rent ($)</label>
+                            <input type="number" name="price" id="modal_price" required step="0.01"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., 2500">
+                        </div>
+                        <div>
+                            <label for="modal_square_footage" class="block text-sm font-medium text-gray-700 mb-2">Square Footage</label>
+                            <input type="number" name="square_footage" id="modal_square_footage" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., 850">
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options Toggle -->
+                    <div class="mb-4">
+                        <button type="button" onclick="toggleModalAdvancedOptions()"
+                                class="flex items-center text-sm font-medium text-brand-purple hover:text-brand-purple-light transition-colors">
+                            <svg id="modalAdvancedChevron" class="w-4 h-4 mr-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            More options (lease length, discounts)
+                        </button>
+                    </div>
+
+                    <!-- Advanced Fields (Hidden by Default) -->
+                    <div id="modalAdvancedOptions" class="hidden mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-4">Additional Details</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="modal_lease_length_months" class="block text-sm font-medium text-gray-700 mb-2">Lease Length (months)</label>
+                                <input type="number" name="lease_length_months" id="modal_lease_length_months" value="12"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="12">
+                            </div>
+                            <div>
+                                <label for="modal_months_free" class="block text-sm font-medium text-gray-700 mb-2">Months Free</label>
+                                <input type="number" name="months_free" id="modal_months_free" value="0"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                            <div>
+                                <label for="modal_weeks_free" class="block text-sm font-medium text-gray-700 mb-2">Weeks Free</label>
+                                <input type="number" name="weeks_free" id="modal_weeks_free" value="0"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                            <div>
+                                <label for="modal_flat_discount" class="block text-sm font-medium text-gray-700 mb-2">Flat Discount ($)</label>
+                                <input type="number" name="flat_discount" id="modal_flat_discount" value="0" step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                    <button type="submit" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-6 py-3 bg-brand-purple text-sm font-medium text-white hover:bg-brand-purple-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:ml-3 sm:w-auto">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Apartment
+                    </button>
+                    <button type="button" onclick="closeAddApartmentModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:mt-0 sm:w-auto">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 // SessionStorage management for anonymous users
 function getSessionApartments() {
@@ -562,6 +672,15 @@ function loadAnonymousApartments() {
     }
 }
 
+// Add apartment to sessionStorage
+function addSessionApartment(apartmentData) {
+    const apartments = getSessionApartments();
+    apartmentData.id = `session_${apartments.length}_${apartmentData.name.replace(/\s+/g, '_')}`;
+    apartments.push(apartmentData);
+    saveSessionApartments(apartments);
+    return apartmentData;
+}
+
 // Delete apartment from sessionStorage
 async function deleteSessionApartment(apartmentId) {
     if (!confirm('Are you sure you want to delete this apartment?')) {
@@ -580,6 +699,109 @@ async function deleteSessionApartment(apartmentId) {
         // No apartments left - redirect to homepage
         window.location.href = '{% url "apartments:index" %}';
     }
+}
+
+// Modal functions
+function openAddApartmentModal() {
+    document.getElementById('addApartmentModal').classList.remove('hidden');
+}
+
+function closeAddApartmentModal() {
+    document.getElementById('addApartmentModal').classList.add('hidden');
+    // Reset form
+    document.getElementById('addApartmentForm').reset();
+    // Hide advanced options
+    const advancedOptions = document.getElementById('modalAdvancedOptions');
+    const chevron = document.getElementById('modalAdvancedChevron');
+    advancedOptions.classList.add('hidden');
+    chevron.classList.remove('rotate-180');
+}
+
+function toggleModalAdvancedOptions() {
+    const advancedOptions = document.getElementById('modalAdvancedOptions');
+    const chevron = document.getElementById('modalAdvancedChevron');
+
+    if (advancedOptions.classList.contains('hidden')) {
+        advancedOptions.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+    } else {
+        advancedOptions.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+    }
+}
+
+// Handle add apartment form submission
+async function handleAddApartment(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const isAnonymous = {{ is_anonymous|yesno:"true,false" }};
+
+    if (isAnonymous) {
+        // Store in sessionStorage for anonymous users
+        const apartments = getSessionApartments();
+
+        // Check 2-apartment limit for anonymous users
+        if (apartments.length >= 2) {
+            alert('You\'ve reached the 2-apartment limit for guest users. Sign up to save and compare more apartments!');
+            window.location.href = '{% url "apartments:signup" %}';
+            return;
+        }
+
+        const apartmentData = {
+            name: formData.get('name'),
+            price: parseFloat(formData.get('price')),
+            square_footage: parseInt(formData.get('square_footage')),
+            lease_length_months: parseInt(formData.get('lease_length_months') || 12),
+            months_free: parseInt(formData.get('months_free') || 0),
+            weeks_free: parseInt(formData.get('weeks_free') || 0),
+            flat_discount: parseFloat(formData.get('flat_discount') || 0)
+        };
+
+        addSessionApartment(apartmentData);
+        closeAddApartmentModal();
+        window.location.reload();
+    } else {
+        // Authenticated user - save to server
+        try {
+            const response = await fetch('{% url "apartments:create_apartment" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+
+            if (response.ok) {
+                closeAddApartmentModal();
+                window.location.reload();
+            } else {
+                const errorText = await response.text();
+                alert('Failed to add apartment. Please check your inputs and try again.');
+                console.error('Error:', errorText);
+            }
+        } catch (error) {
+            alert('An error occurred while adding the apartment.');
+            console.error('Error:', error);
+        }
+    }
+}
+
+// Get CSRF cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // View switching functionality
