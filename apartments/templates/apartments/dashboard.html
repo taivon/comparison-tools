@@ -9,10 +9,10 @@
 <!-- Dashboard Section -->
 <div class="bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="py-6">
-            <div class="flex justify-between items-center">
+        <div class="py-4 sm:py-6">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Your Apartments</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Your Apartments</h1>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         <span id="apartmentCountText">{{ apartment_count }} apartment{{ apartment_count|pluralize }} compared</span>
                         {% if not is_premium %}
@@ -34,42 +34,45 @@
                         {% endif %}
                     </p>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <!-- Preferences/Settings Icon -->
-                    <button onclick="openPreferencesModal()" class="p-2 text-gray-700 hover:text-brand-purple hover:bg-gray-50 rounded-lg border border-gray-300 transition-colors" title="Calculation Settings">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </button>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    <div class="flex items-center gap-3">
+                        <!-- Preferences/Settings Icon -->
+                        <button onclick="openPreferencesModal()" class="p-2.5 sm:p-2 text-gray-700 hover:text-brand-purple hover:bg-gray-50 rounded-lg border border-gray-300 transition-colors touch-manipulation" title="Calculation Settings">
+                            <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </button>
 
-                    <!-- View Toggle -->
-                    <div class="inline-flex rounded-lg border border-gray-300 bg-white">
-                        <button id="cardViewBtn" onclick="switchView('cards')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-l-lg transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                            </svg>
-                        </button>
-                        <button id="tableViewBtn" onclick="switchView('table')" class="px-3 py-2 text-sm font-medium text-white bg-brand-purple rounded-r-lg transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                            </svg>
-                        </button>
+                        <!-- View Toggle - Hidden on mobile, auto-switch to card view -->
+                        <div class="hidden sm:inline-flex rounded-lg border border-gray-300 bg-white">
+                            <button id="cardViewBtn" onclick="switchView('cards')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-l-lg transition-colors touch-manipulation">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                                </svg>
+                            </button>
+                            <button id="tableViewBtn" onclick="switchView('table')" class="px-3 py-2 text-sm font-medium text-white bg-brand-purple rounded-r-lg transition-colors touch-manipulation">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     {% if can_add_apartment %}
-                        <button onclick="openAddApartmentModal()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors">
+                        <button onclick="openAddApartmentModal()" class="inline-flex items-center justify-center px-4 py-3 sm:py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors touch-manipulation min-h-[44px]">
                             <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
                             Add Apartment
                         </button>
                     {% else %}
-                        <div class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-gray-100 cursor-not-allowed">
+                        <div class="inline-flex items-center justify-center px-4 py-3 sm:py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-gray-100 cursor-not-allowed min-h-[44px]">
                             <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            Limit Reached ({{ apartment_count }}/{{ apartment_limit }})
+                            <span class="hidden sm:inline">Limit Reached ({{ apartment_count }}/{{ apartment_limit }})</span>
+                            <span class="sm:hidden">Limit Reached</span>
                         </div>
                     {% endif %}
                 </div>
@@ -180,15 +183,21 @@
                             <div class="text-xs font-medium text-brand-green mb-1">Special Offers</div>
                             <div class="text-sm text-gray-700">
                                 {% if apartment.months_free %}
-                                    {{ apartment.months_free }} month{{ apartment.months_free|pluralize }} free
+                                    <div>{{ apartment.months_free }} month{{ apartment.months_free|pluralize }} free
+                                    <script>
+                                        document.write('($' + calculateDiscountAmount({{ apartment.price }}, {{ apartment.months_free }}, 'months', '{{ preferences.discount_calculation|default:"daily" }}').toFixed(2) + ')');
+                                    </script>
+                                    </div>
                                 {% endif %}
                                 {% if apartment.weeks_free %}
-                                    {% if apartment.months_free %} • {% endif %}
-                                    {{ apartment.weeks_free }} week{{ apartment.weeks_free|pluralize }} free
+                                    <div>{{ apartment.weeks_free }} week{{ apartment.weeks_free|pluralize }} free
+                                    <script>
+                                        document.write('($' + calculateDiscountAmount({{ apartment.price }}, {{ apartment.weeks_free }}, 'weeks', '{{ preferences.discount_calculation|default:"daily" }}').toFixed(2) + ')');
+                                    </script>
+                                    </div>
                                 {% endif %}
                                 {% if apartment.flat_discount %}
-                                    {% if apartment.months_free or apartment.weeks_free %} • {% endif %}
-                                    ${{ apartment.flat_discount|floatformat:2 }} discount
+                                    <div>${{ apartment.flat_discount|floatformat:2 }} flat discount</div>
                                 {% endif %}
                             </div>
                         </div>
