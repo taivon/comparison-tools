@@ -502,6 +502,116 @@
     </div>
 </div>
 
+<!-- Preferences Modal -->
+<div id="preferencesModal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" aria-hidden="true" onclick="closePreferencesModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <form id="preferencesForm" method="post" action="{% url 'apartments:dashboard' %}">
+                {% csrf_token %}
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-brand-purple/10 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Calculation Settings</h3>
+                                    <p class="text-sm text-gray-500">Adjust how apartments are compared</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="closePreferencesModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Weight Sliders -->
+                    <div class="space-y-6 mb-6">
+                        <div>
+                            <label for="price_weight" class="block text-sm font-medium text-gray-700 mb-2">
+                                Price Importance: <span id="price_weight_value" class="text-brand-purple font-semibold">50%</span>
+                            </label>
+                            <input type="range" name="price_weight" id="price_weight" min="0" max="100" value="50"
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
+                                   oninput="updateWeightValue('price_weight', this.value)">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Less Important</span>
+                                <span>More Important</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="sqft_weight" class="block text-sm font-medium text-gray-700 mb-2">
+                                Square Footage Importance: <span id="sqft_weight_value" class="text-brand-purple font-semibold">50%</span>
+                            </label>
+                            <input type="range" name="sqft_weight" id="sqft_weight" min="0" max="100" value="50"
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
+                                   oninput="updateWeightValue('sqft_weight', this.value)">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Less Important</span>
+                                <span>More Important</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="distance_weight" class="block text-sm font-medium text-gray-700 mb-2">
+                                Distance Importance: <span id="distance_weight_value" class="text-brand-purple font-semibold">50%</span>
+                            </label>
+                            <input type="range" name="distance_weight" id="distance_weight" min="0" max="100" value="50"
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
+                                   oninput="updateWeightValue('distance_weight', this.value)">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Less Important</span>
+                                <span>More Important</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Discount Calculation Method -->
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3">Discount Calculation Method</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="radio" name="discount_calculation" value="daily" checked
+                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300">
+                                <span class="ml-3 text-sm text-gray-700">
+                                    <span class="font-medium">Daily</span> - Spread discounts across all days of lease
+                                </span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="discount_calculation" value="monthly"
+                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300">
+                                <span class="ml-3 text-sm text-gray-700">
+                                    <span class="font-medium">Monthly</span> - Apply free months at end of lease
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                    <button type="submit" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-6 py-3 bg-brand-purple text-sm font-medium text-white hover:bg-brand-purple-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:ml-3 sm:w-auto">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Save Settings
+                    </button>
+                    <button type="button" onclick="closePreferencesModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:mt-0 sm:w-auto">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Edit Apartment Modal -->
 <div id="editApartmentModal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -978,13 +1088,41 @@ document.addEventListener('DOMContentLoaded', function() {
     switchView(preferredView);
 });
 
-// Preferences modal functions (placeholders for now)
+// Preferences modal functions
 function openPreferencesModal() {
-    alert('Preferences functionality coming soon!');
+    const modal = document.getElementById('preferencesModal');
+
+    // Load current preferences
+    const priceWeight = {{ preferences.price_weight|default:50 }};
+    const sqftWeight = {{ preferences.sqft_weight|default:50 }};
+    const distanceWeight = {{ preferences.distance_weight|default:50 }};
+    const discountCalc = '{{ preferences.discount_calculation|default:"daily" }}';
+
+    // Set form values
+    document.getElementById('price_weight').value = priceWeight;
+    document.getElementById('sqft_weight').value = sqftWeight;
+    document.getElementById('distance_weight').value = distanceWeight;
+
+    // Update display values
+    document.getElementById('price_weight_value').textContent = priceWeight + '%';
+    document.getElementById('sqft_weight_value').textContent = sqftWeight + '%';
+    document.getElementById('distance_weight_value').textContent = distanceWeight + '%';
+
+    // Set radio button
+    const radios = document.querySelectorAll('input[name="discount_calculation"]');
+    radios.forEach(radio => {
+        radio.checked = (radio.value === discountCalc);
+    });
+
+    modal.classList.remove('hidden');
 }
 
 function closePreferencesModal() {
-    // Placeholder
+    document.getElementById('preferencesModal').classList.add('hidden');
+}
+
+function updateWeightValue(name, value) {
+    document.getElementById(name + '_value').textContent = value + '%';
 }
 
 function dismissSignupPrompt() {
