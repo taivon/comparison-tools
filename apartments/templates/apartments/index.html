@@ -189,6 +189,14 @@
                         </p>
                     </div>
                     <div class="flex items-center space-x-3">
+                        <!-- Preferences/Settings Icon -->
+                        <button onclick="openPreferencesModal()" class="p-2 text-gray-700 hover:text-brand-purple hover:bg-gray-50 rounded-lg border border-gray-300 transition-colors" title="Calculation Settings">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </button>
+
                         <!-- View Toggle -->
                         <div class="inline-flex rounded-lg border border-gray-300 bg-white">
                             <button id="cardViewBtn" onclick="switchView('cards')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-l-lg transition-colors">
@@ -563,8 +571,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Comparison Preferences</h3>
-                                <p class="text-sm text-gray-500">Customize how apartments are ranked and sorted</p>
+                                <h3 class="text-lg font-semibold text-gray-900">Calculation Settings & Preferences</h3>
+                                <p class="text-sm text-gray-500">Customize how net effective rent is calculated and apartments are ranked</p>
                             </div>
                         </div>
                     </div>
@@ -618,6 +626,28 @@
                                 </div>
                             </div>
                             <p class="text-xs text-gray-500 mt-2">Drag to reorder by importance</p>
+                        </div>
+
+                        <!-- Net Effective Calculation Method -->
+                        <div class="border-t border-gray-200 pt-6">
+                            <label class="block text-sm font-medium text-gray-900 mb-3">Net Effective Rent Calculation</label>
+                            <div class="space-y-3">
+                                <label class="flex items-start p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                    <input type="radio" name="rent_calculation_method" value="daily" checked class="mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300">
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">Daily Rate (365 days)</div>
+                                        <div class="text-xs text-gray-500">Calculate total rent for the lease, then divide by 365 days per year</div>
+                                    </div>
+                                </label>
+                                <label class="flex items-start p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                    <input type="radio" name="rent_calculation_method" value="weekly" class="mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300">
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">Weekly Rate (52 weeks)</div>
+                                        <div class="text-xs text-gray-500">Calculate total rent for the lease, then divide by 52 weeks per year</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Changes how net effective monthly rent is calculated when discounts are applied</p>
                         </div>
 
                         <!-- Discount Calculation -->
