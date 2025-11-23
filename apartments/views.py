@@ -122,10 +122,22 @@ def index(request):
     else:
         # Anonymous user - get data from session
         apartments = get_session_apartments(request)
-        preferences = None  # Anonymous users don't have saved preferences
+        # Get anonymous user preferences from session
+        session_prefs = request.session.get('anonymous_preferences', {})
+        if session_prefs:
+            # Create a simple preferences object
+            class SessionPreferences:
+                def __init__(self, data):
+                    self.price_weight = data.get('price_weight', 50)
+                    self.sqft_weight = data.get('sqft_weight', 50)
+                    self.distance_weight = data.get('distance_weight', 50)
+                    self.discount_calculation = data.get('discount_calculation', 'daily')
+            preferences = SessionPreferences(session_prefs)
+        else:
+            preferences = None
 
-    # Handle preferences form submission (only for authenticated users)
-    if request.method == "POST" and request.user.is_authenticated:
+    # Handle preferences form submission (for both authenticated and anonymous users)
+    if request.method == "POST":
         form = UserPreferencesForm(request.POST)
         if form.is_valid():
             preferences_data = {
@@ -134,7 +146,15 @@ def index(request):
                 "distance_weight": form.cleaned_data["distance_weight"],
                 "discount_calculation": form.cleaned_data["discount_calculation"],
             }
-            firestore_service.update_user_preferences(request.user.id, preferences_data)
+
+            if request.user.is_authenticated:
+                # Save to Firestore for authenticated users
+                firestore_service.update_user_preferences(request.user.id, preferences_data)
+            else:
+                # Save to session for anonymous users
+                request.session['anonymous_preferences'] = preferences_data
+                request.session.modified = True
+
             messages.success(request, "Preferences updated successfully!")
             return redirect("apartments:index")
     else:
