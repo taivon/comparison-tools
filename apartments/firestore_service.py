@@ -97,6 +97,11 @@ class FirestoreApartment:
         return self.doc_id or ""
 
     @property
+    def id(self):
+        """Return doc_id as id for template compatibility"""
+        return self.doc_id or ""
+
+    @property
     def price_per_sqft(self):
         if self.square_footage > 0:
             return round(self.price / Decimal(str(self.square_footage)), 2)
