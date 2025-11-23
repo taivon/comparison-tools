@@ -198,9 +198,8 @@ class ApartmentForm(forms.Form):
 
 class UserPreferencesForm(forms.Form):
     DISCOUNT_CHOICES = [
-        ("monthly", "Monthly"),
-        ("weekly", "Weekly"),
         ("daily", "Daily"),
+        ("monthly", "Monthly"),
     ]
 
     price_weight = forms.IntegerField(
@@ -220,10 +219,10 @@ class UserPreferencesForm(forms.Form):
     )
     discount_calculation = forms.ChoiceField(
         choices=DISCOUNT_CHOICES,
-        initial="monthly",
-        widget=forms.Select(
+        initial="daily",
+        widget=forms.RadioSelect(
             attrs={
-                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary"
+                "class": "mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"
             }
         ),
     )
