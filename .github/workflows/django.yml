@@ -24,7 +24,16 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    - name: Run Migrations
+      env:
+        DJANGO_SETTINGS_MODULE: config.settings
+        SECRET_KEY: test-secret-key-for-ci
+      run: |
+        python manage.py migrate --noinput
     - name: Run Tests
+      env:
+        DJANGO_SETTINGS_MODULE: config.settings
+        SECRET_KEY: test-secret-key-for-ci
       run: |
         python manage.py test
 
@@ -63,9 +72,17 @@ jobs:
       working-directory: theme/static_src
       run: npm run build
     
+    - name: Run Migrations (for collectstatic)
+      env:
+        DJANGO_SETTINGS_MODULE: config.settings
+        SECRET_KEY: 'django-insecure-temp-key-for-build-only'
+      run: |
+        python manage.py migrate --noinput || true
+    
     - name: Collect Static Files
       env:
         DJANGO_SETTINGS_MODULE: config.settings
+        SECRET_KEY: 'django-insecure-temp-key-for-build-only'
       run: |
         python manage.py collectstatic --noinput
     
@@ -79,4 +96,5 @@ jobs:
     
     - name: Deploy to App Engine
       run: |
+        gcloud config set project comparison-tools-479102
         gcloud app deploy app.yaml --quiet
