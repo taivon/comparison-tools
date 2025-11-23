@@ -1,10 +1,15 @@
-*.pyc
-db.sqlite3
+# Sensitive environment files - NEVER COMMIT THESE!
+.env
+.env.local
+.env.*.local
+*.env
+
 # Python
+*.pyc
 __pycache__/
 *.py[cod]
 *.sqlite3
-.env
+db.sqlite3
 *.log
 
 # Virtual env
