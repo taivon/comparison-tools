@@ -11,8 +11,11 @@ def firestore_login(request, user):
     """Log in a Firestore user by storing their ID in the session"""
     if user and user.is_authenticated and user.is_active:
         request.session['user_id'] = user.doc_id
+        request.session.save()  # Explicitly save the session
         request.user = user
+        logger.info(f"User {user.username} logged in, session saved with ID: {user.doc_id}")
         return True
+    logger.warning(f"Failed to log in user: authenticated={getattr(user, 'is_authenticated', False)}, active={getattr(user, 'is_active', False)}")
     return False
 
 
