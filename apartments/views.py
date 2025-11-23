@@ -10,7 +10,12 @@ from .firestore_service import (
     FirestoreUserPreferences,
 )
 from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm, LoginForm
-from .auth_utils import firestore_login, firestore_logout, firestore_authenticate, login_required_firestore
+from .auth_utils import (
+    firestore_login,
+    firestore_logout,
+    firestore_authenticate,
+    login_required_firestore,
+)
 import logging
 from decimal import Decimal
 
@@ -60,11 +65,17 @@ def index(request):
             reverse=True,
         )  # Sort in descending order
 
+    # Check if user can add more apartments
+    can_add_apartment = request.user.is_staff or len(apartments) < 2
+
     context = {
         "apartments": apartments,
         "preferences": preferences,
         "form": form,  # Add the form to the context
         "is_premium": request.user.is_staff,  # Temporary premium check
+        "can_add_apartment": can_add_apartment,
+        "apartment_count": len(apartments),
+        "apartment_limit": 2 if not request.user.is_staff else None,
     }
     return render(request, "apartments/index.html", context)
 
@@ -215,7 +226,10 @@ def signup_view(request):
                 return redirect("apartments:index")
             except Exception as e:
                 logger.error(f"Error creating user: {e}")
-                messages.error(request, "An error occurred while creating your account. Please try again.")
+                messages.error(
+                    request,
+                    "An error occurred while creating your account. Please try again.",
+                )
     else:
         form = CustomUserCreationForm()
 
@@ -227,9 +241,9 @@ def login_view(request):
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+
             user = firestore_authenticate(username, password)
             if user:
                 firestore_login(request, user)
@@ -254,11 +268,17 @@ def google_oauth_callback(request):
     """Handle Google OAuth callback and redirect after social auth"""
     # This view is called after successful social auth
     # The pipeline should have already logged the user in
-    
-    if hasattr(request, 'user') and request.user.is_authenticated:
+
+    # Check if user is in session (Firestore authentication)
+    user_id = request.session.get("user_id")
+    if user_id and hasattr(request, "user") and request.user.is_authenticated:
+        logger.info(f"OAuth callback successful for user: {request.user.username}")
         messages.success(request, f"Welcome back, {request.user.username}!")
         return redirect("apartments:index")
     else:
+        logger.warning(
+            f"OAuth callback failed - user_id: {user_id}, user authenticated: {hasattr(request, 'user') and request.user.is_authenticated}"
+        )
         messages.error(request, "Authentication failed. Please try again.")
         return redirect("login")
 
@@ -269,65 +289,75 @@ def sync_firebase_user(request):
     """Sync Firebase authenticated user with Firestore user collection"""
     try:
         data = json.loads(request.body)
-        firebase_uid = data.get('uid')
-        email = data.get('email')
-        display_name = data.get('displayName', '')
-        photo_url = data.get('photoURL', '')
-        
+        firebase_uid = data.get("uid")
+        email = data.get("email")
+        display_name = data.get("displayName", "")
+        photo_url = data.get("photoURL", "")
+
         if not firebase_uid or not email:
-            return JsonResponse({'error': 'Missing required fields'}, status=400)
-        
+            return JsonResponse({"error": "Missing required fields"}, status=400)
+
         firestore_service = FirestoreService()
-        
+
         # Check if user already exists by email
         existing_user = firestore_service.get_user_by_email(email)
-        
+
         if existing_user:
             # Update existing user with Firebase UID
             update_data = {
-                'firebase_uid': firebase_uid,
-                'photo_url': photo_url,
+                "firebase_uid": firebase_uid,
+                "photo_url": photo_url,
             }
             firestore_service.update_user(existing_user.doc_id, update_data)
             user = firestore_service.get_user(existing_user.doc_id)
         else:
             # Create new user
             # Generate username from display_name or email
-            username = display_name.lower().replace(' ', '') if display_name else email.split('@')[0]
-            
+            username = (
+                display_name.lower().replace(" ", "")
+                if display_name
+                else email.split("@")[0]
+            )
+
             # Ensure username is unique
             counter = 1
             base_username = username
             while firestore_service.get_user_by_username(username):
                 username = f"{base_username}{counter}"
                 counter += 1
-            
+
             user_data = {
-                'username': username,
-                'email': email,
-                'first_name': display_name.split(' ')[0] if display_name else '',
-                'last_name': ' '.join(display_name.split(' ')[1:]) if display_name and len(display_name.split(' ')) > 1 else '',
-                'firebase_uid': firebase_uid,
-                'photo_url': photo_url,
-                'is_staff': False,  # New users start as free tier
+                "username": username,
+                "email": email,
+                "first_name": display_name.split(" ")[0] if display_name else "",
+                "last_name": (
+                    " ".join(display_name.split(" ")[1:])
+                    if display_name and len(display_name.split(" ")) > 1
+                    else ""
+                ),
+                "firebase_uid": firebase_uid,
+                "photo_url": photo_url,
+                "is_staff": False,  # New users start as free tier
             }
-            
+
             # Create user without password (Firebase handles auth)
             user = firestore_service.create_firebase_user(user_data)
-        
+
         # Log the user into Django session
         firestore_login(request, user)
-        
-        return JsonResponse({
-            'success': True,
-            'user': {
-                'id': user.doc_id,
-                'username': user.username,
-                'email': user.email,
-                'is_staff': user.is_staff
+
+        return JsonResponse(
+            {
+                "success": True,
+                "user": {
+                    "id": user.doc_id,
+                    "username": user.username,
+                    "email": user.email,
+                    "is_staff": user.is_staff,
+                },
             }
-        })
-        
+        )
+
     except Exception as e:
         logger.error(f"Error syncing Firebase user: {e}")
-        return JsonResponse({'error': 'Internal server error'}, status=500)
+        return JsonResponse({"error": "Internal server error"}, status=500)
