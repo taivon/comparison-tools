@@ -26,7 +26,7 @@
             <!-- Inline Apartment Entry Form -->
             {% if can_add_apartment %}
                 <div class="max-w-4xl mx-auto">
-                    <form method="post" action="{% url 'apartments:create_apartment' %}" class="bg-gradient-to-br from-gray-50 to-white dark:from-neutral-800 dark:to-neutral-900 border-2 border-gray-200 dark:border-neutral-700 rounded-2xl p-8 shadow-lg">
+                    <form id="inlineApartmentForm" method="post" action="{% url 'apartments:create_apartment' %}" onsubmit="handleInlineApartmentSubmit(event)" class="bg-gradient-to-br from-gray-50 to-white dark:from-neutral-800 dark:to-neutral-900 border-2 border-gray-200 dark:border-neutral-700 rounded-2xl p-8 shadow-lg">
                         {% csrf_token %}
 
                         <!-- Basic Fields -->
@@ -1072,6 +1072,42 @@ function toggleModalAdvancedOptions() {
     } else {
         advancedOptions.classList.add('hidden');
         chevron.classList.remove('rotate-180');
+    }
+}
+
+async function handleInlineApartmentSubmit(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const isAnonymous = {{ is_anonymous|yesno:"true,false" }};
+
+    if (isAnonymous) {
+        // Store in sessionStorage for anonymous users
+        const apartments = getSessionApartments();
+
+        // Check 2-apartment limit for anonymous users
+        if (apartments.length >= 2) {
+            alert('You\'ve reached the 2-apartment limit for guest users. Sign up to save and compare more apartments!');
+            window.location.href = '{% url "signup" %}';
+            return;
+        }
+
+        const apartmentData = {
+            name: formData.get('name'),
+            price: parseFloat(formData.get('price')),
+            square_footage: parseInt(formData.get('square_footage')),
+            lease_length_months: parseInt(formData.get('lease_length_months') || 12),
+            months_free: parseInt(formData.get('months_free') || 0),
+            weeks_free: parseInt(formData.get('weeks_free') || 0),
+            flat_discount: parseFloat(formData.get('flat_discount') || 0)
+        };
+
+        addSessionApartment(apartmentData);
+        window.location.reload();
+    } else {
+        // Authenticated user - submit form normally
+        form.submit();
     }
 }
 
