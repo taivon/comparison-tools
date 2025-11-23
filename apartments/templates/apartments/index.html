@@ -637,14 +637,14 @@
                                     {{ radio.tag }}
                                     <div class="ml-3">
                                         <div class="text-sm font-medium text-gray-900">
-                                            {% if radio.choice_value == 'daily' %}
+                                            {% if radio.data.value == 'daily' %}
                                                 Daily Rate (365 days)
                                             {% else %}
                                                 Monthly Rate
                                             {% endif %}
                                         </div>
                                         <div class="text-xs text-gray-500">
-                                            {% if radio.choice_value == 'daily' %}
+                                            {% if radio.data.value == 'daily' %}
                                                 Calculate total rent for the lease, then divide by 365 days per year
                                             {% else %}
                                                 Use standard monthly rent calculation (4 weeks = 1 month)
