@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.http import JsonResponse
 from .models import Apartment, UserPreferences
@@ -124,3 +124,9 @@ def signup(request):
         form = CustomUserCreationForm()
     
     return render(request, 'apartments/signup.html', {'form': form})
+
+def logout_view(request):
+    """Handle user logout with GET and POST requests"""
+    logout(request)
+    messages.success(request, "You have been successfully logged out.")
+    return redirect('login')
