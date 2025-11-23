@@ -130,17 +130,20 @@ def update_preferences(request):
 
 def signup_view(request):
     """Handle user registration"""
-    if request.method == 'POST':
+    if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            messages.success(request, f"Welcome {user.first_name or user.username}! Your account has been created successfully.")
+            messages.success(
+                request,
+                f"Welcome {user.first_name or user.username}! Your account has been created successfully.",
+            )
             login(request, user)
-            return redirect('apartments:index')
+            return redirect("apartments:index")
     else:
         form = CustomUserCreationForm()
-    
-    return render(request, 'apartments/signup.html', {'form': form})
+
+    return render(request, "apartments/signup.html", {"form": form})
 
 
 def logout_view(request):
