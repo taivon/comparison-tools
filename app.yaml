@@ -1,6 +1,6 @@
 runtime: python314
 
-entrypoint: gunicorn config.wsgi --bind=0.0.0.0:$PORT --timeout 120
+entrypoint: gunicorn -b :$PORT main:app
 
 automatic_scaling:
   min_instances: 0
