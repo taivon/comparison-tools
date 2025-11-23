@@ -23,7 +23,7 @@ Each subdomain operates as an independent service while sharing the unified `com
 
 - **Backend**: Django 5.2, Python 3.13.3
 - **Frontend**: Tailwind CSS, Django Templates
-- **Database**: SQLite (development), PostgreSQL (production)
+- **Database**: SQLite (Django admin/auth), Firestore (application data)
 - **Deployment**: Google App Engine
 - **CI/CD**: GitHub Actions
 
