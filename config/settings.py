@@ -145,12 +145,28 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# SQLite is used only for Django admin, auth, and sessions
+# Application data (apartments, user preferences) is stored in Firestore
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# Firestore Configuration
+# Firestore is used for all application data (apartments, user preferences)
+# Django's built-in features (admin, auth, sessions) continue to use SQLite
+FIRESTORE_PROJECT_ID = os.environ.get('GOOGLE_CLOUD_PROJECT', 'comparison-tools-479102')
+
+# In production (App Engine), Firestore uses default service account
+# In development, use Application Default Credentials or service account key
+if not DEBUG:
+    # Production: Use default App Engine service account
+    USE_FIRESTORE_EMULATOR = False
+else:
+    # Development: Can use emulator or real Firestore
+    USE_FIRESTORE_EMULATOR = os.environ.get('FIRESTORE_EMULATOR_HOST') is not None
 
 
 # Password validation
@@ -230,6 +246,11 @@ LOGGING = {
         "apartments": {
             "handlers": ["console"],
             "level": "INFO" if not DEBUG else "DEBUG",
+            "propagate": False,
+        },
+        "google.cloud.firestore": {
+            "handlers": ["console"],
+            "level": "WARNING",
             "propagate": False,
         },
     },
