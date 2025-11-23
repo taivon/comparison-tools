@@ -25,5 +25,5 @@ urlpatterns = [
     path('', include('apartments.urls')),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='apartments/login.html'), name='login'),
     path('accounts/logout/', apartment_views.logout_view, name='logout'),
-    path('accounts/signup/', apartment_views.signup, name='signup'),
+    path('accounts/', include('social_django.urls', namespace='social')),
 ]

@@ -112,19 +112,6 @@ def update_preferences(request):
     
     return render(request, 'apartments/preferences_form.html', {'form': form})
 
-def signup(request):
-    if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, "Account created successfully! Welcome!")
-            return redirect('apartments:index')
-    else:
-        form = CustomUserCreationForm()
-    
-    return render(request, 'apartments/signup.html', {'form': form})
-
 def logout_view(request):
     """Handle user logout with GET and POST requests"""
     logout(request)
