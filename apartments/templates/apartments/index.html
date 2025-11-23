@@ -979,27 +979,55 @@ async function handleEditApartment(event) {
     const formData = new FormData(form);
     const apartmentId = document.getElementById('edit_apartment_id').value;
 
-    try {
-        const response = await fetch(`/apartment/${apartmentId}/update/`, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        });
+    // Check if this is a sessionStorage apartment
+    if (apartmentId.startsWith('session_')) {
+        // Update sessionStorage apartment
+        const apartments = getSessionApartments();
+        const index = apartments.findIndex(apt => apt.id === apartmentId);
 
-        if (response.ok) {
-            // Success - reload the page to show the updated apartment
+        if (index !== -1) {
+            // Update the apartment data
+            apartments[index] = {
+                id: apartmentId,
+                name: formData.get('name'),
+                price: parseFloat(formData.get('price')),
+                square_footage: parseInt(formData.get('square_footage')),
+                lease_length_months: parseInt(formData.get('lease_length_months') || 12),
+                months_free: parseInt(formData.get('months_free') || 0),
+                weeks_free: parseInt(formData.get('weeks_free') || 0),
+                flat_discount: parseFloat(formData.get('flat_discount') || 0)
+            };
+
+            saveSessionApartments(apartments);
+            closeEditApartmentModal();
             window.location.reload();
         } else {
-            // Handle error
-            const errorText = await response.text();
-            alert('Failed to update apartment. Please check your inputs and try again.');
-            console.error('Error:', errorText);
+            alert('Apartment not found.');
         }
-    } catch (error) {
-        alert('An error occurred while updating the apartment.');
-        console.error('Error:', error);
+    } else {
+        // Authenticated user - update on server
+        try {
+            const response = await fetch(`/apartment/${apartmentId}/update/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+
+            if (response.ok) {
+                // Success - reload the page to show the updated apartment
+                window.location.reload();
+            } else {
+                // Handle error
+                const errorText = await response.text();
+                alert('Failed to update apartment. Please check your inputs and try again.');
+                console.error('Error:', errorText);
+            }
+        } catch (error) {
+            alert('An error occurred while updating the apartment.');
+            console.error('Error:', error);
+        }
     }
 }
 
@@ -1332,6 +1360,7 @@ function renderSessionApartments(apartments) {
                 ${apt.flat_discount > 0 ? `$${apt.flat_discount} off` : ''}
             </td>` : ''}
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button onclick='openEditApartmentModal(${JSON.stringify(apt)})' class="text-brand-purple hover:text-brand-purple-light mr-4">Edit</button>
                 <button onclick="deleteSessionApartment('${apt.id}')" class="text-red-600 hover:text-red-900">Delete</button>
             </td>
         `;
@@ -1348,11 +1377,18 @@ function renderSessionApartments(apartments) {
                     ${hasDiscounts && (apt.months_free || apt.weeks_free || apt.flat_discount) ?
                         '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mt-1">Deal</span>' : ''}
                 </div>
-                <button onclick="deleteSessionApartment('${apt.id}')" class="text-red-600 hover:text-red-900 ml-4">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
+                <div class="flex gap-2">
+                    <button onclick='openEditApartmentModal(${JSON.stringify(apt)})' class="text-brand-purple hover:text-brand-purple-light">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </button>
+                    <button onclick="deleteSessionApartment('${apt.id}')" class="text-red-600 hover:text-red-900">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="space-y-3">
                 <div class="flex justify-between">
