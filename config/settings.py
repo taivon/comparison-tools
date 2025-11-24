@@ -312,11 +312,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-# Login settings
-LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "apartments:index"
-LOGOUT_REDIRECT_URL = "login"
-
 # Logging configuration
 LOGGING = {
     "version": 1,
@@ -463,7 +458,7 @@ SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/auth/callback/"
 SOCIAL_AUTH_LOGOUT_REDIRECT_URL = "/login/"
 SOCIAL_AUTH_LOGIN_ERROR_URL = "/login/"
 LOGIN_URL = "/login/"
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "home"  # Redirect to homepage by default
 LOGOUT_REDIRECT_URL = "/login/"
 
 # Social Auth Pipeline (customize user creation)
