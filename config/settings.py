@@ -133,6 +133,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "social_django.context_processors.backends",
                 "social_django.context_processors.login_redirect",
+                "apartments.context_processors.subscription_status",
             ],
         },
     },
@@ -180,6 +181,91 @@ if not DEBUG:
 else:
     # Development: Can use emulator or real Firestore
     USE_FIRESTORE_EMULATOR = os.environ.get("FIRESTORE_EMULATOR_HOST") is not None
+
+
+# Stripe Configuration - Fetch from Secret Manager in production, env vars in development
+def get_stripe_credentials():
+    """Fetch Stripe credentials from Secret Manager in production or environment variables in development."""
+    if DEBUG:
+        # Use environment variables in development (test/sandbox keys)
+        return {
+            "publishable_key": os.getenv("STRIPE_PUBLISHABLE_KEY", ""),
+            "secret_key": os.getenv("STRIPE_SECRET_KEY", ""),
+            "webhook_secret": os.getenv("STRIPE_WEBHOOK_SECRET", ""),
+            "monthly_price_id": os.getenv("STRIPE_MONTHLY_PRICE_ID", ""),
+            "annual_price_id": os.getenv("STRIPE_ANNUAL_PRICE_ID", ""),
+        }
+    else:
+        # Fetch from Google Secret Manager in production (live keys)
+        try:
+            from google.cloud import secretmanager
+
+            client = secretmanager.SecretManagerServiceClient()
+            project_id = "comparison-tools-479102"
+
+            def get_secret(secret_name):
+                """Helper to fetch a secret from Secret Manager"""
+                name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+                response = client.access_secret_version(request={"name": name})
+                return response.payload.data.decode("UTF-8").strip()
+
+            # Fetch all Stripe secrets
+            publishable_key = get_secret("stripe-publishable-key")
+            secret_key = get_secret("stripe-secret-key")
+            webhook_secret = get_secret("stripe-webhook-secret")
+            monthly_price_id = get_secret("stripe-monthly-price-id")
+            annual_price_id = get_secret("stripe-annual-price-id")
+
+            # Validate that credentials are not empty
+            if not secret_key or not publishable_key:
+                raise ValueError("Stripe keys are empty or missing")
+
+            return {
+                "publishable_key": publishable_key,
+                "secret_key": secret_key,
+                "webhook_secret": webhook_secret,
+                "monthly_price_id": monthly_price_id,
+                "annual_price_id": annual_price_id,
+            }
+
+        except Exception as e:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to fetch Stripe credentials from Secret Manager: {e}")
+            # Fallback to environment variables if Secret Manager fails
+            return {
+                "publishable_key": os.getenv("STRIPE_PUBLISHABLE_KEY", ""),
+                "secret_key": os.getenv("STRIPE_SECRET_KEY", ""),
+                "webhook_secret": os.getenv("STRIPE_WEBHOOK_SECRET", ""),
+                "monthly_price_id": os.getenv("STRIPE_MONTHLY_PRICE_ID", ""),
+                "annual_price_id": os.getenv("STRIPE_ANNUAL_PRICE_ID", ""),
+            }
+
+
+# Get Stripe credentials
+stripe_creds = get_stripe_credentials()
+STRIPE_PUBLISHABLE_KEY = stripe_creds["publishable_key"]
+STRIPE_SECRET_KEY = stripe_creds["secret_key"]
+STRIPE_WEBHOOK_SECRET = stripe_creds["webhook_secret"]
+STRIPE_MONTHLY_PRICE_ID = stripe_creds["monthly_price_id"]
+STRIPE_ANNUAL_PRICE_ID = stripe_creds["annual_price_id"]
+
+# Display prices (always from environment variables for simplicity)
+STRIPE_MONTHLY_PRICE_AMOUNT = float(os.environ.get("STRIPE_MONTHLY_PRICE_AMOUNT", "5"))
+STRIPE_ANNUAL_PRICE_AMOUNT = float(os.environ.get("STRIPE_ANNUAL_PRICE_AMOUNT", "50"))
+
+# Feature flag to enable/disable Stripe checkout (defaults to False for safety)
+STRIPE_ENABLED = os.environ.get("STRIPE_ENABLED", "False").lower() == "true"
+
+# Log warning if Stripe is not configured
+if not STRIPE_SECRET_KEY:
+    import logging
+
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "Stripe is not configured. Subscription functionality will be disabled."
+    )
 
 
 # Password validation
@@ -409,16 +495,14 @@ CACHES = {
 }
 
 # Session Configuration
-if not DEBUG:
-    # On App Engine (production), use cache-based sessions to avoid SQLite database writes
-    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-    SESSION_CACHE_ALIAS = "default"
+# Use cache-based sessions in both development and production to avoid SQLite entirely
+# All user data is stored in Firestore, sessions are just for Django's internal auth
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
 
-    # Also configure messages to not use database
+if not DEBUG:
+    # Also configure messages to not use database in production
     MESSAGE_STORAGE = "django.contrib.messages.storage.fallback.FallbackStorage"
-else:
-    # In development, use default database sessions
-    SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 # Session security settings
 SESSION_COOKIE_SECURE = not DEBUG  # Use secure cookies in production

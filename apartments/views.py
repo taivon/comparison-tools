@@ -3,12 +3,14 @@ from django.contrib import messages
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.conf import settings
 import json
 from .firestore_service import (
     FirestoreService,
     FirestoreApartment,
     FirestoreUserPreferences,
 )
+from .stripe_service import StripeService
 from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm, LoginForm
 from .auth_utils import (
     firestore_login,
@@ -20,6 +22,13 @@ import logging
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
+
+
+def user_has_premium(user):
+    """Helper function to check if a user has premium access via subscription or legacy is_staff"""
+    if not user.is_authenticated:
+        return False
+    return StripeService.has_active_subscription(user)
 
 
 def calculate_net_effective_price(apt_data, discount_calculation='daily'):
@@ -132,8 +141,9 @@ def index(request):
     if request.user.is_authenticated:
         apartments = firestore_service.get_user_apartments(request.user.id)
         apartment_count = len(apartments)
-        # Authenticated users: staff = unlimited, others = 2
-        can_add_apartment = request.user.is_staff or apartment_count < 2
+        # Authenticated users: premium = unlimited, free tier = 2
+        has_premium = user_has_premium(request.user)
+        can_add_apartment = has_premium or apartment_count < 2
     else:
         # Anonymous users - will check via JavaScript/sessionStorage
         apartment_count = 0
@@ -237,9 +247,10 @@ def dashboard(request):
         )  # Sort in descending order
 
     # Check if user can add more apartments
+    has_premium = user_has_premium(request.user) if request.user.is_authenticated else False
     if request.user.is_authenticated:
-        # Authenticated users: staff = unlimited, others = 2
-        can_add_apartment = request.user.is_staff or len(apartments) < 2
+        # Authenticated users: premium = unlimited, free tier = 2
+        can_add_apartment = has_premium or len(apartments) < 2
     else:
         # Anonymous users: max 2 apartments
         can_add_apartment = len(apartments) < 2
@@ -258,11 +269,11 @@ def dashboard(request):
         "apartments": apartments,
         "preferences": preferences,
         "form": form,  # Add the form to the context
-        "is_premium": request.user.is_staff if request.user.is_authenticated else False,
+        "is_premium": has_premium,
         "can_add_apartment": can_add_apartment,
         "apartment_count": len(apartments),
         "apartment_limit": (
-            2 if not (request.user.is_authenticated and request.user.is_staff) else None
+            2 if not has_premium else None
         ),
         "is_anonymous": not request.user.is_authenticated,
         "has_discounts": has_discounts,
@@ -296,8 +307,9 @@ def create_apartment(request):
             firestore_service = FirestoreService()
 
             # Check free tier limit for authenticated users
+            has_premium = user_has_premium(request.user)
             if (
-                not request.user.is_staff
+                not has_premium
                 and len(firestore_service.get_user_apartments(request.user.id)) >= 2
             ):
                 messages.error(
@@ -508,10 +520,24 @@ def signup_view(request):
     # Check if there are apartments in sessionStorage (client-side check)
     apartment_count = 0  # Will be checked by JavaScript
 
+    # Add Stripe pricing context
+    monthly_price = settings.STRIPE_MONTHLY_PRICE_AMOUNT
+    annual_price = settings.STRIPE_ANNUAL_PRICE_AMOUNT
+    annual_savings = (monthly_price * 12) - annual_price
+
     context = {
         "form": form,
         "apartment_count": apartment_count,
         "has_apartments_to_save": apartment_count > 0,
+        "monthly_price": monthly_price,
+        "annual_price": annual_price,
+        "annual_savings": annual_savings,
+        "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
+        "monthly_price_id": settings.STRIPE_MONTHLY_PRICE_ID,
+        "annual_price_id": settings.STRIPE_ANNUAL_PRICE_ID,
+        "monthly_interval": "month",
+        "annual_interval": "year",
+        "stripe_enabled": settings.STRIPE_ENABLED,
     }
 
     return render(request, "apartments/signup.html", context)
@@ -648,7 +674,8 @@ def sync_firebase_user(request):
                     "id": user.doc_id,
                     "username": user.username,
                     "email": user.email,
-                    "is_staff": user.is_staff,
+                    "is_staff": user.is_staff,  # Legacy field
+                    "has_premium": user_has_premium(user),
                 },
             }
         )
@@ -672,3 +699,185 @@ def terms_of_service(request):
     return render(request, "apartments/terms.html", {
         "current_date": datetime.now().strftime("%B %d, %Y")
     })
+
+
+# Subscription Views
+
+def pricing_redirect(request):
+    """Redirect pricing page to signup page (all pricing info is on signup page)"""
+    return redirect('apartments:signup')
+
+
+@login_required_firestore
+def create_checkout_session(request):
+    """Create a Stripe checkout session for subscription"""
+    from django.conf import settings
+    from .stripe_service import StripeService
+    import stripe as stripe_lib
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        plan_type = data.get('plan_type')  # 'monthly' or 'annual'
+
+        if plan_type not in ['monthly', 'annual']:
+            return JsonResponse({'error': 'Invalid plan type'}, status=400)
+
+        # Get price ID based on plan type
+        price_id = settings.STRIPE_MONTHLY_PRICE_ID if plan_type == 'monthly' else settings.STRIPE_ANNUAL_PRICE_ID
+
+        # Create success and cancel URLs
+        success_url = request.build_absolute_uri('/subscription/success/')
+        cancel_url = request.build_absolute_uri('/subscription/cancel/')
+
+        # Create checkout session
+        stripe_service = StripeService()
+        session = stripe_service.create_checkout_session(
+            user=request.user,
+            price_id=price_id,
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+
+        return JsonResponse({'sessionId': session.id})
+
+    except stripe_lib.error.StripeError as e:
+        logger.error(f"Stripe error: {e}")
+        logger.error(f"Stripe error type: {type(e).__name__}")
+        logger.error(f"Stripe error dict: {e.__dict__}")
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {e}")
+        logger.error(f"Exception type: {type(e).__name__}")
+        logger.error(f"Exception args: {e.args}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return JsonResponse({'error': 'Internal server error'}, status=500)
+
+
+@login_required_firestore
+def checkout_success(request):
+    """Handle successful checkout"""
+    messages.success(request, "Thank you for subscribing! Your premium access is now active.")
+    return redirect('apartments:dashboard')
+
+
+@login_required_firestore
+def checkout_cancel(request):
+    """Handle cancelled checkout"""
+    messages.info(request, "Checkout cancelled. You can upgrade to premium anytime.")
+    return redirect('apartments:pricing')
+
+
+@login_required_firestore
+def billing_portal(request):
+    """Redirect to Stripe billing portal for subscription management"""
+    from .stripe_service import StripeService
+    import stripe as stripe_lib
+
+    try:
+        stripe_service = StripeService()
+        return_url = request.build_absolute_uri('/dashboard/')
+
+        session = stripe_service.create_billing_portal_session(
+            user=request.user,
+            return_url=return_url
+        )
+
+        return redirect(session.url)
+
+    except ValueError as e:
+        messages.error(request, "You don't have an active subscription.")
+        return redirect('apartments:pricing')
+    except stripe_lib.error.StripeError as e:
+        logger.error(f"Stripe error: {e}")
+        messages.error(request, "Unable to access billing portal. Please try again.")
+        return redirect('apartments:dashboard')
+    except Exception as e:
+        logger.error(f"Error creating billing portal session: {e}")
+        messages.error(request, "An error occurred. Please try again.")
+        return redirect('apartments:dashboard')
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def stripe_webhook(request):
+    """Handle Stripe webhook events"""
+    from django.conf import settings
+    from .stripe_service import StripeService
+    import stripe as stripe_lib
+
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+
+    try:
+        event = stripe_lib.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError:
+        # Invalid payload
+        logger.error("Invalid webhook payload")
+        return JsonResponse({'error': 'Invalid payload'}, status=400)
+    except stripe_lib.error.SignatureVerificationError:
+        # Invalid signature
+        logger.error("Invalid webhook signature")
+        return JsonResponse({'error': 'Invalid signature'}, status=400)
+
+    stripe_service = StripeService()
+
+    # Handle the event
+    event_type = event['type']
+
+    try:
+        if event_type == 'checkout.session.completed':
+            # Payment successful, subscription created
+            session = event['data']['object']
+            subscription_id = session.get('subscription')
+
+            if subscription_id:
+                subscription = stripe_lib.Subscription.retrieve(subscription_id)
+                stripe_service.sync_subscription_status(subscription)
+                logger.info(f"Checkout completed: {subscription_id}")
+
+        elif event_type == 'customer.subscription.updated':
+            # Subscription updated (plan change, renewal, etc.)
+            subscription = event['data']['object']
+            stripe_service.sync_subscription_status(subscription)
+            logger.info(f"Subscription updated: {subscription.id}")
+
+        elif event_type == 'customer.subscription.deleted':
+            # Subscription cancelled
+            subscription = event['data']['object']
+            stripe_service.sync_subscription_status(subscription)
+            logger.info(f"Subscription deleted: {subscription.id}")
+
+        elif event_type == 'invoice.payment_succeeded':
+            # Payment succeeded (renewal)
+            invoice = event['data']['object']
+            subscription_id = invoice.get('subscription')
+
+            if subscription_id:
+                subscription = stripe_lib.Subscription.retrieve(subscription_id)
+                stripe_service.sync_subscription_status(subscription)
+                logger.info(f"Payment succeeded for subscription: {subscription_id}")
+
+        elif event_type == 'invoice.payment_failed':
+            # Payment failed
+            invoice = event['data']['object']
+            subscription_id = invoice.get('subscription')
+
+            if subscription_id:
+                subscription = stripe_lib.Subscription.retrieve(subscription_id)
+                stripe_service.sync_subscription_status(subscription)
+                logger.warning(f"Payment failed for subscription: {subscription_id}")
+
+        else:
+            logger.info(f"Unhandled webhook event type: {event_type}")
+
+    except Exception as e:
+        logger.error(f"Error processing webhook event {event_type}: {e}")
+        return JsonResponse({'error': 'Webhook processing failed'}, status=500)
+
+    return JsonResponse({'status': 'success'})
