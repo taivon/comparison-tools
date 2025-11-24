@@ -793,8 +793,8 @@ def create_checkout_session(request):
         price_id = settings.STRIPE_MONTHLY_PRICE_ID if plan_type == 'monthly' else settings.STRIPE_ANNUAL_PRICE_ID
 
         # Create success and cancel URLs
-        success_url = request.build_absolute_uri('/subscription/success/')
-        cancel_url = request.build_absolute_uri('/subscription/cancel/')
+        success_url = request.build_absolute_uri('/apartments/subscription/success/')
+        cancel_url = request.build_absolute_uri('/apartments/subscription/cancel/')
 
         # Create checkout session
         stripe_service = StripeService()
@@ -843,7 +843,7 @@ def billing_portal(request):
 
     try:
         stripe_service = StripeService()
-        return_url = request.build_absolute_uri('/dashboard/')
+        return_url = request.build_absolute_uri('/apartments/dashboard/')
 
         session = stripe_service.create_billing_portal_session(
             user=request.user,
