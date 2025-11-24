@@ -1,0 +1,245 @@
+{% extends "apartments/base.html" %}
+
+{% block title %}Pricing - Apartment Comparison Tool{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Choose Your Plan
+        </h1>
+        <p class="text-xl text-gray-600 dark:text-gray-300">
+            Upgrade to Premium for unlimited apartment comparisons
+        </p>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <!-- Monthly Plan -->
+        <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-lg border-2 border-gray-200 dark:border-neutral-700 p-8 hover:border-brand-purple transition-all">
+            <div class="mb-6">
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Monthly</h3>
+                <div class="flex items-baseline mb-4">
+                    <span class="text-5xl font-bold text-gray-900 dark:text-white">${{ monthly_price|floatformat:2 }}</span>
+                    <span class="text-gray-500 dark:text-gray-400 ml-2">/{{ monthly_interval }}</span>
+                </div>
+                <p class="text-gray-600 dark:text-gray-300">Perfect for flexible monthly needs</p>
+            </div>
+
+            <ul class="space-y-4 mb-8">
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Unlimited apartment comparisons</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Advanced comparison features</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Customizable weighting preferences</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Cancel anytime</span>
+                </li>
+            </ul>
+
+            {% if user.is_authenticated %}
+                {% if has_subscription %}
+                    {% if subscription_info.plan == 'monthly' %}
+                        <button disabled class="w-full bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold cursor-not-allowed">
+                            Current Plan
+                        </button>
+                    {% else %}
+                        <button onclick="switchPlan('monthly')" class="w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                            Switch to Monthly
+                        </button>
+                    {% endif %}
+                {% else %}
+                    <button onclick="createCheckoutSession('monthly')" class="w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                        Get Started
+                    </button>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'apartments:signup' %}" class="block w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
+                    Sign Up to Get Started
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Annual Plan -->
+        <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-lg border-2 border-brand-purple p-8 relative hover:shadow-xl transition-all">
+            <!-- Best Value Badge -->
+            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <span class="bg-brand-green text-white px-4 py-1 rounded-full text-sm font-semibold">
+                    Best Value - Save 17%
+                </span>
+            </div>
+
+            <div class="mb-6 mt-4">
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Annual</h3>
+                <div class="flex items-baseline mb-4">
+                    <span class="text-5xl font-bold text-gray-900 dark:text-white">${{ annual_price|floatformat:2 }}</span>
+                    <span class="text-gray-500 dark:text-gray-400 ml-2">/{{ annual_interval }}</span>
+                </div>
+                <p class="text-gray-600 dark:text-gray-300">Best value for long-term planning</p>
+            </div>
+
+            <ul class="space-y-4 mb-8">
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Everything in Monthly plan</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Save ${{ annual_savings|floatformat:2 }} per year</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">One convenient payment</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Cancel anytime</span>
+                </li>
+            </ul>
+
+            {% if user.is_authenticated %}
+                {% if has_subscription %}
+                    {% if subscription_info.plan == 'annual' %}
+                        <button disabled class="w-full bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold cursor-not-allowed">
+                            Current Plan
+                        </button>
+                    {% else %}
+                        <button onclick="switchPlan('annual')" class="w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                            Switch to Annual
+                        </button>
+                    {% endif %}
+                {% else %}
+                    <button onclick="createCheckoutSession('annual')" class="w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                        Get Started
+                    </button>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'apartments:signup' %}" class="block w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
+                    Sign Up to Get Started
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Free Plan Info -->
+    <div class="max-w-3xl mx-auto mt-12 bg-brand-gray-light dark:bg-neutral-800 rounded-lg p-6 border border-gray-200 dark:border-neutral-700">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Free Plan</h3>
+        <p class="text-gray-600 dark:text-gray-300 mb-4">
+            Not ready to upgrade? No problem! Our free plan includes:
+        </p>
+        <ul class="space-y-2">
+            <li class="flex items-start">
+                <svg class="w-5 h-5 text-brand-purple mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Compare up to 2 apartments</span>
+            </li>
+            <li class="flex items-start">
+                <svg class="w-5 h-5 text-brand-purple mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Basic comparison features</span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Current Subscription Info (if applicable) -->
+    {% if user.is_authenticated and has_subscription %}
+        <div class="max-w-3xl mx-auto mt-8 bg-white dark:bg-neutral-800 rounded-lg p-6 border border-brand-purple">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Your Subscription</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">
+                {{ subscription_info.status_message }}
+            </p>
+            <a href="{% url 'apartments:billing_portal' %}" class="inline-block bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-2 rounded-lg font-semibold transition-colors">
+                Manage Subscription
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Stripe.js -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe('{{ stripe_publishable_key }}');
+
+    async function createCheckoutSession(planType) {
+        try {
+            const response = await fetch('{% url "apartments:create_checkout_session" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({ plan_type: planType }),
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+
+            // Redirect to Stripe Checkout
+            const result = await stripe.redirectToCheckout({
+                sessionId: data.sessionId,
+            });
+
+            if (result.error) {
+                alert('Error: ' + result.error.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+
+    async function switchPlan(planType) {
+        if (confirm('Are you sure you want to switch your plan? This will be prorated based on your current subscription.')) {
+            // This would require additional endpoint for plan switching
+            // For now, direct to billing portal
+            window.location.href = '{% url "apartments:billing_portal" %}';
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

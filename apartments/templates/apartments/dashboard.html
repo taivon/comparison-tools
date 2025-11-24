@@ -117,17 +117,17 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
 
 <!-- Anonymous User Signup Prompt -->
 {% if is_anonymous %}
-    <div id="signupPrompt" class="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
+    <div id="signupPrompt" class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-b border-gray-200 dark:border-neutral-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div class="flex items-start sm:items-center">
                     <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="h-6 w-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-purple-900">
+                        <p class="text-sm font-medium text-purple-900 dark:text-purple-100">
                             {% if apartment_count >= 2 %}
                                 You've reached the guest limit! Sign up to save your comparisons and add unlimited apartments.
                             {% else %}
@@ -137,13 +137,51 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     </div>
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <a href="{% url 'login' %}" class="text-sm font-medium text-purple-700 hover:text-purple-900 min-h-[44px] flex items-center px-3 touch-manipulation">
+                    <a href="{% url 'login' %}" class="text-sm font-medium text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 min-h-[44px] flex items-center px-3 touch-manipulation">
                         Sign In
                     </a>
                     <a href="{% url 'signup' %}" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors min-h-[44px] touch-manipulation flex-1 sm:flex-initial">
                         Sign Up Free
                     </a>
-                    <button onclick="dismissSignupPrompt()" class="text-gray-400 hover:text-gray-600 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
+                    <button onclick="dismissSignupPrompt()" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Premium Upgrade Banner for Free Users -->
+{% if stripe_enabled and user.is_authenticated and not is_premium %}
+    <div id="upgradePrompt" class="bg-gradient-to-r from-brand-purple/10 to-brand-purple-light/10 dark:from-brand-purple/20 dark:to-brand-purple-light/20 border-b border-brand-purple/20 dark:border-brand-purple/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex items-start sm:items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                            {% if apartment_count >= apartment_limit %}
+                                You've reached the free plan limit ({{ apartment_limit }} apartments). Upgrade to Premium for unlimited comparisons!
+                            {% elif apartment_count >= 1 %}
+                                You're using {{ apartment_count }}/{{ apartment_limit }} apartments on the free plan. Upgrade to Premium for unlimited comparisons starting at $9.99/month!
+                            {% else %}
+                                Upgrade to Premium for unlimited apartment comparisons starting at $9.99/month!
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <a href="{% url 'apartments:signup' %}" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-brand-purple hover:bg-brand-purple-dark transition-colors min-h-[44px] touch-manipulation flex-1 sm:flex-initial">
+                        Upgrade to Premium
+                    </a>
+                    <button onclick="dismissUpgradePrompt()" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                         </svg>
@@ -1270,6 +1308,14 @@ function dismissSignupPrompt() {
     if (prompt) {
         prompt.style.display = 'none';
         sessionStorage.setItem('signupPromptDismissed', 'true');
+    }
+}
+
+function dismissUpgradePrompt() {
+    const prompt = document.getElementById('upgradePrompt');
+    if (prompt) {
+        prompt.style.display = 'none';
+        sessionStorage.setItem('upgradePromptDismissed', 'true');
     }
 }
 

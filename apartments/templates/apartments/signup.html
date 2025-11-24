@@ -4,15 +4,16 @@
 
 {% block content %}
 <div class="min-h-screen bg-white">
-    <!-- Hero Section -->
+    {% if not user.is_authenticated %}
+    <!-- Hero Section (only show for non-authenticated users) -->
     <div class="text-center py-12">
         <div class="w-16 h-16 bg-brand-purple rounded-xl flex items-center justify-center mx-auto mb-4">
             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
             </svg>
         </div>
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">Get PRO access to Apartment Comparison Tool</h1>
-        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Our rent concession calculator calculates your net effective rent, helping you compare apartments with move-in specials, free months, and discounts. Unlock unlimited listings and advanced features. Cancel anytime.</p>
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Start Comparing Apartments Smarter</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Our rent concession calculator calculates your net effective rent, helping you compare apartments with move-in specials, free months, and discounts. Get started free or upgrade for unlimited comparisons and advanced features.</p>
         <div class="mt-8 flex justify-center">
             <a href="{% url 'social:begin' 'google-oauth2' %}"
                class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg bg-brand-purple text-white hover:bg-brand-purple-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple text-lg font-semibold shadow-lg transition-colors">
@@ -30,34 +31,154 @@
             <a href="{% url 'login' %}" class="font-medium text-brand-purple hover:text-brand-purple-light">Sign in</a>
         </p>
     </div>
+    {% else %}
+    <!-- Header for authenticated users -->
+    <div class="text-center py-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Upgrade to Premium</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Choose the plan that works best for you</p>
+    </div>
+    {% endif %}
 
-    <!-- Pricing Table -->
-    <div class="max-w-4xl mx-auto px-4 py-12">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Pricing</h2>
-        <div class="grid md:grid-cols-2 gap-8">
-            <div class="border border-gray-200 rounded-xl p-8 bg-gray-50 text-center">
-                <h3 class="text-xl font-semibold mb-2">Free</h3>
-                <p class="text-3xl font-bold mb-4">$0</p>
-                <ul class="text-gray-700 space-y-2 mb-6">
-                    <li>Compare up to 2 apartments</li>
-                    <li>Basic filters</li>
-                    <li>Net effective price calculation</li>
-                </ul>
-                <span class="inline-block px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">Current Plan</span>
+    <!-- Pricing Cards -->
+    <div class="max-w-7xl mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Choose Your Plan</h2>
+
+        <!-- Free Plan Card -->
+        <div class="max-w-3xl mx-auto mb-8 bg-gray-50 rounded-xl p-6 border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Free Plan</h3>
+                    <p class="text-gray-600">Try our apartment comparison tool at no cost</p>
+                </div>
+                <div class="text-3xl font-bold text-gray-900">$0</div>
             </div>
-            <div class="border border-brand-purple rounded-xl p-8 bg-white text-center shadow-lg">
-                <h3 class="text-xl font-semibold mb-2 text-brand-purple">PRO</h3>
-                <p class="text-3xl font-bold mb-4 text-brand-purple">$4.99<span class="text-base font-normal text-gray-600">/mo</span></p>
-                <ul class="text-gray-700 space-y-2 mb-6">
-                    <li>Unlimited apartments</li>
-                    <li>Advanced filters & sorting</li>
-                    <li>Priority support</li>
-                    <li>Early access to new features</li>
+            <ul class="mt-4 space-y-2">
+                <li class="flex items-start">
+                    <svg class="w-5 h-5 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700">Compare up to 2 apartments</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-5 h-5 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700">Basic comparison features</span>
+                </li>
+            </ul>
+        </div>
+
+        {% if stripe_enabled %}
+        <!-- Premium Plans -->
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <!-- Monthly Plan -->
+            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 hover:border-brand-purple transition-all">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Monthly</h3>
+                    <div class="flex items-baseline mb-4">
+                        <span class="text-5xl font-bold text-gray-900">${{ monthly_price|floatformat:2 }}</span>
+                        <span class="text-gray-500 ml-2">/{{ monthly_interval }}</span>
+                    </div>
+                    <p class="text-gray-600">Perfect for flexible monthly needs</p>
+                </div>
+
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-start">
+                        <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">Unlimited apartment comparisons</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">Advanced comparison features</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">Customizable weighting preferences</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">Cancel anytime</span>
+                    </li>
                 </ul>
-                <a href="{% url 'social:begin' 'google-oauth2' %}"
-                   class="inline-block px-6 py-2 bg-brand-purple text-white rounded-lg font-semibold hover:bg-brand-purple-light transition-colors">Continue with Google</a>
+
+                {% if user.is_authenticated %}
+                    <button onclick="createCheckoutSession('monthly')" class="block w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
+                        Subscribe Monthly
+                    </button>
+                {% else %}
+                    <a href="{% url 'social:begin' 'google-oauth2' %}"
+                       class="block w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
+                        Sign Up for Monthly
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Annual Plan -->
+            <div class="bg-white rounded-2xl shadow-lg border-2 border-brand-purple p-8 relative hover:shadow-xl transition-all">
+                <!-- Best Value Badge -->
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span class="bg-brand-green text-white px-4 py-1 rounded-full text-sm font-semibold">
+                        Best Value - Save 17%
+                    </span>
+                </div>
+
+                <div class="mb-6 mt-4">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Annual</h3>
+                    <div class="flex items-baseline mb-4">
+                        <span class="text-5xl font-bold text-gray-900">${{ annual_price|floatformat:2 }}</span>
+                        <span class="text-gray-500 ml-2">/{{ annual_interval }}</span>
+                    </div>
+                    <p class="text-gray-600">Best value for long-term planning</p>
+                </div>
+
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-start">
+                        <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">Everything in Monthly plan</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">Save ${{ annual_savings|floatformat:2 }} per year</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">One convenient payment</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="w-6 h-6 text-brand-green mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">Cancel anytime</span>
+                    </li>
+                </ul>
+
+                {% if user.is_authenticated %}
+                    <button onclick="createCheckoutSession('annual')" class="block w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
+                        Subscribe Annual
+                    </button>
+                {% else %}
+                    <a href="{% url 'social:begin' 'google-oauth2' %}"
+                       class="block w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
+                        Sign Up for Annual
+                    </a>
+                {% endif %}
             </div>
         </div>
+        {% endif %}
     </div>
 
     <!-- Features Comparison -->
@@ -69,7 +190,7 @@
                     <tr>
                         <th class="px-6 py-4 text-left text-sm font-medium text-gray-900">Feature</th>
                         <th class="px-6 py-4 text-center text-sm font-medium text-gray-600">Free</th>
-                        <th class="px-6 py-4 text-center text-sm font-medium text-brand-purple font-bold">PRO</th>
+                        <th class="px-6 py-4 text-center text-sm font-medium text-brand-purple font-bold">Premium</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -104,15 +225,15 @@
         <div class="space-y-6">
             <div>
                 <h3 class="font-semibold text-gray-900 mb-2">How does the free plan work?</h3>
-                <p class="text-gray-700">You can compare up to 2 apartments with basic features. Upgrade to PRO for unlimited comparisons and advanced tools.</p>
+                <p class="text-gray-700">You can compare up to 2 apartments with basic features. Upgrade to Premium for unlimited comparisons and advanced tools.</p>
             </div>
             <div>
                 <h3 class="font-semibold text-gray-900 mb-2">Can I cancel anytime?</h3>
-                <p class="text-gray-700">Yes, you can cancel your PRO subscription at any time from your account settings.</p>
+                <p class="text-gray-700">Yes, you can cancel your Premium subscription at any time. You'll retain access until the end of your billing period.</p>
             </div>
             <div>
-                <h3 class="font-semibold text-gray-900 mb-2">How do I pay for PRO?</h3>
-                <p class="text-gray-700">You'll be able to pay securely with your credit card via Stripe (coming soon).</p>
+                <h3 class="font-semibold text-gray-900 mb-2">How do I subscribe to Premium?</h3>
+                <p class="text-gray-700">After signing up, you can choose either a monthly or annual subscription. Payment is processed securely through Stripe.</p>
             </div>
             <div>
                 <h3 class="font-semibold text-gray-900 mb-2">Is my data safe?</h3>
@@ -121,4 +242,59 @@
         </div>
     </div>
 </div>
+
+<!-- Stripe.js (only load for authenticated users) -->
+{% if user.is_authenticated %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe('{{ stripe_publishable_key }}');
+
+    async function createCheckoutSession(planType) {
+        try {
+            const response = await fetch('{% url "apartments:create_checkout_session" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({ plan_type: planType }),
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+
+            // Redirect to Stripe Checkout
+            const result = await stripe.redirectToCheckout({
+                sessionId: data.sessionId,
+            });
+
+            if (result.error) {
+                alert('Error: ' + result.error.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endif %}
 {% endblock %}
