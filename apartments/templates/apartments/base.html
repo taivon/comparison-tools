@@ -170,7 +170,26 @@
                             </svg>
                         </button>
                     {% endif %}
+                    <!-- Mobile menu button (hamburger) -->
+                    <button type="button" id="mobile-menu-button" class="md:hidden p-1.5 sm:p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" aria-label="Toggle mobile menu">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
                 </div>
+            </div>
+        </div>
+        <!-- Mobile menu (hidden by default) -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-neutral-700">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                {% if user.is_authenticated %}
+                    {% if apartment_count > 0 %}
+                        <a href="{% url 'apartments:dashboard' %}" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700">Dashboard</a>
+                    {% endif %}
+                {% else %}
+                    <!-- Anonymous users: show/hide via JavaScript based on sessionStorage -->
+                    <a href="{% url 'apartments:dashboard' %}" id="mobileDashboardLink" class="hidden block px-3 py-2 rounded-lg text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700">Dashboard</a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -631,12 +650,23 @@
 
             // Show/hide Dashboard link for anonymous users based on sessionStorage
             const dashboardLink = document.getElementById('dashboardLink');
-            if (dashboardLink) {
+            const mobileDashboardLink = document.getElementById('mobileDashboardLink');
+            if (dashboardLink || mobileDashboardLink) {
                 const apartments = sessionStorage.getItem('anonymous_apartments');
                 const apartmentCount = apartments ? JSON.parse(apartments).length : 0;
                 if (apartmentCount > 0) {
-                    dashboardLink.classList.remove('hidden');
+                    if (dashboardLink) dashboardLink.classList.remove('hidden');
+                    if (mobileDashboardLink) mobileDashboardLink.classList.remove('hidden');
                 }
+            }
+
+            // Mobile menu toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
             }
         });
         
