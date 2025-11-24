@@ -12,6 +12,7 @@ def create_firestore_user(strategy, details, backend, user=None, *args, **kwargs
     This replaces Django's default user creation
     """
     firestore_service = FirestoreService()
+    request = strategy.request
 
     # Get user data from social auth
     email = details.get("email")
@@ -19,19 +20,21 @@ def create_firestore_user(strategy, details, backend, user=None, *args, **kwargs
         logger.error("No email provided by social auth")
         return None
 
+    # Note: OAuth flow currently redirects to homepage after login
+    # The 'next' parameter preservation through OAuth is complex and can be added later if needed
+
     # Check if user already exists in Firestore
     existing_user = firestore_service.get_user_by_email(email)
 
     if existing_user:
         # User exists, log them into Django session
-        request = strategy.request
         login_success = firestore_login(request, existing_user)
         logger.info(
             f"Existing Firestore user login attempt: {existing_user.username}, success: {login_success}"
         )
         logger.info(f"Session after login: user_id = {request.session.get('user_id')}")
-        # Return redirect to force redirect to main page
-        return redirect("/")
+        # Redirect to callback which will handle the 'next' parameter
+        return redirect("/apartments/auth/callback/")
 
     # Create new Firestore user
     first_name = details.get("first_name", "")
@@ -67,7 +70,6 @@ def create_firestore_user(strategy, details, backend, user=None, *args, **kwargs
         firestore_user = firestore_service.create_firebase_user(user_data)
 
         # Log user into Django session
-        request = strategy.request
         login_success = firestore_login(request, firestore_user)
 
         logger.info(
@@ -75,8 +77,8 @@ def create_firestore_user(strategy, details, backend, user=None, *args, **kwargs
         )
         logger.info(f"Session after login: user_id = {request.session.get('user_id')}")
 
-        # Return redirect to force redirect to main page
-        return redirect("/")
+        # Redirect to callback which will handle the 'next' parameter
+        return redirect("/apartments/auth/callback/")
 
     except Exception as e:
         logger.error(f"Error creating Firestore user: {e}")
