@@ -701,6 +701,25 @@ def terms_of_service(request):
     })
 
 
+def robots_txt(request):
+    """Generate robots.txt file dynamically"""
+    from django.http import HttpResponse
+
+    # Build the absolute URL for the sitemap
+    protocol = "https" if request.is_secure() else "http"
+    host = request.get_host()
+    sitemap_url = f"{protocol}://{host}/sitemap.xml"
+
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "",
+        f"Sitemap: {sitemap_url}",
+    ]
+
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
 # Subscription Views
 
 def pricing_redirect(request):

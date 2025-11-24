@@ -34,6 +34,7 @@ urlpatterns = [
     path("logout/", apartment_views.logout_view, name="logout"),
     path("signup/", apartment_views.signup_view, name="signup"),
     path("auth/", include("social_django.urls", namespace="social")),  # Google OAuth
-    # SEO: Sitemap
+    # SEO: Sitemap and Robots
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
+    path("robots.txt", apartment_views.robots_txt, name="robots_txt"),
 ]
