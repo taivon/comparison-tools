@@ -190,10 +190,18 @@ class FirestoreUser:
         self.password_hash = kwargs.get("password_hash", "")
         self.firebase_uid = kwargs.get("firebase_uid", "")  # For Firebase Auth
         self.photo_url = kwargs.get("photo_url", "")  # For Google profile photo
-        self.is_staff = kwargs.get("is_staff", False)  # Premium status
+        self.is_staff = kwargs.get("is_staff", False)  # Premium status (legacy)
         self.is_active = kwargs.get("is_active", True)
         self.date_joined = kwargs.get("date_joined", datetime.now())
         self.last_login = kwargs.get("last_login", None)
+
+        # Stripe subscription fields
+        self.stripe_customer_id = kwargs.get("stripe_customer_id", "")
+        self.stripe_subscription_id = kwargs.get("stripe_subscription_id", "")
+        self.subscription_status = kwargs.get("subscription_status", "")  # active, canceled, past_due, etc.
+        self.subscription_plan = kwargs.get("subscription_plan", "")  # monthly, annual
+        self.subscription_current_period_end = kwargs.get("subscription_current_period_end", None)
+        self.subscription_cancel_at_period_end = kwargs.get("subscription_cancel_at_period_end", False)
 
     @property
     def id(self):
@@ -223,6 +231,12 @@ class FirestoreUser:
             "is_active": self.is_active,
             "date_joined": self.date_joined,
             "last_login": self.last_login,
+            "stripe_customer_id": self.stripe_customer_id,
+            "stripe_subscription_id": self.stripe_subscription_id,
+            "subscription_status": self.subscription_status,
+            "subscription_plan": self.subscription_plan,
+            "subscription_current_period_end": self.subscription_current_period_end,
+            "subscription_cancel_at_period_end": self.subscription_cancel_at_period_end,
         }
 
     @classmethod
@@ -240,6 +254,12 @@ class FirestoreUser:
             is_active=data.get("is_active", True),
             date_joined=data.get("date_joined", datetime.now()),
             last_login=data.get("last_login", None),
+            stripe_customer_id=data.get("stripe_customer_id", ""),
+            stripe_subscription_id=data.get("stripe_subscription_id", ""),
+            subscription_status=data.get("subscription_status", ""),
+            subscription_plan=data.get("subscription_plan", ""),
+            subscription_current_period_end=data.get("subscription_current_period_end", None),
+            subscription_cancel_at_period_end=data.get("subscription_cancel_at_period_end", False),
         )
 
     def set_password(self, raw_password):
