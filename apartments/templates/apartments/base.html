@@ -17,14 +17,17 @@
     <meta property="og:site_name" content="Comparison Tools">
     <meta property="og:title" content="{% block og_title %}{% block og_title_content %}Find Your Perfect Apartment | Apartment Comparison Tool{% endblock %}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{% block og_description_content %}Compare multiple apartments side-by-side by rent, price per square foot, and lease terms. Includes a built-in rent concession calculator to calculate net effective rent. Make smarter apartment hunting decisions with our free comparison tool.{% endblock %}{% endblock %}">
-    {% block og_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'apple-touch-icon.png' %}">{% endblock %}
+    {% block og_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-image.png' %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/png">{% endblock %}
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
     <meta name="twitter:title" content="{% block twitter_title %}{% block twitter_title_content %}Find Your Perfect Apartment | Apartment Comparison Tool{% endblock %}{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}{% block twitter_description_content %}Compare multiple apartments side-by-side by rent, price per square foot, and lease terms. Includes a built-in rent concession calculator to calculate net effective rent. Make smarter apartment hunting decisions with our free comparison tool.{% endblock %}{% endblock %}">
-    {% block twitter_image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'apple-touch-icon.png' %}">{% endblock %}
+    {% block twitter_image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-image.png' %}">{% endblock %}
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
