@@ -59,17 +59,17 @@
 </head>
 <body class="bg-gray-50 dark:bg-neutral-900 font-sans" data-is-anonymous="{% if not user.is_authenticated %}true{% else %}false{% endif %}" data-has-apartments="{% if apartments %}true{% else %}false{% endif %}">
     <nav class="bg-white dark:bg-neutral-800 border-b border-gray-100 dark:border-neutral-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-14 sm:h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <a href="{% url 'apartments:index' %}" class="flex items-center space-x-2">
-                            <div class="w-8 h-8 bg-brand-purple rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 bg-brand-purple rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                 </svg>
                             </div>
-                            <span class="text-xl font-bold text-gray-900 dark:text-white">Apartment Comparison Tool</span>
+                            <span class="hidden sm:inline text-xl font-bold text-gray-900 dark:text-white">Apartment Comparison Tool</span>
                         </a>
                     </div>
                     <div class="hidden md:block ml-10">
@@ -85,35 +85,38 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 sm:space-x-4">
                     {% if user.is_authenticated %}
                         <!-- Theme Toggle -->
-                        <button onclick="toggleTheme()" class="p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
+                        <button onclick="toggleTheme()" class="p-1.5 sm:p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
                             <!-- Moon icon (visible in light mode, click to go dark) -->
-                            <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                             </svg>
                             <!-- Sun icon (visible in dark mode, click to go light) -->
-                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                         </button>
                         {% if stripe_enabled %}
                             {% if user_has_premium %}
-                                <!-- Premium badge for premium users -->
-                                <span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-brand-purple/10 text-brand-purple">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <!-- Premium badge for premium users (hidden on smallest mobile) -->
+                                <span class="hidden xs:inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-full bg-brand-purple/10 text-brand-purple">
+                                    <svg class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
                                     </svg>
-                                    Premium
+                                    <span class="hidden sm:inline">Premium</span>
                                 </span>
                             {% endif %}
                         {% endif %}
                         <!-- User dropdown menu -->
                         <div class="relative group">
-                            <button type="button" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-brand-purple focus:outline-none">
-                                <span>{{ user.first_name|default:user.username }}</span>
-                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <button type="button" class="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-brand-purple focus:outline-none border border-gray-200 dark:border-gray-600 rounded-lg">
+                                <span class="hidden sm:inline">{{ user.first_name|default:user.username }}</span>
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 ml-0.5 sm:ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
@@ -139,11 +142,11 @@
                     {% else %}
                         <!-- Person icon dropdown for login/signup -->
                         <div class="relative group">
-                            <button id="user-menu-button" type="button" class="flex items-center px-2 py-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-brand-purple" aria-expanded="false">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <button id="user-menu-button" type="button" class="flex items-center px-1.5 sm:px-2 py-1.5 sm:py-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-brand-purple" aria-expanded="false">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 ml-0.5 sm:ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
@@ -155,13 +158,13 @@
                             </div>
                         </div>
                         <!-- Theme Toggle remains outside -->
-                        <button onclick="toggleTheme()" class="ml-2 p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
+                        <button onclick="toggleTheme()" class="p-1.5 sm:p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
                             <!-- Moon icon (visible in light mode, click to go dark) -->
-                            <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                             </svg>
                             <!-- Sun icon (visible in dark mode, click to go light) -->
-                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                         </button>

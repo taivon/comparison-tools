@@ -192,14 +192,40 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
 <!-- Apartments Views Container -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+    <!-- Mobile Sort Controls -->
+    <div class="sm:hidden mb-4">
+        <label for="mobileSortSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort by</label>
+        <select id="mobileSortSelect" onchange="sortMobileCards(this.value)" class="block w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple text-sm">
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="price-asc">Price (Low to High)</option>
+            <option value="price-desc">Price (High to Low)</option>
+            {% if has_discounts %}
+            <option value="net_price-asc">Net Effective (Low to High)</option>
+            <option value="net_price-desc">Net Effective (High to Low)</option>
+            {% endif %}
+            <option value="square_footage-desc">Square Footage (Large to Small)</option>
+            <option value="square_footage-asc">Square Footage (Small to Large)</option>
+            <option value="price_per_sqft-asc">Price/sq ft (Low to High)</option>
+            <option value="price_per_sqft-desc">Price/sq ft (High to Low)</option>
+            {% if has_discounts %}
+            <option value="discount-desc">Discount (High to Low)</option>
+            <option value="discount-asc">Discount (Low to High)</option>
+            {% endif %}
+        </select>
+    </div>
+
     <!-- Card View - Mobile only -->
     <div id="cardView" class="grid grid-cols-1 gap-6 sm:hidden">
         {% for apartment in apartments %}
             <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 hover:shadow-md transition-shadow duration-200"
+                 data-name="{{ apartment.name|lower }}"
                  data-price="{{ apartment.price }}"
-                 data-score="{{ apartment.weighted_score|default:0 }}"
+                 data-net-price="{{ apartment.net_effective_price|default:apartment.price }}"
                  data-sqft="{{ apartment.square_footage }}"
-                 data-commute="{{ apartment.commute_time|default:999 }}">
+                 data-price-per-sqft="{{ apartment.price_per_sqft }}"
+                 data-discount-amount="0"
+                 id="mobile-card-{{ apartment.pk|default:forloop.counter }}">
                 <!-- Card Header -->
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
                     <div class="flex items-center justify-between">
@@ -272,6 +298,8 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                         {% endif %}
                                         var monthlyDiscount = totalDiscount / leaseLength;
                                         document.getElementById('card-discount-total-{{ apartment.pk|default:forloop.counter }}').textContent = ' ($' + monthlyDiscount.toFixed(2) + '/mo)';
+                                        // Store discount amount for mobile sorting
+                                        document.getElementById('mobile-card-{{ apartment.pk|default:forloop.counter }}').setAttribute('data-discount-amount', monthlyDiscount.toFixed(2));
                                     })();
                                 </script>
                             </div>
@@ -1537,6 +1565,55 @@ function sortTable(column) {
 
     // Re-append rows in sorted order
     rows.forEach(row => tbody.appendChild(row));
+}
+
+// Mobile card sorting functionality
+function sortMobileCards(sortValue) {
+    const cardView = document.getElementById('cardView');
+    const cards = Array.from(cardView.querySelectorAll('.bg-white'));
+
+    const [column, direction] = sortValue.split('-');
+
+    cards.sort((a, b) => {
+        let aVal, bVal;
+
+        switch(column) {
+            case 'name':
+                aVal = a.getAttribute('data-name') || '';
+                bVal = b.getAttribute('data-name') || '';
+                return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+
+            case 'price':
+                aVal = parseFloat(a.getAttribute('data-price')) || 0;
+                bVal = parseFloat(b.getAttribute('data-price')) || 0;
+                break;
+
+            case 'net_price':
+                aVal = parseFloat(a.getAttribute('data-net-price')) || 0;
+                bVal = parseFloat(b.getAttribute('data-net-price')) || 0;
+                break;
+
+            case 'square_footage':
+                aVal = parseFloat(a.getAttribute('data-sqft')) || 0;
+                bVal = parseFloat(b.getAttribute('data-sqft')) || 0;
+                break;
+
+            case 'price_per_sqft':
+                aVal = parseFloat(a.getAttribute('data-price-per-sqft')) || 0;
+                bVal = parseFloat(b.getAttribute('data-price-per-sqft')) || 0;
+                break;
+
+            case 'discount':
+                aVal = parseFloat(a.getAttribute('data-discount-amount')) || 0;
+                bVal = parseFloat(b.getAttribute('data-discount-amount')) || 0;
+                break;
+        }
+
+        return direction === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+
+    // Re-append cards in sorted order
+    cards.forEach(card => cardView.appendChild(card));
 }
 </script>
 
