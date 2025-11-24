@@ -26,7 +26,7 @@ theme/node_modules/
 .DS_Store
 
 # Django stuff
-/static/
+/staticfiles/
 
 # GCP Service Account Keys (should never be committed)
 gcp-service-account-key.json
