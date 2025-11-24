@@ -24,6 +24,29 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 
 
+def main_homepage(request):
+    """Main landing page showcasing all comparison tools"""
+    return render(request, "home.html")
+
+
+def homes_coming_soon(request):
+    """Placeholder for homes comparison tool"""
+    return render(request, "coming_soon.html", {
+        "tool_name": "Home Comparison",
+        "tool_description": "Compare homes for purchase by price, features, location, and more.",
+        "icon_path": "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+    })
+
+
+def hotels_coming_soon(request):
+    """Placeholder for hotels comparison tool"""
+    return render(request, "coming_soon.html", {
+        "tool_name": "Hotel Comparison",
+        "tool_description": "Compare hotels by price, amenities, location, and reviews.",
+        "icon_path": "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+    })
+
+
 def user_has_premium(user):
     """Helper function to check if a user has premium access via subscription or legacy is_staff"""
     if not user.is_authenticated:
@@ -507,7 +530,15 @@ def signup_view(request):
                     f"Welcome {user.first_name or user.username}! Your account has been created successfully.",
                 )
 
-                return redirect("apartments:index")
+                # Check for 'next' parameter for redirect
+                from .auth_utils import is_safe_redirect_url
+                next_url = request.POST.get('next') or request.GET.get('next')
+
+                if next_url and is_safe_redirect_url(next_url, request):
+                    return redirect(next_url)
+                else:
+                    # Default: redirect to homepage
+                    return redirect("home")
             except Exception as e:
                 logger.error(f"Error creating user: {e}")
                 messages.error(
@@ -525,6 +556,9 @@ def signup_view(request):
     annual_price = settings.STRIPE_ANNUAL_PRICE_AMOUNT
     annual_savings = (monthly_price * 12) - annual_price
 
+    # Pass 'next' parameter to template context for form submission
+    next_url = request.GET.get('next', '')
+
     context = {
         "form": form,
         "apartment_count": apartment_count,
@@ -538,6 +572,7 @@ def signup_view(request):
         "monthly_interval": "month",
         "annual_interval": "year",
         "stripe_enabled": settings.STRIPE_ENABLED,
+        "next": next_url,
     }
 
     return render(request, "apartments/signup.html", context)
@@ -556,19 +591,23 @@ def login_view(request):
                 firestore_login(request, user)
                 messages.success(request, f"Welcome back, {user.username}!")
 
-                # Check if user has apartments and redirect accordingly
-                firestore_service = FirestoreService()
-                apartments = firestore_service.get_user_apartments(user.id)
-                if apartments:
-                    return redirect("apartments:dashboard")
+                # Check for 'next' parameter for redirect
+                from .auth_utils import is_safe_redirect_url
+                next_url = request.POST.get('next') or request.GET.get('next')
+
+                if next_url and is_safe_redirect_url(next_url, request):
+                    return redirect(next_url)
                 else:
-                    return redirect("apartments:index")
+                    # Default: redirect to homepage
+                    return redirect("home")
             else:
                 messages.error(request, "Invalid username or password.")
     else:
         form = LoginForm()
 
-    return render(request, "apartments/login.html", {"form": form})
+    # Pass 'next' parameter to template context for form submission
+    next_url = request.GET.get('next', '')
+    return render(request, "apartments/login.html", {"form": form, "next": next_url})
 
 
 def logout_view(request):
@@ -589,13 +628,19 @@ def google_oauth_callback(request):
         logger.info(f"OAuth callback successful for user: {request.user.username}")
         messages.success(request, f"Welcome back, {request.user.username}!")
 
-        # Check if user has apartments and redirect accordingly
-        firestore_service = FirestoreService()
-        apartments = firestore_service.get_user_apartments(user_id)
-        if apartments:
-            return redirect("apartments:dashboard")
+        # Check for 'next' parameter in session (set by social auth pipeline)
+        from .auth_utils import is_safe_redirect_url
+        next_url = request.session.get('oauth_next')
+
+        # Clear the oauth_next from session after retrieving it
+        if 'oauth_next' in request.session:
+            del request.session['oauth_next']
+
+        if next_url and is_safe_redirect_url(next_url, request):
+            return redirect(next_url)
         else:
-            return redirect("apartments:index")
+            # Default: redirect to homepage
+            return redirect("home")
     else:
         logger.warning(
             f"OAuth callback failed - user_id: {user_id}, user authenticated: {hasattr(request, 'user') and request.user.is_authenticated}"
@@ -724,7 +769,7 @@ def robots_txt(request):
 
 def pricing_redirect(request):
     """Redirect pricing page to signup page (all pricing info is on signup page)"""
-    return redirect('apartments:signup')
+    return redirect('signup')
 
 
 @login_required_firestore
