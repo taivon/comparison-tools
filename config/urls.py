@@ -16,7 +16,15 @@ Including another URLconf
 """
 
 from django.urls import include, path
+from django.contrib.sitemaps.views import sitemap
 from apartments import views as apartment_views
+from apartments.sitemaps import StaticViewSitemap, DashboardSitemap
+
+# Sitemap configuration
+sitemaps = {
+    "static": StaticViewSitemap,
+    "dashboard": DashboardSitemap,
+}
 
 urlpatterns = [
     # path("admin/", admin.site.urls),  # Disabled for Firestore-only setup
@@ -26,4 +34,6 @@ urlpatterns = [
     path("logout/", apartment_views.logout_view, name="logout"),
     path("signup/", apartment_views.signup_view, name="signup"),
     path("auth/", include("social_django.urls", namespace="social")),  # Google OAuth
+    # SEO: Sitemap
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
 ]

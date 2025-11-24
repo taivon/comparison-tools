@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",  # For SEO sitemap generation
     "social_django",  # Re-enabled for Google OAuth
     "apartments",
 ]
