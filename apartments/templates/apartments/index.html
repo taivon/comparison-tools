@@ -1,8 +1,55 @@
 {% extends 'apartments/base.html' %}
 
-{% block title %}Find Your Perfect Apartment{% endblock %}
+{% block title %}Apartment Comparison Tool with Rent Concession Calculator{% endblock %}
+
+{% block meta_description %}Free apartment comparison tool with built-in rent concession calculator. Compare apartments by net effective rent, square footage, and lease terms. Make smarter apartment hunting decisions.{% endblock %}
 
 {% block extra_head %}
+<!-- Schema.org Structured Data for Apartment Comparison Tool -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Apartment Comparison Tool",
+    "url": "{{ request.scheme }}://{{ request.get_host }}/apartments/",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any",
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+    },
+    "description": "Free apartment comparison tool with built-in rent concession calculator. Compare apartments by net effective rent, price per square foot, and lease terms to find the best value.",
+    "featureList": [
+        "Net effective rent calculator",
+        "Side-by-side apartment comparison",
+        "Price per square foot analysis",
+        "Lease term comparison",
+        "Free and unlimited comparisons with account",
+        "No credit card required"
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "{{ request.scheme }}://{{ request.get_host }}/"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Apartment Comparison",
+            "item": "{{ request.scheme }}://{{ request.get_host }}/apartments/"
+        }
+    ]
+}
+</script>
 {% endblock %}
 
 {% block content %}
@@ -726,7 +773,7 @@ async function handleInlineApartmentSubmit(event) {
         // Check 2-apartment limit for anonymous users
         if (apartments.length >= 2) {
             alert('You\'ve reached the 2-apartment limit for guest users. Sign up to save and compare more apartments!');
-            window.location.href = '{% url "signup" %}';
+            window.location.href = '{% url "signup" %}?next=/apartments/';
             return;
         }
 
@@ -762,7 +809,7 @@ async function handleAddApartment(event) {
         // Check 2-apartment limit for anonymous users
         if (apartments.length >= 2) {
             alert('You\'ve reached the 2-apartment limit for guest users. Sign up to save and compare more apartments!');
-            window.location.href = '{% url "signup" %}';
+            window.location.href = '{% url "signup" %}?next=/apartments/';
             return;
         }
 

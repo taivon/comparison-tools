@@ -15,7 +15,7 @@
         <h1 class="text-4xl font-bold text-gray-900 mb-4">Start Comparing Apartments Smarter</h1>
         <p class="text-lg text-gray-600 max-w-2xl mx-auto">Our rent concession calculator calculates your net effective rent, helping you compare apartments with move-in specials, free months, and discounts. Get started free or upgrade for unlimited comparisons and advanced features.</p>
         <div class="mt-8 flex justify-center">
-            <a href="{% url 'social:begin' 'google-oauth2' %}"
+            <a href="{% url 'social:begin' 'google-oauth2' %}{% if next %}?next={{ next|urlencode }}{% endif %}"
                class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg bg-brand-purple text-white hover:bg-brand-purple-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple text-lg font-semibold shadow-lg transition-colors">
                 <svg class="w-6 h-6 mr-3" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -28,7 +28,7 @@
         </div>
         <p class="text-center text-sm text-gray-600 mt-6">
             Already have an account?
-            <a href="{% url 'login' %}" class="font-medium text-brand-purple hover:text-brand-purple-light">Sign in</a>
+            <a href="{% url 'login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="font-medium text-brand-purple hover:text-brand-purple-light">Sign in</a>
         </p>
     </div>
     {% else %}
@@ -114,7 +114,7 @@
                         Subscribe Monthly
                     </button>
                 {% else %}
-                    <a href="{% url 'social:begin' 'google-oauth2' %}"
+                    <a href="{% url 'social:begin' 'google-oauth2' %}{% if next %}?next={{ next|urlencode }}{% endif %}"
                        class="block w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
                         Sign Up for Monthly
                     </a>
@@ -171,7 +171,7 @@
                         Subscribe Annual
                     </button>
                 {% else %}
-                    <a href="{% url 'social:begin' 'google-oauth2' %}"
+                    <a href="{% url 'social:begin' 'google-oauth2' %}{% if next %}?next={{ next|urlencode }}{% endif %}"
                        class="block w-full bg-brand-purple hover:bg-brand-purple-dark text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
                         Sign Up for Annual
                     </a>
