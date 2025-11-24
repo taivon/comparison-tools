@@ -1,5 +1,6 @@
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.utils.http import url_has_allowed_host_and_scheme
 from .firestore_service import FirestoreService
 from .middleware import AnonymousFirestoreUser
 import logging
@@ -39,13 +40,35 @@ def firestore_authenticate(username, password):
         return None
 
 
+def is_safe_redirect_url(url, request):
+    """
+    Validate that a redirect URL is safe to prevent open redirect vulnerabilities.
+    Returns True if the URL is safe to redirect to, False otherwise.
+    """
+    if not url:
+        return False
+
+    # Use Django's built-in validation to ensure the URL is safe
+    # This checks that the URL is relative or uses an allowed host
+    allowed_hosts = request.get_host()
+    return url_has_allowed_host_and_scheme(
+        url=url,
+        allowed_hosts={allowed_hosts},
+        require_https=request.is_secure()
+    )
+
+
 def login_required_firestore(view_func):
     """Decorator to require Firestore authentication"""
 
     def wrapper(request, *args, **kwargs):
         if not hasattr(request, "user") or not request.user.is_authenticated:
             messages.error(request, "Please log in to access this page.")
-            return redirect("login")
+            # Preserve the current URL as the 'next' parameter
+            from django.http import QueryDict
+            query = QueryDict(mutable=True)
+            query['next'] = request.get_full_path()
+            return redirect(f"/login/?{query.urlencode()}")
         return view_func(request, *args, **kwargs)
 
     return wrapper
