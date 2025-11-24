@@ -78,18 +78,15 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             </svg>
                         </button>
 
-                        <!-- View Toggle - Hidden on mobile, auto-switch to card view -->
-                        <div class="hidden sm:inline-flex rounded-lg border border-gray-300 bg-white">
-                            <button id="cardViewBtn" onclick="switchView('cards')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-l-lg transition-colors touch-manipulation">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                                </svg>
-                            </button>
-                            <button id="tableViewBtn" onclick="switchView('table')" class="px-3 py-2 text-sm font-medium text-white bg-brand-purple rounded-r-lg transition-colors touch-manipulation">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                </svg>
-                            </button>
+                        <!-- Sort Dropdown - Mobile only -->
+                        <div class="sm:hidden">
+                            <select id="mobileSortSelect" onchange="sortMobileCards(this.value)" class="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-purple touch-manipulation">
+                                <option value="name" selected>Sort by Name</option>
+                                <option value="price">Sort by Price</option>
+                                <!-- <option value="score">Sort by Score</option> -->
+                                <option value="sqft">Sort by Sq Ft</option>
+                                <!-- <option value="commute">Sort by Commute</option> -->
+                            </select>
                         </div>
                     </div>
 
@@ -195,10 +192,14 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
 <!-- Apartments Views Container -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- Card View -->
-    <div id="cardView" class="hidden grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <!-- Card View - Mobile only -->
+    <div id="cardView" class="grid grid-cols-1 gap-6 sm:hidden">
         {% for apartment in apartments %}
-            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 hover:shadow-md transition-shadow duration-200">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 hover:shadow-md transition-shadow duration-200"
+                 data-price="{{ apartment.price }}"
+                 data-score="{{ apartment.weighted_score|default:0 }}"
+                 data-sqft="{{ apartment.square_footage }}"
+                 data-commute="{{ apartment.commute_time|default:999 }}">
                 <!-- Card Header -->
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
                     <div class="flex items-center justify-between">
@@ -319,8 +320,8 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
         {% endfor %}
     </div>
 
-    <!-- Table View -->
-    <div id="tableView" class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
+    <!-- Table View - Desktop only -->
+    <div id="tableView" class="hidden sm:block overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr class="divide-x divide-gray-200">
@@ -1218,52 +1219,65 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// View switching functionality
-function switchView(viewType) {
+// Mobile card sorting functionality
+function sortMobileCards(sortBy) {
     const cardView = document.getElementById('cardView');
-    const tableView = document.getElementById('tableView');
-    const cardBtn = document.getElementById('cardViewBtn');
-    const tableBtn = document.getElementById('tableViewBtn');
+    const cards = Array.from(cardView.children);
 
-    if (viewType === 'cards') {
-        cardView.classList.remove('hidden');
-        cardView.classList.add('grid');
-        tableView.classList.add('hidden');
-        cardBtn.classList.add('bg-gray-100', 'text-gray-900');
-        tableBtn.classList.remove('bg-gray-100', 'text-gray-900');
-        localStorage.setItem('preferredView', 'cards');
-    } else {
-        cardView.classList.add('hidden');
-        cardView.classList.remove('grid');
-        tableView.classList.remove('hidden');
-        tableBtn.classList.add('bg-gray-100', 'text-gray-900');
-        cardBtn.classList.remove('bg-gray-100', 'text-gray-900');
-        localStorage.setItem('preferredView', 'table');
-    }
+    cards.sort((a, b) => {
+        let aValue, bValue;
+
+        switch(sortBy) {
+            case 'name':
+                aValue = a.querySelector('h3').textContent.trim().toLowerCase();
+                bValue = b.querySelector('h3').textContent.trim().toLowerCase();
+                return aValue.localeCompare(bValue);
+
+            case 'price':
+                aValue = parseFloat(a.dataset.price || 0);
+                bValue = parseFloat(b.dataset.price || 0);
+                return aValue - bValue;
+
+            case 'score':
+                aValue = parseFloat(a.dataset.score || 0);
+                bValue = parseFloat(b.dataset.score || 0);
+                return bValue - aValue; // Higher score first
+
+            case 'sqft':
+                aValue = parseFloat(a.dataset.sqft || 0);
+                bValue = parseFloat(b.dataset.sqft || 0);
+                return bValue - aValue; // Larger first
+
+            case 'commute':
+                aValue = parseFloat(a.dataset.commute || 999);
+                bValue = parseFloat(b.dataset.commute || 999);
+                return aValue - bValue; // Shorter commute first
+
+            default:
+                return 0;
+        }
+    });
+
+    // Re-append sorted cards
+    cards.forEach(card => cardView.appendChild(card));
+
+    // Save preference
+    localStorage.setItem('mobileSortPreference', sortBy);
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadAnonymousApartments();
 
-    // Auto-switch to card view on mobile (< 640px)
-    const isMobile = window.innerWidth < 640;
-    const preferredView = isMobile ? 'cards' : (localStorage.getItem('preferredView') || 'table');
-    switchView(preferredView);
-
-    // Listen for window resize to auto-switch view
-    let resizeTimer;
-    window.addEventListener('resize', function() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
-            const nowMobile = window.innerWidth < 640;
-            if (nowMobile && !document.getElementById('cardView').classList.contains('grid')) {
-                switchView('cards');
-            } else if (!nowMobile && localStorage.getItem('preferredView')) {
-                switchView(localStorage.getItem('preferredView'));
-            }
-        }, 250);
-    });
+    // Restore mobile sort preference
+    const savedSort = localStorage.getItem('mobileSortPreference');
+    if (savedSort) {
+        const sortSelect = document.getElementById('mobileSortSelect');
+        if (sortSelect) {
+            sortSelect.value = savedSort;
+            sortMobileCards(savedSort);
+        }
+    }
 });
 
 // Preferences modal functions
