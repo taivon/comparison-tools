@@ -1,0 +1,366 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO Meta Tags -->
+    <title>Compare Apartments, Homes & Hotels | Free Comparison Tools</title>
+    <meta name="description" content="Free comparison tools for apartments, homes, and hotels. Compare multiple properties side-by-side with built-in rent concession calculator. Make smarter decisions with data-driven insights.">
+    <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}/">
+    <meta property="og:site_name" content="Comparison Tools">
+    <meta property="og:title" content="Compare Apartments, Homes & Hotels | Free Comparison Tools">
+    <meta property="og:description" content="Free comparison tools for apartments, homes, and hotels. Compare multiple properties side-by-side with built-in rent concession calculator.">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'apple-touch-icon.png' %}">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ request.scheme }}://{{ request.get_host }}/">
+    <meta name="twitter:title" content="Compare Apartments, Homes & Hotels | Free Comparison Tools">
+    <meta name="twitter:description" content="Free comparison tools for apartments, homes, and hotels. Compare multiple properties side-by-side with built-in rent concession calculator.">
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'apple-touch-icon.png' %}">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
+
+    <!-- Keywords -->
+    <meta name="keywords" content="apartment comparison tool, rent concession calculator, net effective rent, apartment hunting, compare apartments, rental comparison, home comparison, hotel comparison, property comparison">
+
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Comparison Tools",
+        "url": "{{ request.scheme }}://{{ request.get_host }}",
+        "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'apple-touch-icon.png' %}",
+        "description": "Free comparison tools for apartments, homes, and hotels. Compare multiple properties side-by-side with built-in rent concession calculator.",
+        "sameAs": []
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Comparison Tools",
+        "url": "{{ request.scheme }}://{{ request.get_host }}",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "{{ request.scheme }}://{{ request.get_host }}/apartments/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
+
+    <!-- Use Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-purple': '#8160A9',
+                        'brand-purple-light': '#9B7CB8',
+                        'brand-purple-dark': '#6B4F8A',
+                        'brand-green': '#10b981',
+                        'brand-gray': '#64748b',
+                        'brand-gray-light': '#f8fafc',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 dark:bg-neutral-900 font-sans">
+    <!-- Navigation -->
+    <nav class="bg-white dark:bg-neutral-800 border-b border-gray-100 dark:border-neutral-700">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-14 sm:h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <a href="/" class="flex items-center space-x-2">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 bg-brand-purple rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
+                            <span class="hidden sm:inline text-xl font-bold text-gray-900 dark:text-white">Comparison Tools</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <!-- Theme Toggle -->
+                    <button onclick="toggleTheme()" class="p-1.5 sm:p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
+                        <!-- Moon icon (visible in light mode, click to go dark) -->
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                        <!-- Sun icon (visible in dark mode, click to go light) -->
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-white dark:bg-neutral-800">
+        <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:py-24 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
+                    Smart comparison tools for
+                    <span class="text-brand-purple">finding your next place</span>
+                </h1>
+                <p class="mt-6 max-w-3xl mx-auto text-xl text-gray-500 dark:text-gray-300">
+                    Compare apartments, homes, and hotels side-by-side. Calculate net effective rent with our built-in rent concession calculator and make data-driven decisions.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Tools Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <!-- Apartments Tool - Available -->
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-brand-purple dark:border-brand-purple overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="p-8">
+                    <div class="w-12 h-12 bg-brand-purple/10 dark:bg-brand-purple/20 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div class="mb-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                            Available Now
+                        </span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Apartment Comparison</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-6">
+                        Compare apartments by rent, square footage, and lease terms. Built-in rent concession calculator helps you find the best value.
+                    </p>
+                    <ul class="space-y-2 mb-8">
+                        <li class="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Net effective rent calculator
+                        </li>
+                        <li class="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Side-by-side comparison
+                        </li>
+                        <li class="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Custom ranking priorities
+                        </li>
+                    </ul>
+                    <a href="{% url 'apartments:index' %}" class="block w-full text-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors shadow-sm">
+                        Start Comparing Apartments
+                    </a>
+                </div>
+            </div>
+
+            <!-- Homes Tool - Coming Soon -->
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-gray-200 dark:border-neutral-700 overflow-hidden opacity-75">
+                <div class="p-8">
+                    <div class="w-12 h-12 bg-gray-100 dark:bg-neutral-700 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                    </div>
+                    <div class="mb-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-neutral-700 text-gray-600 dark:text-gray-400">
+                            Coming Soon
+                        </span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Home Comparison</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-6">
+                        Compare homes for purchase by price, features, location, and more. Perfect for home buyers making a big decision.
+                    </p>
+                    <ul class="space-y-2 mb-8">
+                        <li class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Mortgage calculator
+                        </li>
+                        <li class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Feature comparison
+                        </li>
+                        <li class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Location scoring
+                        </li>
+                    </ul>
+                    <button disabled class="block w-full text-center px-6 py-3 border-2 border-gray-300 dark:border-neutral-600 text-base font-medium rounded-lg text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 cursor-not-allowed">
+                        Coming Soon
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hotels Tool - Coming Soon -->
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-gray-200 dark:border-neutral-700 overflow-hidden opacity-75">
+                <div class="p-8">
+                    <div class="w-12 h-12 bg-gray-100 dark:bg-neutral-700 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div class="mb-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-neutral-700 text-gray-600 dark:text-gray-400">
+                            Coming Soon
+                        </span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Hotel Comparison</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-6">
+                        Compare hotels by price, amenities, location, and reviews. Find the best deal for your next trip.
+                    </p>
+                    <ul class="space-y-2 mb-8">
+                        <li class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Price per night comparison
+                        </li>
+                        <li class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Amenity checklist
+                        </li>
+                        <li class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Review aggregation
+                        </li>
+                    </ul>
+                    <button disabled class="block w-full text-center px-6 py-3 border-2 border-gray-300 dark:border-neutral-600 text-base font-medium rounded-lg text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 cursor-not-allowed">
+                        Coming Soon
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="bg-gray-100 dark:bg-neutral-800 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Why use our comparison tools?</h2>
+                <p class="mt-4 text-xl text-gray-600 dark:text-gray-300">Make smarter decisions with data-driven insights</p>
+            </div>
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-brand-purple/10 dark:bg-brand-purple/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Smart Calculations</h3>
+                    <p class="text-gray-600 dark:text-gray-300">Automatic calculations for net effective rent, price per square foot, and more.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-brand-green/10 dark:bg-brand-green/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Private & Secure</h3>
+                    <p class="text-gray-600 dark:text-gray-300">Your data is private and secure. No account needed to try - compare up to 2 as a guest.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Lightning Fast</h3>
+                    <p class="text-gray-600 dark:text-gray-300">Instantly compare dozens of options and see which offers the best value for your needs.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="bg-brand-purple">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+            <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                <span class="block">Ready to find your perfect place?</span>
+                <span class="block text-brand-purple-light">Start comparing apartments today.</span>
+            </h2>
+            <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+                <div class="inline-flex rounded-lg shadow">
+                    <a href="{% url 'apartments:index' %}" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-brand-purple bg-white hover:bg-gray-50 transition-colors">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-neutral-800 border-t border-gray-200 dark:border-neutral-700">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400">&copy; 2024 Comparison Tools. All rights reserved.</p>
+                <div class="flex space-x-6">
+                    <a href="{% url 'privacy' %}" class="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-purple">Privacy</a>
+                    <a href="{% url 'terms' %}" class="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-purple">Terms</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Dark Mode Script -->
+    <script>
+        // Dark mode toggle function
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+
+            if (isDark) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Initialize theme from localStorage on page load
+        (function() {
+            const theme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (theme === 'dark' || (!theme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+</body>
+</html>
