@@ -8,12 +8,13 @@
     <!-- SEO Meta Tags -->
     <title>{% block title %}Find Your Perfect Apartment | Apartment Comparison Tool{% endblock %}</title>
     <meta name="description" content="{% block meta_description %}Compare multiple apartments side-by-side by rent, price per square foot, and lease terms. Includes a built-in rent concession calculator to calculate net effective rent. Make smarter apartment hunting decisions with our free comparison tool.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}apartment comparison, rent concession calculator, net effective rent, apartment finder, compare apartments, rental comparison tool, price per square foot, lease comparison{% endblock %}">
     <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
-    <meta property="og:site_name" content="Apartment Comparison Tool">
+    <meta property="og:site_name" content="Comparison Tools">
     <meta property="og:title" content="{% block og_title %}{% block og_title_content %}Find Your Perfect Apartment | Apartment Comparison Tool{% endblock %}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{% block og_description_content %}Compare multiple apartments side-by-side by rent, price per square foot, and lease terms. Includes a built-in rent concession calculator to calculate net effective rent. Make smarter apartment hunting decisions with our free comparison tool.{% endblock %}{% endblock %}">
     {% block og_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'apple-touch-icon.png' %}">{% endblock %}
@@ -63,13 +64,13 @@
             <div class="flex justify-between h-14 sm:h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <a href="{% url 'apartments:index' %}" class="flex items-center space-x-2">
+                        <a href="{% url 'home' %}" class="flex items-center space-x-2">
                             <div class="w-8 h-8 sm:w-9 sm:h-9 bg-brand-purple rounded-lg flex items-center justify-center">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                 </svg>
                             </div>
-                            <span class="hidden sm:inline text-xl font-bold text-gray-900 dark:text-white">Apartment Comparison Tool</span>
+                            <span class="hidden sm:inline text-xl font-bold text-gray-900 dark:text-white">Comparison Tools</span>
                         </a>
                     </div>
                     <div class="hidden md:block ml-10">
@@ -128,7 +129,7 @@
                                                 Manage Subscription
                                             </a>
                                         {% else %}
-                                            <a href="{% url 'apartments:signup' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-t-lg">
+                                            <a href="{% url 'signup' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-t-lg">
                                                 Upgrade to Premium
                                             </a>
                                         {% endif %}
@@ -153,7 +154,7 @@
                             <div class="absolute right-0 pt-2 z-50 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
                                 <div class="w-40 rounded-lg shadow-lg bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700">
                                     <a href="{% url 'login' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-t-lg">Login</a>
-                                    <a href="{% url 'apartments:signup' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-b-lg">Sign Up</a>
+                                    <a href="{% url 'signup' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-b-lg">Sign Up</a>
                                 </div>
                             </div>
                         </div>
@@ -218,8 +219,8 @@
                     &copy; 2025 Apartment Comparison Tool. Making apartment hunting smarter.
                 </p>
                 <div class="mt-4 flex justify-center space-x-6">
-                    <a href="{% url 'apartments:privacy' %}" class="text-gray-400 hover:text-gray-500 text-sm">Privacy Policy</a>
-                    <a href="{% url 'apartments:terms' %}" class="text-gray-400 hover:text-gray-500 text-sm">Terms of Service</a>
+                    <a href="{% url 'privacy' %}" class="text-gray-400 hover:text-gray-500 text-sm">Privacy Policy</a>
+                    <a href="{% url 'terms' %}" class="text-gray-400 hover:text-gray-500 text-sm">Terms of Service</a>
                     <a href="#" class="text-gray-400 hover:text-gray-500 text-sm">Contact</a>
                 </div>
             </div>
