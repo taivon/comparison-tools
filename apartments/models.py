@@ -1,36 +1,202 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 from decimal import Decimal
+
+
+# =============================================================================
+# Product & Subscription Models
+# =============================================================================
+
+class Product(models.Model):
+    """Represents a comparison tool product (apartments, homes, cars, hotels, bundle)"""
+    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    free_tier_limit = models.IntegerField(default=2)  # Items allowed on free tier
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class Plan(models.Model):
+    """Subscription plan for a product (Free, Pro Monthly, Pro Annual)"""
+    TIER_CHOICES = [
+        ('free', 'Free'),
+        ('pro', 'Pro'),
+    ]
+    INTERVAL_CHOICES = [
+        ('', 'None'),
+        ('month', 'Monthly'),
+        ('year', 'Annual'),
+    ]
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='plans')
+    name = models.CharField(max_length=100)  # "Free", "Pro Monthly", "Pro Annual"
+    tier = models.CharField(max_length=50, choices=TIER_CHOICES, default='free')
+    stripe_price_id = models.CharField(max_length=200, blank=True)
+    price_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    billing_interval = models.CharField(max_length=20, choices=INTERVAL_CHOICES, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['product', 'tier', 'billing_interval']
+
+    def __str__(self):
+        return f"{self.product.name} - {self.name}"
+
+
+class Subscription(models.Model):
+    """User's subscription to a product plan"""
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('canceled', 'Canceled'),
+        ('past_due', 'Past Due'),
+        ('trialing', 'Trialing'),
+        ('incomplete', 'Incomplete'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name='subscriptions')
+    stripe_subscription_id = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='active')
+    current_period_end = models.DateTimeField(null=True, blank=True)
+    cancel_at_period_end = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.plan}"
+
+    @property
+    def is_premium_active(self):
+        """Check if this subscription grants premium access"""
+        if self.plan.tier != 'pro':
+            return False
+
+        if self.status == 'active':
+            return True
+
+        # Grace period for canceled/past_due
+        if self.status in ['canceled', 'past_due'] and self.current_period_end:
+            return self.current_period_end > timezone.now()
+
+        return False
+
+
+# =============================================================================
+# Subscription Helper Functions
+# =============================================================================
+
+def get_user_subscription(user, product_slug: str):
+    """
+    Get user's active subscription for a product.
+    Also checks for bundle subscription which grants access to all products.
+    """
+    if not user.is_authenticated:
+        return None
+
+    # First check for product-specific subscription
+    try:
+        return Subscription.objects.select_related('plan', 'plan__product').get(
+            user=user,
+            plan__product__slug=product_slug,
+            status__in=['active', 'trialing', 'canceled', 'past_due']
+        )
+    except Subscription.DoesNotExist:
+        pass
+
+    # Check for bundle subscription
+    try:
+        return Subscription.objects.select_related('plan', 'plan__product').get(
+            user=user,
+            plan__product__slug='bundle',
+            status__in=['active', 'trialing', 'canceled', 'past_due']
+        )
+    except Subscription.DoesNotExist:
+        return None
+
+
+def user_has_premium(user, product_slug: str) -> bool:
+    """Check if user has premium access for a specific product."""
+    if not user.is_authenticated:
+        return False
+
+    # Staff always has premium access
+    if user.is_staff:
+        return True
+
+    subscription = get_user_subscription(user, product_slug)
+    if subscription:
+        return subscription.is_premium_active
+
+    return False
+
+
+def get_product_free_tier_limit(product_slug: str) -> int:
+    """Get the free tier limit for a product."""
+    try:
+        product = Product.objects.get(slug=product_slug)
+        return product.free_tier_limit
+    except Product.DoesNotExist:
+        return 2  # Default
+
+
+# =============================================================================
+# User Profile Model
+# =============================================================================
+
+class UserProfile(models.Model):
+    """Extended user profile with Stripe customer data"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    photo_url = models.URLField(max_length=500, blank=True, default='')
+    stripe_customer_id = models.CharField(max_length=255, blank=True, default='')
+
+    def __str__(self):
+        return f"Profile for {self.user.username}"
+
+
+# =============================================================================
+# Apartment Comparison Models
+# =============================================================================
 
 class Apartment(models.Model):
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
     square_footage = models.IntegerField(validators=[MinValueValidator(0)])
     lease_length_months = models.IntegerField(validators=[MinValueValidator(1)])
-    
+
     # Discount fields
     months_free = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     weeks_free = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     flat_discount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0'), validators=[MinValueValidator(Decimal('0'))])
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    
+
     class Meta:
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return self.name
-    
+
     @property
     def price_per_sqft(self):
         if self.square_footage > 0:
             return round(self.price / Decimal(str(self.square_footage)), 2)
         else:
             return Decimal('0')
-    
+
     @property
     def net_effective_price(self):
         total_discount = Decimal('0')
@@ -45,23 +211,17 @@ class Apartment(models.Model):
         )
 
         if user_preferences.discount_calculation == 'daily':
-            # Calculate annual rent divided by 365 days
             daily_rate = self.price * Decimal('12') / Decimal('365')
-            # Convert months_free to days (using 365/12 for precision)
             if self.months_free > 0:
                 days_free_from_months = Decimal(str(self.months_free)) * Decimal('365') / Decimal('12')
                 total_discount += daily_rate * days_free_from_months
-            # Convert weeks_free to days
             if self.weeks_free > 0:
                 total_discount += daily_rate * Decimal('7') * Decimal(str(self.weeks_free))
         elif user_preferences.discount_calculation == 'weekly':
-            # Calculate annual rent divided by 52 weeks
             weekly_rate = self.price * Decimal('12') / Decimal('52')
-            # Convert months_free to weeks (using 52/12 for precision)
             if self.months_free > 0:
                 weeks_free_from_months = Decimal(str(self.months_free)) * Decimal('52') / Decimal('12')
                 total_discount += weekly_rate * weeks_free_from_months
-            # Add weeks_free directly
             if self.weeks_free > 0:
                 total_discount += weekly_rate * Decimal(str(self.weeks_free))
         else:  # monthly
@@ -73,11 +233,11 @@ class Apartment(models.Model):
         total_discount += self.flat_discount
         total_lease_value = self.price * Decimal(str(self.lease_length_months))
         net_price = (total_lease_value - total_discount) / Decimal(str(self.lease_length_months))
-        # Round to 2 decimal places
         return round(net_price, 2)
 
+
 class UserPreferences(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')
     price_weight = models.IntegerField(default=50, validators=[MinValueValidator(0), MaxValueValidator(100)])
     sqft_weight = models.IntegerField(default=50, validators=[MinValueValidator(0), MaxValueValidator(100)])
     distance_weight = models.IntegerField(default=50, validators=[MinValueValidator(0), MaxValueValidator(100)])
@@ -88,8 +248,8 @@ class UserPreferences(models.Model):
             ('weekly', 'Weekly'),
             ('daily', 'Daily')
         ],
-        default='monthly'
+        default='daily'
     )
-    
+
     def __str__(self):
         return f"Preferences for {self.user.username}"
