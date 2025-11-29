@@ -913,8 +913,14 @@ def stripe_webhook(request):
 @login_required
 def favorite_places_list(request):
     """List user's favorite places with management options"""
-    places = FavoritePlace.objects.filter(user=request.user)
     has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+
+    # Require premium for location features
+    if not has_premium:
+        messages.info(request, "Favorite Places with distance calculations is a Pro feature. Upgrade to unlock!")
+        return redirect("signup")
+
+    places = FavoritePlace.objects.filter(user=request.user)
 
     place_count = places.count()
     place_limit = get_favorite_place_limit(request.user, PRODUCT_SLUG)
@@ -933,13 +939,16 @@ def favorite_places_list(request):
 @login_required
 def create_favorite_place(request):
     """Create a new favorite place with geocoding"""
+    has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+
+    # Require premium for location features
+    if not has_premium:
+        messages.info(request, "Favorite Places is a Pro feature. Upgrade to unlock distance calculations!")
+        return redirect("signup")
+
     # Check limit
     if not can_add_favorite_place(request.user, PRODUCT_SLUG):
-        has_premium = user_has_premium(request.user, PRODUCT_SLUG)
-        if has_premium:
-            messages.error(request, "You've reached the maximum of 5 favorite places.")
-        else:
-            messages.error(request, "Free users can only have 1 favorite place. Upgrade to Pro for up to 5!")
+        messages.error(request, "You've reached the maximum of 5 favorite places.")
         return redirect("apartments:favorite_places")
 
     if request.method == "POST":
@@ -1017,6 +1026,13 @@ def create_favorite_place(request):
 @login_required
 def update_favorite_place(request, pk):
     """Update an existing favorite place"""
+    has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+
+    # Require premium for location features
+    if not has_premium:
+        messages.info(request, "Favorite Places is a Pro feature. Upgrade to unlock!")
+        return redirect("signup")
+
     place = get_object_or_404(FavoritePlace, pk=pk, user=request.user)
 
     if request.method == "POST":
@@ -1110,6 +1126,13 @@ def update_favorite_place(request, pk):
 @login_required
 def delete_favorite_place(request, pk):
     """Delete a favorite place"""
+    has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+
+    # Require premium for location features
+    if not has_premium:
+        messages.info(request, "Favorite Places is a Pro feature. Upgrade to unlock!")
+        return redirect("signup")
+
     place = get_object_or_404(FavoritePlace, pk=pk, user=request.user)
 
     if request.method == "POST":
