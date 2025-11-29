@@ -2500,32 +2500,37 @@ function openScoreTuner() {
     modal.classList.remove('hidden');
     setTimeout(() => modal.classList.add('show'), 10);
 
-    // Then load values after a short delay to ensure DOM is ready
-    setTimeout(() => {
-        const form = document.getElementById('preferencesForm');
-        if (form) {
-            const priceInput = form.querySelector('input[name="price_weight"]');
-            const distanceInput = form.querySelector('input[name="distance_weight"]');
+    // Initialize content based on user tier
+    if (isPremium) {
+        setTimeout(() => initializePriorityList(), 10);
+    } else {
+        // Then load values after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            const form = document.getElementById('preferencesForm');
+            if (form) {
+                const priceInput = form.querySelector('input[name="price_weight"]');
+                const distanceInput = form.querySelector('input[name="distance_weight"]');
 
-            const priceValue = parseInt(priceInput?.value || 50);
-            const distanceValue = parseInt(distanceInput?.value || 50);
+                const priceValue = parseInt(priceInput?.value || 50);
+                const distanceValue = parseInt(distanceInput?.value || 50);
 
-            // Calculate total to determine the balance
-            const total = priceValue + distanceValue;
-            let balanceValue = 50; // Default to middle
+                // Calculate total to determine the balance
+                const total = priceValue + distanceValue;
+                let balanceValue = 50; // Default to middle
 
             if (total > 0) {
                 // Convert to 0-100 scale where slider represents distance percentage
                 balanceValue = Math.round((distanceValue / total) * 100);
             }
 
-            const balanceSlider = document.getElementById('balanceSlider');
-            if (balanceSlider) {
-                balanceSlider.value = balanceValue;
-                updateBalance(balanceValue);
+                const balanceSlider = document.getElementById('balanceSlider');
+                if (balanceSlider) {
+                    balanceSlider.value = balanceValue;
+                    updateBalance(balanceValue);
+                }
             }
-        }
-    }, 50);
+        }, 50);
+    }
 }
 
 function createScoreTunerModal() {
@@ -2538,90 +2543,27 @@ function createScoreTunerModal() {
 
     // Create content based on premium status
     const slidersContent = isPremium ? `
-        <!-- Premium: All Scoring Factors -->
-        <div class="space-y-5 max-h-96 overflow-y-auto pr-2">
-            <!-- Base Rent -->
-            <div>
-                <label for="tunerPriceWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Base Rent: <span id="tunerPriceValue" class="text-brand-purple font-semibold">${userPreferences.priceWeight}</span>
-                </label>
-                <input type="range" id="tunerPriceWeight" min="0" max="100" value="${userPreferences.priceWeight}"
-                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                       oninput="updateTunerWeight('price', this.value)">
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    <span>Less Important</span>
-                    <span>More Important</span>
-                </div>
+        <!-- Premium: Drag and Drop Priority List -->
+        <div class="space-y-4">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+                Drag factors to prioritize them. Top 4 get weighted: <span class="font-semibold text-brand-purple">40%, 30%, 20%, 10%</span>
+            </p>
+
+            <!-- Priority List -->
+            <div id="factorPriorityList" class="space-y-2">
+                <!-- Items will be inserted here by JavaScript -->
             </div>
 
-            <!-- Net Effective Rent -->
-            <div>
-                <label for="tunerNetRentWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Net Effective Rent: <span id="tunerNetRentValue" class="text-brand-purple font-semibold">${userPreferences.netRentWeight}</span>
-                </label>
-                <input type="range" id="tunerNetRentWeight" min="0" max="100" value="${userPreferences.netRentWeight}"
-                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                       oninput="updateTunerWeight('netRent', this.value)">
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    <span>Less Important</span>
-                    <span>More Important</span>
-                </div>
+            <!-- Divider -->
+            <div class="flex items-center my-4">
+                <div class="flex-1 border-t-2 border-dashed border-gray-300 dark:border-gray-600"></div>
+                <span class="px-3 text-xs text-gray-500 dark:text-gray-400 font-medium">Not used in scoring</span>
+                <div class="flex-1 border-t-2 border-dashed border-gray-300 dark:border-gray-600"></div>
             </div>
 
-            <!-- Square Footage -->
-            <div>
-                <label for="tunerSqftWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Square Footage: <span id="tunerSqftValue" class="text-brand-purple font-semibold">${userPreferences.sqftWeight}</span>
-                </label>
-                <input type="range" id="tunerSqftWeight" min="0" max="100" value="${userPreferences.sqftWeight}"
-                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                       oninput="updateTunerWeight('sqft', this.value)">
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    <span>Less Important</span>
-                    <span>More Important</span>
-                </div>
-            </div>
-
-            <!-- Bedrooms -->
-            <div>
-                <label for="tunerBedroomsWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Bedrooms: <span id="tunerBedroomsValue" class="text-brand-purple font-semibold">${userPreferences.bedroomsWeight}</span>
-                </label>
-                <input type="range" id="tunerBedroomsWeight" min="0" max="100" value="${userPreferences.bedroomsWeight}"
-                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                       oninput="updateTunerWeight('bedrooms', this.value)">
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    <span>Less Important</span>
-                    <span>More Important</span>
-                </div>
-            </div>
-
-            <!-- Bathrooms -->
-            <div>
-                <label for="tunerBathroomsWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Bathrooms: <span id="tunerBathroomsValue" class="text-brand-purple font-semibold">${userPreferences.bathroomsWeight}</span>
-                </label>
-                <input type="range" id="tunerBathroomsWeight" min="0" max="100" value="${userPreferences.bathroomsWeight}"
-                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                       oninput="updateTunerWeight('bathrooms', this.value)">
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    <span>Less Important</span>
-                    <span>More Important</span>
-                </div>
-            </div>
-
-            <!-- Distance -->
-            <div>
-                <label for="tunerDistanceWeight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Distance to Favorite Places: <span id="tunerDistanceValue" class="text-brand-purple font-semibold">${userPreferences.distanceWeight}</span>
-                </label>
-                <input type="range" id="tunerDistanceWeight" min="0" max="100" value="${userPreferences.distanceWeight}"
-                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                       oninput="updateTunerWeight('distance', this.value)">
-                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    <span>Less Important</span>
-                    <span>More Important</span>
-                </div>
+            <!-- Unused Factors -->
+            <div id="unusedFactorsList" class="space-y-2">
+                <!-- Unused items will be inserted here by JavaScript -->
             </div>
         </div>
     ` : `
@@ -2730,6 +2672,234 @@ function updateTunerWeight(factor, value) {
     }
 }
 
+// Premium: Drag and Drop Priority List Functions
+function initializePriorityList() {
+    const allFactors = [
+        { key: 'price', label: 'Base Rent', weight: userPreferences.priceWeight },
+        { key: 'netRent', label: 'Net Effective Rent', weight: userPreferences.netRentWeight },
+        { key: 'sqft', label: 'Square Footage', weight: userPreferences.sqftWeight },
+        { key: 'bedrooms', label: 'Bedrooms', weight: userPreferences.bedroomsWeight },
+        { key: 'bathrooms', label: 'Bathrooms', weight: userPreferences.bathroomsWeight },
+        { key: 'distance', label: 'Distance to Favorite Places', weight: userPreferences.distanceWeight }
+    ];
+
+    // Sort by current weight (descending)
+    allFactors.sort((a, b) => b.weight - a.weight);
+
+    // Split into priority (top 4) and unused (rest)
+    const priorityFactors = allFactors.slice(0, 4);
+    const unusedFactors = allFactors.slice(4);
+
+    // Render priority list
+    const priorityList = document.getElementById('factorPriorityList');
+    if (priorityList) {
+        priorityList.innerHTML = '';
+        priorityFactors.forEach((factor, index) => {
+            priorityList.appendChild(createFactorItem(factor, index, true));
+        });
+    }
+
+    // Render unused list
+    const unusedList = document.getElementById('unusedFactorsList');
+    if (unusedList) {
+        unusedList.innerHTML = '';
+        unusedFactors.forEach((factor, index) => {
+            unusedList.appendChild(createFactorItem(factor, index, false));
+        });
+    }
+}
+
+function createFactorItem(factor, index, isPriority) {
+    const weights = [40, 30, 20, 10];
+    const weight = isPriority ? weights[index] : 0;
+
+    const div = document.createElement('div');
+    div.className = 'factor-item flex items-center justify-between p-3 bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-lg cursor-move hover:border-brand-purple transition-colors';
+    div.draggable = true;
+    div.dataset.factorKey = factor.key;
+
+    div.innerHTML = `
+        <div class="flex items-center flex-1">
+            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+            </svg>
+            <span class="text-sm font-medium text-gray-900 dark:text-white">${factor.label}</span>
+        </div>
+        <div class="flex items-center">
+            ${isPriority ? `
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-purple text-white mr-2">
+                    ${weight}%
+                </span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">#${index + 1}</span>
+            ` : `
+                <span class="text-xs text-gray-400 dark:text-gray-500">Unused</span>
+            `}
+        </div>
+    `;
+
+    // Add drag event listeners
+    div.addEventListener('dragstart', handleDragStart);
+    div.addEventListener('dragend', handleDragEnd);
+    div.addEventListener('dragover', handleDragOver);
+    div.addEventListener('drop', handleDrop);
+    div.addEventListener('dragenter', handleDragEnter);
+    div.addEventListener('dragleave', handleDragLeave);
+
+    return div;
+}
+
+let draggedElement = null;
+
+function handleDragStart(e) {
+    draggedElement = this;
+    this.style.opacity = '0.4';
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function handleDragEnd(e) {
+    this.style.opacity = '1';
+
+    // Remove all drag-over styling
+    document.querySelectorAll('.factor-item').forEach(item => {
+        item.classList.remove('border-brand-purple', 'bg-purple-50', 'dark:bg-purple-900/20');
+    });
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    if (this !== draggedElement) {
+        this.classList.add('border-brand-purple', 'bg-purple-50', 'dark:bg-purple-900/20');
+    }
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('border-brand-purple', 'bg-purple-50', 'dark:bg-purple-900/20');
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+
+    if (draggedElement !== this) {
+        // Get all items from both lists
+        const priorityList = document.getElementById('factorPriorityList');
+        const unusedList = document.getElementById('unusedFactorsList');
+
+        const allItems = [
+            ...Array.from(priorityList.children),
+            ...Array.from(unusedList.children)
+        ];
+
+        // Find positions
+        const draggedIndex = allItems.indexOf(draggedElement);
+        const targetIndex = allItems.indexOf(this);
+
+        // Swap elements
+        if (draggedIndex < targetIndex) {
+            this.parentNode.insertBefore(draggedElement, this.nextSibling);
+        } else {
+            this.parentNode.insertBefore(draggedElement, this);
+        }
+
+        // Rebuild lists
+        rebuildPriorityLists();
+    }
+
+    return false;
+}
+
+function rebuildPriorityLists() {
+    const priorityList = document.getElementById('factorPriorityList');
+    const unusedList = document.getElementById('unusedFactorsList');
+
+    // Get all items
+    const allItems = [
+        ...Array.from(priorityList.children),
+        ...Array.from(unusedList.children)
+    ];
+
+    // Clear both lists
+    priorityList.innerHTML = '';
+    unusedList.innerHTML = '';
+
+    const weights = [40, 30, 20, 10];
+
+    // Redistribute: first 4 go to priority, rest to unused
+    allItems.forEach((item, index) => {
+        const factorKey = item.dataset.factorKey;
+        const label = item.querySelector('span.text-sm').textContent;
+
+        if (index < 4) {
+            // Priority item
+            const weight = weights[index];
+            const newItem = document.createElement('div');
+            newItem.className = item.className;
+            newItem.draggable = true;
+            newItem.dataset.factorKey = factorKey;
+            newItem.innerHTML = `
+                <div class="flex items-center flex-1">
+                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">${label}</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-purple text-white mr-2">
+                        ${weight}%
+                    </span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">#${index + 1}</span>
+                </div>
+            `;
+
+            // Re-add event listeners
+            newItem.addEventListener('dragstart', handleDragStart);
+            newItem.addEventListener('dragend', handleDragEnd);
+            newItem.addEventListener('dragover', handleDragOver);
+            newItem.addEventListener('drop', handleDrop);
+            newItem.addEventListener('dragenter', handleDragEnter);
+            newItem.addEventListener('dragleave', handleDragLeave);
+
+            priorityList.appendChild(newItem);
+        } else {
+            // Unused item
+            const newItem = document.createElement('div');
+            newItem.className = item.className;
+            newItem.draggable = true;
+            newItem.dataset.factorKey = factorKey;
+            newItem.innerHTML = `
+                <div class="flex items-center flex-1">
+                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">${label}</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xs text-gray-400 dark:text-gray-500">Unused</span>
+                </div>
+            `;
+
+            // Re-add event listeners
+            newItem.addEventListener('dragstart', handleDragStart);
+            newItem.addEventListener('dragend', handleDragEnd);
+            newItem.addEventListener('dragover', handleDragOver);
+            newItem.addEventListener('drop', handleDrop);
+            newItem.addEventListener('dragenter', handleDragEnter);
+            newItem.addEventListener('dragleave', handleDragLeave);
+
+            unusedList.appendChild(newItem);
+        }
+    });
+}
+
 function saveScoreWeights() {
     const form = document.getElementById('preferencesForm');
     if (!form) {
@@ -2739,13 +2909,29 @@ function saveScoreWeights() {
     }
 
     if (isPremium) {
-        // Premium: Get all weight values from sliders
-        const priceWeight = document.getElementById('tunerPriceWeight')?.value || 50;
-        const netRentWeight = document.getElementById('tunerNetRentWeight')?.value || 0;
-        const sqftWeight = document.getElementById('tunerSqftWeight')?.value || 50;
-        const bedroomsWeight = document.getElementById('tunerBedroomsWeight')?.value || 0;
-        const bathroomsWeight = document.getElementById('tunerBathroomsWeight')?.value || 0;
-        const distanceWeight = document.getElementById('tunerDistanceWeight')?.value || 50;
+        // Premium: Get priority order from drag-and-drop lists
+        const priorityList = document.getElementById('factorPriorityList');
+        const unusedList = document.getElementById('unusedFactorsList');
+
+        const weights = [40, 30, 20, 10];
+        const factorWeights = {
+            price: 0,
+            netRent: 0,
+            sqft: 0,
+            bedrooms: 0,
+            bathrooms: 0,
+            distance: 0
+        };
+
+        // Assign weights to priority items
+        if (priorityList) {
+            Array.from(priorityList.children).forEach((item, index) => {
+                const factorKey = item.dataset.factorKey;
+                factorWeights[factorKey] = weights[index];
+            });
+        }
+
+        // Unused items get 0 weight (already initialized to 0)
 
         // Update form inputs
         const priceInput = form.querySelector('input[name="price_weight"]');
@@ -2755,12 +2941,12 @@ function saveScoreWeights() {
         const bathroomsInput = form.querySelector('input[name="bathrooms_weight"]');
         const distanceInput = form.querySelector('input[name="distance_weight"]');
 
-        if (priceInput) priceInput.value = priceWeight;
-        if (netRentInput) netRentInput.value = netRentWeight;
-        if (sqftInput) sqftInput.value = sqftWeight;
-        if (bedroomsInput) bedroomsInput.value = bedroomsWeight;
-        if (bathroomsInput) bathroomsInput.value = bathroomsWeight;
-        if (distanceInput) distanceInput.value = distanceWeight;
+        if (priceInput) priceInput.value = factorWeights.price;
+        if (netRentInput) netRentInput.value = factorWeights.netRent;
+        if (sqftInput) sqftInput.value = factorWeights.sqft;
+        if (bedroomsInput) bedroomsInput.value = factorWeights.bedrooms;
+        if (bathroomsInput) bathroomsInput.value = factorWeights.bathrooms;
+        if (distanceInput) distanceInput.value = factorWeights.distance;
     } else {
         // Free: Get balance slider value
         const balance = document.getElementById('balanceSlider')?.value || 50;
