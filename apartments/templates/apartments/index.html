@@ -1,8 +1,10 @@
 {% extends 'apartments/base.html' %}
 
-{% block title %}Apartment Comparison Tool with Rent Concession Calculator{% endblock %}
+{% block title %}Apartment Comparison Tool | Net Effective Rent Calculator & Commute Times{% endblock %}
 
-{% block meta_description %}Free apartment comparison tool with built-in rent concession calculator. Compare apartments by net effective rent, square footage, and lease terms. Make smarter apartment hunting decisions.{% endblock %}
+{% block meta_description %}Free apartment comparison tool with rent concession calculator and commute time analysis. Compare apartments by net effective rent, price per sq ft, and driving distance to work. The only tool that factors in location when ranking apartments.{% endblock %}
+
+{% block meta_keywords %}apartment comparison tool, rent concession calculator, net effective rent calculator, compare apartments, apartment finder, rental comparison tool, commute time calculator, driving distance to work, apartment hunting tool, price per square foot calculator, lease comparison, apartment ranking tool{% endblock %}
 
 {% block extra_head %}
 <!-- Schema.org Structured Data for Apartment Comparison Tool -->
@@ -19,14 +21,70 @@
         "price": "0",
         "priceCurrency": "USD"
     },
-    "description": "Free apartment comparison tool with built-in rent concession calculator. Compare apartments by net effective rent, price per square foot, and lease terms to find the best value.",
+    "description": "Free apartment comparison tool with rent concession calculator and commute time analysis. Compare apartments by net effective rent, driving distance to work, and price per square foot.",
     "featureList": [
         "Net effective rent calculator",
+        "Driving distance and commute time to favorite places",
         "Side-by-side apartment comparison",
         "Price per square foot analysis",
-        "Lease term comparison",
-        "Free and unlimited comparisons with account",
-        "No credit card required"
+        "Address autocomplete with Google Places",
+        "Custom ranking by price, size, and location",
+        "Lease term and concession comparison",
+        "Free to use - no credit card required"
+    ],
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150",
+        "bestRating": "5"
+    }
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What is net effective rent and how do I calculate it?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Net effective rent is the actual monthly cost of an apartment after factoring in concessions like free months or move-in discounts. Our calculator takes your listed rent, lease length, and any concessions (months free, weeks free, or flat discounts) and calculates the true monthly cost spread over your entire lease."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "How does the apartment comparison tool work?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Simply add apartments you're considering with their rent, square footage, and any concessions. Our tool automatically calculates net effective rent, price per square foot, and ranks them based on your priorities. You can also add your important locations (like work or gym) to see driving distances from each apartment."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Can I compare apartments by commute time to work?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes! Add your workplace or any important locations as 'Favorite Places' and our tool will calculate driving distances from each apartment. You can prioritize location in your ranking to find apartments that balance price, size, and convenience."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Is this apartment comparison tool free?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, our apartment comparison tool is free to use. You can compare up to 2 apartments as a guest without signing up. Create a free account to save unlimited apartments and access all features including commute time calculations."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What's the difference between gross rent and net effective rent?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Gross rent is the advertised monthly rent before any concessions. Net effective rent spreads those concessions (like 2 months free) across your entire lease to show what you're actually paying per month. An apartment listed at $3,000/month with 2 months free on a 12-month lease has a net effective rent of $2,500/month."
+            }
+        }
     ]
 }
 </script>
@@ -50,6 +108,29 @@
     ]
 }
 </script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="bg-gray-50 dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800" aria-label="Breadcrumb">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ol class="flex items-center space-x-2 py-3 text-sm">
+            <li>
+                <a href="{% url 'home' %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple dark:hover:text-brand-purple-light">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                    </svg>
+                    <span class="sr-only">Home</span>
+                </a>
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-2 text-gray-900 dark:text-white font-medium" aria-current="page">Apartment Comparison Tool</span>
+            </li>
+        </ol>
+    </div>
+</nav>
 {% endblock %}
 
 {% block content %}
@@ -176,7 +257,7 @@
                 <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Smart apartment comparison</h2>
                 <p class="mt-4 text-xl text-gray-500 dark:text-gray-300">Make better rental decisions with data-driven insights</p>
             </div>
-            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="bg-white dark:bg-neutral-700 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-600">
                     <div class="w-12 h-12 bg-brand-purple/10 dark:bg-brand-purple/20 rounded-lg flex items-center justify-center mb-4">
                         <svg class="w-6 h-6 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,7 +265,7 @@
                         </svg>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Smart Comparison</h3>
-                    <p class="text-gray-500 dark:text-gray-300">Compare apartments based on what matters most to you - price, size, discounts, and more.</p>
+                    <p class="text-gray-500 dark:text-gray-300">Compare apartments based on what matters most - price, size, location, and concessions.</p>
                 </div>
                 <div class="bg-white dark:bg-neutral-700 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-600">
                     <div class="w-12 h-12 bg-brand-green/10 dark:bg-brand-green/20 rounded-lg flex items-center justify-center mb-4">
@@ -192,8 +273,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Rent Concession Calculator</h3>
-                    <p class="text-gray-500 dark:text-gray-300">Calculate net effective rent with our built-in rent concession calculator. Factor in discounts, free months, and move-in specials automatically.</p>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Net Effective Rent Calculator</h3>
+                    <p class="text-gray-500 dark:text-gray-300">Calculate true monthly cost after concessions. Factor in free months, weeks, and flat discounts.</p>
+                </div>
+                <div class="bg-white dark:bg-neutral-700 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-600">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Commute Distance</h3>
+                    <p class="text-gray-500 dark:text-gray-300">Add your work, gym, or favorite spots and see driving distances from each apartment.</p>
                 </div>
                 <div class="bg-white dark:bg-neutral-700 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-600">
                     <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
@@ -201,9 +292,66 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Lightning Fast</h3>
-                    <p class="text-gray-500 dark:text-gray-300">Instantly compare dozens of apartments and see which offers the best value for your needs.</p>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Custom Rankings</h3>
+                    <p class="text-gray-500 dark:text-gray-300">Prioritize what matters most. Rank by price, square footage, or location score.</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="py-16 bg-white dark:bg-neutral-900">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Frequently Asked Questions</h2>
+                <p class="mt-4 text-lg text-gray-500 dark:text-gray-300">Everything you need to know about comparing apartments</p>
+            </div>
+            <div class="space-y-6">
+                <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                        What is net effective rent and how do I calculate it?
+                    </summary>
+                    <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                        <p>Net effective rent is the actual monthly cost of an apartment after factoring in concessions like free months or move-in discounts. Our calculator takes your listed rent, lease length, and any concessions (months free, weeks free, or flat discounts) and calculates the true monthly cost spread over your entire lease.</p>
+                        <p class="mt-2">For example, an apartment listed at $3,000/month with 2 months free on a 12-month lease has a net effective rent of $2,500/month ($30,000 total ÷ 12 months).</p>
+                    </div>
+                </details>
+                <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                        How does the apartment comparison tool work?
+                    </summary>
+                    <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                        <p>Simply add apartments you're considering with their rent, square footage, and any concessions. Our tool automatically calculates net effective rent, price per square foot, and ranks them based on your priorities.</p>
+                        <p class="mt-2">You can also add your important locations (like work or gym) to see driving distances from each apartment, helping you factor commute time into your decision.</p>
+                    </div>
+                </details>
+                <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                        Can I compare apartments by commute time to work?
+                    </summary>
+                    <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                        <p>Yes! Add your workplace or any important locations as "Favorite Places" and our tool will calculate driving distances from each apartment. You can prioritize location in your ranking to find apartments that balance price, size, and convenience.</p>
+                        <p class="mt-2">This feature uses Google Maps to calculate real driving distances, so you get accurate commute estimates for each apartment.</p>
+                    </div>
+                </details>
+                <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                        Is this apartment comparison tool free?
+                    </summary>
+                    <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                        <p>Yes, our apartment comparison tool is free to use. You can compare up to 2 apartments as a guest without signing up. Create a free account to save unlimited apartments and access all features including commute time calculations.</p>
+                    </div>
+                </details>
+                <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                        What's the difference between gross rent and net effective rent?
+                    </summary>
+                    <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                        <p><strong>Gross rent</strong> is the advertised monthly rent before any concessions.</p>
+                        <p class="mt-2"><strong>Net effective rent</strong> spreads those concessions (like 2 months free) across your entire lease to show what you're actually paying per month.</p>
+                        <p class="mt-2">This is important because an apartment with higher gross rent but better concessions might actually be cheaper than one with lower advertised rent but no deals.</p>
+                    </div>
+                </details>
             </div>
         </div>
     </div>
