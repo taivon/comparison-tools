@@ -566,3 +566,37 @@ if not DEBUG:
 SESSION_COOKIE_SECURE = not DEBUG  # Use secure cookies in production
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 86400  # 1 day
+
+
+# Google Maps API Configuration
+def get_google_maps_api_key():
+    """Fetch Google Maps API key from Secret Manager in production or environment variables in development."""
+    if DEBUG:
+        return os.getenv("GOOGLE_MAPS_API_KEY", "")
+    else:
+        try:
+            from google.cloud import secretmanager
+
+            client = secretmanager.SecretManagerServiceClient()
+            project_id = "comparison-tools-479102"
+            name = f"projects/{project_id}/secrets/google-maps-api-key/versions/latest"
+            response = client.access_secret_version(request={"name": name})
+            return response.payload.data.decode("UTF-8").strip()
+        except Exception as e:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to fetch Google Maps API key from Secret Manager: {e}")
+            return os.getenv("GOOGLE_MAPS_API_KEY", "")
+
+
+GOOGLE_MAPS_API_KEY = get_google_maps_api_key()
+
+# Log warning if Google Maps API is not configured
+if not GOOGLE_MAPS_API_KEY:
+    import logging
+
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "Google Maps API key not configured. Address autocomplete and driving distances will be disabled."
+    )
