@@ -172,6 +172,24 @@ class ApartmentForm(forms.Form):
             }
         ),
     )
+    bedrooms = forms.ChoiceField(
+        choices=[("0", "Studio")] + [(str(i), str(i)) for i in range(1, 16)],
+        initial="1",
+        widget=forms.Select(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
+            }
+        ),
+    )
+    bathrooms = forms.ChoiceField(
+        choices=[(str(Decimal(str(i)) / 2), str(Decimal(str(i)) / 2) if i % 2 == 0 else f"{i // 2}.5") for i in range(1, 31)],
+        initial="1",
+        widget=forms.Select(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
+            }
+        ),
+    )
     lease_length_months = forms.IntegerField(
         validators=[MinValueValidator(1)],
         widget=forms.NumberInput(

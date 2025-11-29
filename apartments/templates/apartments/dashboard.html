@@ -192,16 +192,6 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             </svg>
                         </button>
 
-                        <!-- Sort Dropdown - Mobile only -->
-                        <div class="sm:hidden">
-                            <select id="mobileSortSelect" onchange="sortMobileCards(this.value)" class="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-purple touch-manipulation">
-                                <option value="name" selected>Sort by Name</option>
-                                <option value="price">Sort by Price</option>
-                                <!-- <option value="score">Sort by Score</option> -->
-                                <option value="sqft">Sort by Sq Ft</option>
-                                <!-- <option value="commute">Sort by Commute</option> -->
-                            </select>
-                        </div>
                     </div>
 
                     {% if can_add_apartment %}
@@ -308,25 +298,35 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
 
     <!-- Mobile Sort Controls -->
     <div class="sm:hidden mb-4">
-        <label for="mobileSortSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort by</label>
-        <select id="mobileSortSelect" onchange="sortMobileCards(this.value)" class="block w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple text-sm">
-            <option value="name-asc">Name (A-Z)</option>
-            <option value="name-desc">Name (Z-A)</option>
-            <option value="price-asc">Price (Low to High)</option>
-            <option value="price-desc">Price (High to Low)</option>
-            {% if has_discounts %}
-            <option value="net_price-asc">Net Effective (Low to High)</option>
-            <option value="net_price-desc">Net Effective (High to Low)</option>
-            {% endif %}
-            <option value="square_footage-desc">Square Footage (Large to Small)</option>
-            <option value="square_footage-asc">Square Footage (Small to Large)</option>
-            <option value="price_per_sqft-asc">Price/sq ft (Low to High)</option>
-            <option value="price_per_sqft-desc">Price/sq ft (High to Low)</option>
-            {% if has_discounts %}
-            <option value="discount-desc">Discount (High to Low)</option>
-            <option value="discount-asc">Discount (Low to High)</option>
-            {% endif %}
-        </select>
+        <div class="flex gap-3">
+            <div class="flex-1">
+                <label for="mobileSortField" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort by</label>
+                <select id="mobileSortField" onchange="updateMobileSort()" class="block w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple text-sm">
+                    <option value="name">Name</option>
+                    <option value="price">Price</option>
+                    {% if has_discounts %}
+                    <option value="net_price">Net Effective</option>
+                    {% endif %}
+                    <option value="square_footage">Square Footage</option>
+                    <option value="bedrooms">Bedrooms</option>
+                    <option value="bathrooms">Bathrooms</option>
+                    <option value="price_per_sqft">Price/sq ft</option>
+                    {% if has_discounts %}
+                    <option value="discount">Discount</option>
+                    {% endif %}
+                    {% if favorite_places %}
+                    <option value="avg_distance">Avg Distance</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="w-28">
+                <label for="mobileSortOrder" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Order</label>
+                <select id="mobileSortOrder" onchange="updateMobileSort()" class="block w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple text-sm">
+                    <option value="asc">ASC</option>
+                    <option value="desc">DESC</option>
+                </select>
+            </div>
+        </div>
     </div>
 
     <!-- Card View - Mobile only -->
@@ -337,8 +337,11 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                  data-price="{{ apartment.price }}"
                  data-net-price="{{ apartment.net_effective_price|default:apartment.price }}"
                  data-sqft="{{ apartment.square_footage }}"
+                 data-bedrooms="{{ apartment.bedrooms|default:1 }}"
+                 data-bathrooms="{{ apartment.bathrooms|default:1 }}"
                  data-price-per-sqft="{{ apartment.price_per_sqft }}"
                  data-discount-amount="0"
+                 data-avg-distance="{{ apartment.average_distance|default:'999' }}"
                  id="mobile-card-{{ apartment.pk|default:forloop.counter }}">
                 <!-- Card Header -->
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
@@ -397,6 +400,14 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             <div class="text-sm font-medium text-gray-900">${{ apartment.price_per_sqft|floatformat:2 }}</div>
                             <div class="text-xs text-gray-500">per sq ft</div>
                         </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="text-sm font-medium text-gray-900">{% if apartment.bedrooms == 0 %}Studio{% else %}{{ apartment.bedrooms|floatformat:"-1" }}{% endif %}</div>
+                            <div class="text-xs text-gray-500">{% if apartment.bedrooms == 0 %}apt{% else %}bed{{ apartment.bedrooms|floatformat:"-1"|pluralize }}{% endif %}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="text-sm font-medium text-gray-900">{{ apartment.bathrooms|floatformat:"-1" }}</div>
+                            <div class="text-xs text-gray-500">bath{{ apartment.bathrooms|floatformat:"-1"|pluralize }}</div>
+                        </div>
                     </div>
 
                     <!-- Additional Details -->
@@ -446,6 +457,8 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             name: '{{ apartment.name|escapejs }}',
                             price: {{ apartment.price }},
                             square_footage: {{ apartment.square_footage }},
+                            bedrooms: {{ apartment.bedrooms|default:1 }},
+                            bathrooms: {{ apartment.bathrooms|default:1 }},
                             lease_length_months: {{ apartment.lease_length_months|default:12 }},
                             months_free: {{ apartment.months_free|default:0 }},
                             weeks_free: {{ apartment.weeks_free|default:0 }},
@@ -503,6 +516,22 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     <th scope="col" class="px-6 py-3 text-left">
                         <button onclick="sortTable('square_footage')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
                             Sq Ft
+                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                            </svg>
+                        </button>
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left">
+                        <button onclick="sortTable('bedrooms')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                            Beds
+                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                            </svg>
+                        </button>
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left">
+                        <button onclick="sortTable('bathrooms')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                            Baths
                             <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                             </svg>
@@ -661,6 +690,18 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                 {{ apartment.square_footage }}
                             </div>
                         </td>
+                        <!-- Bedrooms -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900" data-field="bedrooms">
+                                {% if apartment.bedrooms == 0 %}Studio{% else %}{{ apartment.bedrooms|floatformat:"-1" }}{% endif %}
+                            </div>
+                        </td>
+                        <!-- Bathrooms -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900" data-field="bathrooms">
+                                {{ apartment.bathrooms|floatformat:"-1" }}
+                            </div>
+                        </td>
                         <!-- Price per Sq Ft -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-900">
@@ -756,6 +797,8 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                 address: '{{ apartment.address|default:""|escapejs }}',
                                 price: {{ apartment.price }},
                                 square_footage: {{ apartment.square_footage }},
+                                bedrooms: {{ apartment.bedrooms|default:1 }},
+                                bathrooms: {{ apartment.bathrooms|default:1 }},
                                 lease_length_months: {{ apartment.lease_length_months|default:12 }},
                                 months_free: {{ apartment.months_free|default:0 }},
                                 weeks_free: {{ apartment.weeks_free|default:0 }},
@@ -839,6 +882,56 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             <input type="number" name="square_footage" id="modal_square_footage" required
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
                                    placeholder="e.g., 850">
+                        </div>
+                        <div>
+                            <label for="modal_bedrooms" class="block text-sm font-medium text-gray-700 mb-2">Bedrooms</label>
+                            <select name="bedrooms" id="modal_bedrooms"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+                                <option value="0">Studio</option>
+                                {% for i in "123456789"|make_list %}<option value="{{ i }}"{% if i == "1" %} selected{% endif %}>{{ i }}</option>{% endfor %}
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="modal_bathrooms" class="block text-sm font-medium text-gray-700 mb-2">Bathrooms</label>
+                            <select name="bathrooms" id="modal_bathrooms"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+                                <option value="0.5">0.5</option>
+                                <option value="1" selected>1</option>
+                                <option value="1.5">1.5</option>
+                                <option value="2">2</option>
+                                <option value="2.5">2.5</option>
+                                <option value="3">3</option>
+                                <option value="3.5">3.5</option>
+                                <option value="4">4</option>
+                                <option value="4.5">4.5</option>
+                                <option value="5">5</option>
+                                <option value="5.5">5.5</option>
+                                <option value="6">6</option>
+                                <option value="6.5">6.5</option>
+                                <option value="7">7</option>
+                                <option value="7.5">7.5</option>
+                                <option value="8">8</option>
+                                <option value="8.5">8.5</option>
+                                <option value="9">9</option>
+                                <option value="9.5">9.5</option>
+                                <option value="10">10</option>
+                                <option value="10.5">10.5</option>
+                                <option value="11">11</option>
+                                <option value="11.5">11.5</option>
+                                <option value="12">12</option>
+                                <option value="12.5">12.5</option>
+                                <option value="13">13</option>
+                                <option value="13.5">13.5</option>
+                                <option value="14">14</option>
+                                <option value="14.5">14.5</option>
+                                <option value="15">15</option>
+                            </select>
                         </div>
                     </div>
 
@@ -1088,6 +1181,64 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             <input type="number" name="square_footage" id="edit_square_footage" required
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
                                    placeholder="e.g., 850">
+                        </div>
+                        <div>
+                            <label for="edit_bedrooms" class="block text-sm font-medium text-gray-700 mb-2">Bedrooms</label>
+                            <select name="bedrooms" id="edit_bedrooms"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+                                <option value="0">Studio</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="edit_bathrooms" class="block text-sm font-medium text-gray-700 mb-2">Bathrooms</label>
+                            <select name="bathrooms" id="edit_bathrooms"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+                                <option value="0.5">0.5</option>
+                                <option value="1">1</option>
+                                <option value="1.5">1.5</option>
+                                <option value="2">2</option>
+                                <option value="2.5">2.5</option>
+                                <option value="3">3</option>
+                                <option value="3.5">3.5</option>
+                                <option value="4">4</option>
+                                <option value="4.5">4.5</option>
+                                <option value="5">5</option>
+                                <option value="5.5">5.5</option>
+                                <option value="6">6</option>
+                                <option value="6.5">6.5</option>
+                                <option value="7">7</option>
+                                <option value="7.5">7.5</option>
+                                <option value="8">8</option>
+                                <option value="8.5">8.5</option>
+                                <option value="9">9</option>
+                                <option value="9.5">9.5</option>
+                                <option value="10">10</option>
+                                <option value="10.5">10.5</option>
+                                <option value="11">11</option>
+                                <option value="11.5">11.5</option>
+                                <option value="12">12</option>
+                                <option value="12.5">12.5</option>
+                                <option value="13">13</option>
+                                <option value="13.5">13.5</option>
+                                <option value="14">14</option>
+                                <option value="14.5">14.5</option>
+                                <option value="15">15</option>
+                            </select>
                         </div>
                     </div>
 
@@ -1532,6 +1683,8 @@ async function handleAddApartment(event) {
             name: formData.get('name'),
             price: parseFloat(formData.get('price')),
             square_footage: parseInt(formData.get('square_footage')),
+            bedrooms: parseFloat(formData.get('bedrooms') || 1),
+            bathrooms: parseFloat(formData.get('bathrooms') || 1),
             lease_length_months: parseInt(formData.get('lease_length_months') || 12),
             months_free: parseInt(formData.get('months_free') || 0),
             weeks_free: parseInt(formData.get('weeks_free') || 0),
@@ -1583,64 +1736,44 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// Mobile card sorting functionality
-function sortMobileCards(sortBy) {
-    const cardView = document.getElementById('cardView');
-    const cards = Array.from(cardView.children);
+// Mobile card sorting - combines field and order dropdowns
+function updateMobileSort() {
+    const fieldSelect = document.getElementById('mobileSortField');
+    const orderSelect = document.getElementById('mobileSortOrder');
+    if (!fieldSelect || !orderSelect) return;
 
-    cards.sort((a, b) => {
-        let aValue, bValue;
+    const field = fieldSelect.value;
+    const order = orderSelect.value;
+    const sortValue = field + '-' + order;
 
-        switch(sortBy) {
-            case 'name':
-                aValue = a.querySelector('h3').textContent.trim().toLowerCase();
-                bValue = b.querySelector('h3').textContent.trim().toLowerCase();
-                return aValue.localeCompare(bValue);
+    sortMobileCards(sortValue);
 
-            case 'price':
-                aValue = parseFloat(a.dataset.price || 0);
-                bValue = parseFloat(b.dataset.price || 0);
-                return aValue - bValue;
-
-            case 'score':
-                aValue = parseFloat(a.dataset.score || 0);
-                bValue = parseFloat(b.dataset.score || 0);
-                return bValue - aValue; // Higher score first
-
-            case 'sqft':
-                aValue = parseFloat(a.dataset.sqft || 0);
-                bValue = parseFloat(b.dataset.sqft || 0);
-                return bValue - aValue; // Larger first
-
-            case 'commute':
-                aValue = parseFloat(a.dataset.commute || 999);
-                bValue = parseFloat(b.dataset.commute || 999);
-                return aValue - bValue; // Shorter commute first
-
-            default:
-                return 0;
-        }
-    });
-
-    // Re-append sorted cards
-    cards.forEach(card => cardView.appendChild(card));
-
-    // Save preference
-    localStorage.setItem('mobileSortPreference', sortBy);
+    // Save preferences
+    localStorage.setItem('mobileSortField', field);
+    localStorage.setItem('mobileSortOrder', order);
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadAnonymousApartments();
 
-    // Restore mobile sort preference
-    const savedSort = localStorage.getItem('mobileSortPreference');
-    if (savedSort) {
-        const sortSelect = document.getElementById('mobileSortSelect');
-        if (sortSelect) {
-            sortSelect.value = savedSort;
-            sortMobileCards(savedSort);
-        }
+    // Restore mobile sort preferences
+    const savedField = localStorage.getItem('mobileSortField');
+    const savedOrder = localStorage.getItem('mobileSortOrder');
+
+    const fieldSelect = document.getElementById('mobileSortField');
+    const orderSelect = document.getElementById('mobileSortOrder');
+
+    if (fieldSelect && savedField) {
+        fieldSelect.value = savedField;
+    }
+    if (orderSelect && savedOrder) {
+        orderSelect.value = savedOrder;
+    }
+
+    // Apply saved sort if we have both dropdowns
+    if (fieldSelect && orderSelect && (savedField || savedOrder)) {
+        updateMobileSort();
     }
 
     // Calculate tooltip discount values
@@ -1821,6 +1954,8 @@ function openEditApartmentModal(apartmentData) {
     document.getElementById('edit_address').value = apartmentData.address || '';
     document.getElementById('edit_price').value = apartmentData.price;
     document.getElementById('edit_square_footage').value = apartmentData.square_footage;
+    document.getElementById('edit_bedrooms').value = apartmentData.bedrooms || 1;
+    document.getElementById('edit_bathrooms').value = apartmentData.bathrooms || 1;
     document.getElementById('edit_lease_length_months').value = apartmentData.lease_length_months || 12;
     document.getElementById('edit_months_free').value = apartmentData.months_free || 0;
     document.getElementById('edit_weeks_free').value = apartmentData.weeks_free || 0;
@@ -1881,6 +2016,8 @@ async function handleEditApartment(event) {
                 name: formData.get('name'),
                 price: parseFloat(formData.get('price')),
                 square_footage: parseInt(formData.get('square_footage')),
+                bedrooms: parseFloat(formData.get('bedrooms') || 1),
+                bathrooms: parseFloat(formData.get('bathrooms') || 1),
                 lease_length_months: parseInt(formData.get('lease_length_months') || 12),
                 months_free: parseInt(formData.get('months_free') || 0),
                 weeks_free: parseInt(formData.get('weeks_free') || 0),
@@ -1925,6 +2062,8 @@ let sortDirection = {
     price: 'asc',
     net_price: 'asc',
     square_footage: 'desc',
+    bedrooms: 'desc',
+    bathrooms: 'desc',
     price_per_sqft: 'asc',
     discount: 'asc',
     avg_distance: 'asc'
@@ -1970,6 +2109,16 @@ function sortTable(column) {
                 bVal = parseFloat(b.querySelector('[data-field="square_footage"]').textContent.replace(/,/g, ''));
                 break;
 
+            case 'bedrooms':
+                aVal = parseFloat(a.querySelector('[data-field="bedrooms"]').textContent.replace(/,/g, ''));
+                bVal = parseFloat(b.querySelector('[data-field="bedrooms"]').textContent.replace(/,/g, ''));
+                break;
+
+            case 'bathrooms':
+                aVal = parseFloat(a.querySelector('[data-field="bathrooms"]').textContent.replace(/,/g, ''));
+                bVal = parseFloat(b.querySelector('[data-field="bathrooms"]').textContent.replace(/,/g, ''));
+                break;
+
             case 'price_per_sqft':
                 // Adjust column index based on whether Net Effective column exists
                 const pricePerSqftIndex = hasDiscounts ? 4 : 3;
@@ -2013,7 +2162,10 @@ function sortTable(column) {
 // Mobile card sorting functionality
 function sortMobileCards(sortValue) {
     const cardView = document.getElementById('cardView');
-    const cards = Array.from(cardView.querySelectorAll('.bg-white'));
+    if (!cardView) return;
+
+    const cards = Array.from(cardView.querySelectorAll('[data-name]'));
+    if (cards.length === 0) return;
 
     const [column, direction] = sortValue.split('-');
 
@@ -2041,6 +2193,16 @@ function sortMobileCards(sortValue) {
                 bVal = parseFloat(b.getAttribute('data-sqft')) || 0;
                 break;
 
+            case 'bedrooms':
+                aVal = parseFloat(a.getAttribute('data-bedrooms')) || 0;
+                bVal = parseFloat(b.getAttribute('data-bedrooms')) || 0;
+                break;
+
+            case 'bathrooms':
+                aVal = parseFloat(a.getAttribute('data-bathrooms')) || 0;
+                bVal = parseFloat(b.getAttribute('data-bathrooms')) || 0;
+                break;
+
             case 'price_per_sqft':
                 aVal = parseFloat(a.getAttribute('data-price-per-sqft')) || 0;
                 bVal = parseFloat(b.getAttribute('data-price-per-sqft')) || 0;
@@ -2050,6 +2212,15 @@ function sortMobileCards(sortValue) {
                 aVal = parseFloat(a.getAttribute('data-discount-amount')) || 0;
                 bVal = parseFloat(b.getAttribute('data-discount-amount')) || 0;
                 break;
+
+            case 'avg_distance':
+                aVal = parseFloat(a.getAttribute('data-avg-distance')) || 999;
+                bVal = parseFloat(b.getAttribute('data-avg-distance')) || 999;
+                break;
+
+            default:
+                aVal = 0;
+                bVal = 0;
         }
 
         return direction === 'asc' ? aVal - bVal : bVal - aVal;

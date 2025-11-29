@@ -312,6 +312,8 @@ def create_apartment(request):
                     longitude=longitude,
                     price=form.cleaned_data["price"],
                     square_footage=form.cleaned_data["square_footage"],
+                    bedrooms=form.cleaned_data["bedrooms"],
+                    bathrooms=form.cleaned_data["bathrooms"],
                     lease_length_months=form.cleaned_data["lease_length_months"],
                     months_free=form.cleaned_data["months_free"],
                     weeks_free=form.cleaned_data["weeks_free"],
@@ -353,6 +355,8 @@ def update_apartment(request, pk):
             apartment.address = new_address
             apartment.price = form.cleaned_data["price"]
             apartment.square_footage = form.cleaned_data["square_footage"]
+            apartment.bedrooms = form.cleaned_data["bedrooms"]
+            apartment.bathrooms = form.cleaned_data["bathrooms"]
             apartment.lease_length_months = form.cleaned_data["lease_length_months"]
             apartment.months_free = form.cleaned_data["months_free"]
             apartment.weeks_free = form.cleaned_data["weeks_free"]

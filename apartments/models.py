@@ -173,6 +173,8 @@ class Apartment(models.Model):
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
     square_footage = models.IntegerField(validators=[MinValueValidator(0)])
+    bedrooms = models.DecimalField(max_digits=3, decimal_places=1, default=1, validators=[MinValueValidator(Decimal('0'))])  # Supports 0.5 for studios
+    bathrooms = models.DecimalField(max_digits=3, decimal_places=1, default=1, validators=[MinValueValidator(Decimal('0.5'))])  # Supports 1.5, 2.5, etc.
     lease_length_months = models.IntegerField(validators=[MinValueValidator(1)])
 
     # Location fields
