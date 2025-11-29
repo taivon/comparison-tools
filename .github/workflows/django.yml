@@ -20,12 +20,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Run Migrations
-      env:
-        DJANGO_SETTINGS_MODULE: config.settings
-        SECRET_KEY: test-secret-key-for-ci
-      run: |
-        python manage.py migrate --noinput
     - name: Run Tests
       env:
         DJANGO_SETTINGS_MODULE: config.settings
@@ -37,31 +31,24 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     permissions:
       contents: read
       id-token: write
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version-file: '.python-version'
-    
+
     - name: Install Python Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    
-    - name: Run Migrations (for collectstatic)
-      env:
-        DJANGO_SETTINGS_MODULE: config.settings
-        SECRET_KEY: 'django-insecure-temp-key-for-build-only'
-      run: |
-        python manage.py migrate --noinput || true
-    
+
     - name: Collect Static Files
       env:
         DJANGO_SETTINGS_MODULE: config.settings
@@ -69,14 +56,7 @@ jobs:
       run: |
         mkdir -p static
         python manage.py collectstatic --noinput --clear
-    
-    - name: Check for required secrets
-      run: |
-        if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
-          echo "Error: GCP_SA_KEY secret is not set. Please add the Google Cloud service account key to your repository secrets."
-          exit 1
-        fi
-    
+
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
       with:
@@ -84,68 +64,12 @@ jobs:
         project_id: comparison-tools-479102
         create_credentials_file: true
         export_environment_variables: true
-    
+
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
         project_id: comparison-tools-479102
-    
-    - name: Enable Required APIs
-      run: |
-        gcloud services enable cloudbuild.googleapis.com --project=comparison-tools-479102 || true
-        gcloud services enable appengine.googleapis.com --project=comparison-tools-479102 || true
-        gcloud services enable cloudresourcemanager.googleapis.com --project=comparison-tools-479102 || true
-        gcloud services enable storage-component.googleapis.com --project=comparison-tools-479102 || true
-        gcloud services enable secretmanager.googleapis.com --project=comparison-tools-479102 || true
-    
-    - name: Grant Secret Manager permissions to service account
-      run: |
-        # Grant the GitHub Actions service account permission to manage secrets
-        gcloud projects add-iam-policy-binding comparison-tools-479102 \
-          --member="serviceAccount:github-actions-deploy@comparison-tools-479102.iam.gserviceaccount.com" \
-          --role="roles/secretmanager.admin" || true
-    
-    - name: Create Google Secrets for OAuth
-      env:
-        GOOGLE_OAUTH2_KEY: ${{ secrets.GOOGLE_OAUTH2_KEY }}
-        GOOGLE_OAUTH2_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
-      run: |
-        # Create or update the OAuth key in Secret Manager
-        if gcloud secrets describe google-oauth2-key --project=comparison-tools-479102 >/dev/null 2>&1; then
-          echo "OAuth key secret exists, updating..."
-          echo "${GOOGLE_OAUTH2_KEY}" | gcloud secrets versions add google-oauth2-key --data-file=- --project=comparison-tools-479102
-        else
-          echo "Creating new OAuth key secret..."
-          echo "${GOOGLE_OAUTH2_KEY}" | gcloud secrets create google-oauth2-key --data-file=- --project=comparison-tools-479102
-        fi
-        
-        # Create or update the OAuth secret in Secret Manager
-        if gcloud secrets describe google-oauth2-secret --project=comparison-tools-479102 >/dev/null 2>&1; then
-          echo "OAuth secret exists, updating..."
-          echo "${GOOGLE_OAUTH2_SECRET}" | gcloud secrets versions add google-oauth2-secret --data-file=- --project=comparison-tools-479102
-        else
-          echo "Creating new OAuth secret..."
-          echo "${GOOGLE_OAUTH2_SECRET}" | gcloud secrets create google-oauth2-secret --data-file=- --project=comparison-tools-479102
-        fi
-        
-        # Grant App Engine access to OAuth secrets
-        gcloud secrets add-iam-policy-binding google-oauth2-key \
-          --member="serviceAccount:comparison-tools-479102@appspot.gserviceaccount.com" \
-          --role="roles/secretmanager.secretAccessor" \
-          --project=comparison-tools-479102
-        gcloud secrets add-iam-policy-binding google-oauth2-secret \
-          --member="serviceAccount:comparison-tools-479102@appspot.gserviceaccount.com" \
-          --role="roles/secretmanager.secretAccessor" \
-          --project=comparison-tools-479102
 
-        # Grant App Engine access to Supabase secrets
-        for secret in supabase-db-host supabase-db-name supabase-db-user supabase-db-password supabase-db-port django-secret-key; do
-          gcloud secrets add-iam-policy-binding $secret \
-            --member="serviceAccount:comparison-tools-479102@appspot.gserviceaccount.com" \
-            --role="roles/secretmanager.secretAccessor" \
-            --project=comparison-tools-479102 || true
-        done
-    
     - name: Run Production Migrations
       run: |
         # Fetch Supabase credentials from Secret Manager
@@ -161,5 +85,4 @@ jobs:
 
     - name: Deploy to App Engine
       run: |
-        gcloud config set project comparison-tools-479102
-        gcloud app deploy app.yaml --quiet --verbosity=debug
+        gcloud app deploy app.yaml --quiet
