@@ -18,12 +18,11 @@ Including another URLconf
 from django.urls import include, path
 from django.contrib.sitemaps.views import sitemap
 from apartments import views as apartment_views
-from apartments.sitemaps import StaticViewSitemap, DashboardSitemap
+from apartments.sitemaps import StaticViewSitemap
 
 # Sitemap configuration
 sitemaps = {
     "static": StaticViewSitemap,
-    "dashboard": DashboardSitemap,
 }
 
 urlpatterns = [

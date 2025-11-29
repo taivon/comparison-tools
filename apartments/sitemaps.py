@@ -11,8 +11,8 @@ class StaticViewSitemap(Sitemap):
 
     # Define priorities for each page
     priorities = {
-        "home": 1.0,  # Main landing page - highest priority
-        "apartments:index": 0.9,  # Apartment comparison tool - very high priority
+        "apartments:index": 1.0,  # Apartment comparison tool - highest priority
+        "home": 0.9,  # Main landing page - second highest
         "privacy": 0.4,  # Legal pages - lower priority
         "terms": 0.4,
         "homes": 0.3,  # Coming soon pages - lowest priority
@@ -61,19 +61,3 @@ class StaticViewSitemap(Sitemap):
         return None
 
 
-class DashboardSitemap(Sitemap):
-    """Sitemap for authenticated user pages"""
-
-    priority = 0.6
-    changefreq = "daily"
-    protocol = "https"
-
-    def items(self):
-        """Return list of URL names for dashboard pages"""
-        return [
-            "apartments:dashboard",
-        ]
-
-    def location(self, item):
-        """Return the URL path for each item"""
-        return reverse(item)

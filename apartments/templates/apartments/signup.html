@@ -2,6 +2,10 @@
 
 {% block title %}Sign Up - Apartment Comparison Tool{% endblock %}
 
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-white">
     {% if not user.is_authenticated %}
