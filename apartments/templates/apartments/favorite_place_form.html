@@ -65,6 +65,76 @@
                     {% endif %}
                 </div>
 
+                <!-- Travel Mode -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Travel Mode <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        How you'll travel to this place
+                    </p>
+                    <div class="space-y-2">
+                        {% for radio in form.travel_mode %}
+                            <label class="flex items-center">
+                                {{ radio.tag }}
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ radio.choice_label }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    {% if form.travel_mode.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.travel_mode.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Time Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Time Preference <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        Choose when you need to arrive or when you'll depart
+                    </p>
+                    <div class="space-y-2">
+                        {% for radio in form.time_type %}
+                            <label class="flex items-center">
+                                {{ radio.tag }}
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ radio.choice_label }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    {% if form.time_type.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.time_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Departure Time -->
+                <div id="departure_time_field" style="display: none;">
+                    <label for="id_departure_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Departure Time
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
+                        When you plan to leave for this place
+                    </p>
+                    {{ form.departure_time }}
+                    {% if form.departure_time.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.departure_time.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Arrival Time -->
+                <div id="arrival_time_field" style="display: none;">
+                    <label for="id_arrival_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Arrival Time
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
+                        When you need to arrive at this place
+                    </p>
+                    {{ form.arrival_time }}
+                    {% if form.arrival_time.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.arrival_time.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
                 <!-- Tips -->
                 <div class="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4">
                     <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tips for best results</h4>
@@ -79,7 +149,7 @@
                             <svg class="w-4 h-4 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                             </svg>
-                            Driving distance and estimated travel time will be calculated
+                            Travel time will be calculated based on your selected mode and time
                         </li>
                         <li class="flex items-start">
                             <svg class="w-4 h-4 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -103,4 +173,65 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get time type radio buttons
+    const timeTypeRadios = document.querySelectorAll('input[name="time_type"]');
+    const departureField = document.getElementById('departure_time_field');
+    const arrivalField = document.getElementById('arrival_time_field');
+    const departureInput = document.getElementById('id_departure_time');
+    const arrivalInput = document.getElementById('id_arrival_time');
+
+    // Function to get next Saturday at 12:00 PM
+    function getNextSaturdayNoon() {
+        const now = new Date();
+        const daysUntilSaturday = (6 - now.getDay() + 7) % 7 || 7; // Days until next Saturday
+        const nextSaturday = new Date(now);
+        nextSaturday.setDate(now.getDate() + daysUntilSaturday);
+        nextSaturday.setHours(12, 0, 0, 0);
+
+        // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+        const year = nextSaturday.getFullYear();
+        const month = String(nextSaturday.getMonth() + 1).padStart(2, '0');
+        const day = String(nextSaturday.getDate()).padStart(2, '0');
+        const hours = String(nextSaturday.getHours()).padStart(2, '0');
+        const minutes = String(nextSaturday.getMinutes()).padStart(2, '0');
+
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    // Function to toggle time fields based on selected time type
+    function toggleTimeFields() {
+        const selectedTimeType = document.querySelector('input[name="time_type"]:checked').value;
+
+        if (selectedTimeType === 'departure') {
+            departureField.style.display = 'block';
+            arrivalField.style.display = 'none';
+
+            // Set default departure time if empty
+            if (!departureInput.value) {
+                departureInput.value = getNextSaturdayNoon();
+            }
+
+            // Clear arrival time when switching to departure
+            arrivalInput.value = '';
+        } else {
+            departureField.style.display = 'none';
+            arrivalField.style.display = 'block';
+
+            // Clear departure time when switching to arrival
+            departureInput.value = '';
+        }
+    }
+
+    // Add event listeners to time type radio buttons
+    timeTypeRadios.forEach(radio => {
+        radio.addEventListener('change', toggleTimeFields);
+    });
+
+    // Initialize on page load
+    toggleTimeFields();
+});
+</script>
 {% endblock %}

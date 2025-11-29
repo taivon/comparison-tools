@@ -305,3 +305,35 @@ class FavoritePlaceForm(forms.Form):
             }
         ),
     )
+    travel_mode = forms.ChoiceField(
+        choices=[("driving", "Driving"), ("transit", "Transit")],
+        initial="driving",
+        widget=forms.RadioSelect(
+            attrs={"class": "h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}
+        ),
+    )
+    time_type = forms.ChoiceField(
+        choices=[("departure", "Departure Time"), ("arrival", "Arrival Time")],
+        initial="departure",
+        widget=forms.RadioSelect(
+            attrs={"class": "h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}
+        ),
+    )
+    departure_time = forms.DateTimeField(
+        required=False,
+        widget=forms.DateTimeInput(
+            attrs={
+                "type": "datetime-local",
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
+            }
+        ),
+    )
+    arrival_time = forms.DateTimeField(
+        required=False,
+        widget=forms.DateTimeInput(
+            attrs={
+                "type": "datetime-local",
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
+            }
+        ),
+    )

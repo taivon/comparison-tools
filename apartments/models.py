@@ -296,11 +296,28 @@ class ApartmentScore(models.Model):
 class FavoritePlace(models.Model):
     """A user's favorite place (e.g., Work, Gym) for distance calculations"""
 
+    TRAVEL_MODE_CHOICES = [
+        ("driving", "Driving"),
+        ("transit", "Transit"),
+    ]
+
+    TIME_TYPE_CHOICES = [
+        ("departure", "Departure Time"),
+        ("arrival", "Arrival Time"),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="favorite_places")
     label = models.CharField(max_length=100)  # e.g., "Work", "Gym"
     address = models.CharField(max_length=500)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
+    # Travel preferences
+    travel_mode = models.CharField(max_length=20, choices=TRAVEL_MODE_CHOICES, default="driving")
+    time_type = models.CharField(max_length=20, choices=TIME_TYPE_CHOICES, default="departure")
+    arrival_time = models.DateTimeField(null=True, blank=True)
+    departure_time = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -322,7 +339,10 @@ class ApartmentDistance(models.Model):
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name="distances")
     favorite_place = models.ForeignKey(FavoritePlace, on_delete=models.CASCADE, related_name="apartment_distances")
     distance_miles = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    travel_time_minutes = models.IntegerField(null=True, blank=True)  # Optional for MVP
+    travel_time_minutes = models.IntegerField(null=True, blank=True)
+    transit_fare = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True, help_text="Transit fare in USD"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

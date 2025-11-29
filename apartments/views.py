@@ -975,12 +975,22 @@ def create_favorite_place(request):
                 if not result.success:
                     geocode_failed = True
 
+            # Get travel preferences
+            travel_mode = form.cleaned_data["travel_mode"]
+            time_type = form.cleaned_data["time_type"]
+            departure_time = form.cleaned_data.get("departure_time")
+            arrival_time = form.cleaned_data.get("arrival_time")
+
             place = FavoritePlace.objects.create(
                 user=request.user,
                 label=label,
                 address=address,
                 latitude=latitude,
                 longitude=longitude,
+                travel_mode=travel_mode,
+                time_type=time_type,
+                departure_time=departure_time if time_type == "departure" else None,
+                arrival_time=arrival_time if time_type == "arrival" else None,
             )
 
             if geocode_failed or (latitude is None and longitude is None):
@@ -1017,6 +1027,17 @@ def update_favorite_place(request, pk):
 
             place.label = form.cleaned_data["label"]
             place.address = new_address
+
+            # Update travel preferences
+            travel_mode = form.cleaned_data["travel_mode"]
+            time_type = form.cleaned_data["time_type"]
+            departure_time = form.cleaned_data.get("departure_time")
+            arrival_time = form.cleaned_data.get("arrival_time")
+
+            place.travel_mode = travel_mode
+            place.time_type = time_type
+            place.departure_time = departure_time if time_type == "departure" else None
+            place.arrival_time = arrival_time if time_type == "arrival" else None
 
             # Re-geocode if address changed
             geocode_failed = False
@@ -1063,6 +1084,10 @@ def update_favorite_place(request, pk):
             initial={
                 "label": place.label,
                 "address": place.address,
+                "travel_mode": place.travel_mode,
+                "time_type": place.time_type,
+                "departure_time": place.departure_time,
+                "arrival_time": place.arrival_time,
             }
         )
 
