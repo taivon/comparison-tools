@@ -1,27 +1,30 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
 import json
-from .firestore_service import (
-    FirestoreService,
-    FirestoreApartment,
-    FirestoreUserPreferences,
+from .models import (
+    Apartment, UserPreferences, UserProfile, Plan,
+    user_has_premium, get_product_free_tier_limit
 )
-from .stripe_service import StripeService
 from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm, LoginForm
-from .auth_utils import (
-    firestore_login,
-    firestore_logout,
-    firestore_authenticate,
-    login_required_firestore,
-)
 import logging
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
+
+# Product slug for this app
+PRODUCT_SLUG = 'apartments'
+
+
+def get_or_create_profile(user):
+    """Get or create UserProfile for a user"""
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    return profile
 
 
 def main_homepage(request):
@@ -47,17 +50,8 @@ def hotels_coming_soon(request):
     })
 
 
-def user_has_premium(user):
-    """Helper function to check if a user has premium access via subscription or legacy is_staff"""
-    if not user.is_authenticated:
-        return False
-    return StripeService.has_active_subscription(user)
-
-
 def calculate_net_effective_price(apt_data, discount_calculation='daily'):
     """Calculate net effective price for session apartments"""
-    from decimal import Decimal
-
     price = Decimal(str(apt_data.get('price', 0)))
     lease_length_months = apt_data.get('lease_length_months', 12)
     months_free = apt_data.get('months_free', 0)
@@ -67,23 +61,17 @@ def calculate_net_effective_price(apt_data, discount_calculation='daily'):
     total_discount = Decimal('0')
 
     if discount_calculation == 'daily':
-        # Calculate annual rent divided by 365 days
         daily_rate = price * Decimal('12') / Decimal('365')
-        # Convert months_free to days (using 365/12 for precision)
         if months_free > 0:
             days_free_from_months = Decimal(str(months_free)) * Decimal('365') / Decimal('12')
             total_discount += daily_rate * days_free_from_months
-        # Convert weeks_free to days
         if weeks_free > 0:
             total_discount += daily_rate * Decimal('7') * Decimal(str(weeks_free))
     elif discount_calculation == 'weekly':
-        # Calculate annual rent divided by 52 weeks
         weekly_rate = price * Decimal('12') / Decimal('52')
-        # Convert months_free to weeks (using 52/12 for precision)
         if months_free > 0:
             weeks_free_from_months = Decimal(str(months_free)) * Decimal('52') / Decimal('12')
             total_discount += weekly_rate * weeks_free_from_months
-        # Add weeks_free directly
         if weeks_free > 0:
             total_discount += weekly_rate * Decimal(str(weeks_free))
     else:  # monthly
@@ -95,80 +83,17 @@ def calculate_net_effective_price(apt_data, discount_calculation='daily'):
     total_discount += flat_discount
     total_lease_value = price * Decimal(str(lease_length_months))
     net_price = (total_lease_value - total_discount) / Decimal(str(lease_length_months))
-    # Round to 2 decimal places and return as float
     return float(round(net_price, 2))
-
-
-def get_session_apartments(request):
-    """Get apartments from session for anonymous users"""
-    session_apartments = request.session.get("anonymous_apartments", [])
-    apartments = []
-
-    for apt_data in session_apartments:
-        # Create a simple object with the apartment data
-        class SessionApartment:
-            def __init__(self, data):
-                for key, value in data.items():
-                    setattr(self, key, value)
-                # Ensure we have a doc_id attribute
-                if not hasattr(self, "doc_id"):
-                    self.doc_id = data.get("id", f"session_{len(apartments)}")
-                # Add price_per_sqft property (rounded to 2 decimals)
-                self.price_per_sqft = round(self.price / self.square_footage, 2) if self.square_footage > 0 else 0
-
-        apartment = SessionApartment(apt_data)
-        apartments.append(apartment)
-
-    return apartments
-
-
-def save_session_apartment(request, apartment_data):
-    """Save apartment to session for anonymous users"""
-    session_apartments = request.session.get("anonymous_apartments", [])
-
-    # Add unique ID for session apartments
-    apartment_data["id"] = (
-        f"session_{len(session_apartments)}_{apartment_data.get('name', 'apt').replace(' ', '_')}"
-    )
-
-    session_apartments.append(apartment_data)
-    request.session["anonymous_apartments"] = session_apartments
-    request.session.modified = True
-
-
-def clear_session_apartments(request):
-    """Clear session apartments (used when user signs up)"""
-    if "anonymous_apartments" in request.session:
-        del request.session["anonymous_apartments"]
-        request.session.modified = True
-
-
-def delete_session_apartment_by_id(request, apartment_id):
-    """Delete a single session apartment by ID"""
-    session_apartments = request.session.get("anonymous_apartments", [])
-
-    # Filter out the apartment with the matching ID
-    updated_apartments = [apt for apt in session_apartments if apt.get("id") != apartment_id]
-
-    request.session["anonymous_apartments"] = updated_apartments
-    request.session.modified = True
-
-    return len(session_apartments) != len(updated_apartments)  # Return True if apartment was found and deleted
 
 
 def index(request):
     """Homepage - landing page with form and features"""
-    firestore_service = FirestoreService()
-
-    # Simple apartment count check for form availability
     if request.user.is_authenticated:
-        apartments = firestore_service.get_user_apartments(request.user.id)
-        apartment_count = len(apartments)
-        # Authenticated users: premium = unlimited, free tier = 2
-        has_premium = user_has_premium(request.user)
+        apartments = Apartment.objects.filter(user=request.user)
+        apartment_count = apartments.count()
+        has_premium = user_has_premium(request.user, PRODUCT_SLUG)
         can_add_apartment = has_premium or apartment_count < 2
     else:
-        # Anonymous users - will check via JavaScript/sessionStorage
         apartment_count = 0
         can_add_apartment = True  # JavaScript will enforce the 2-apartment limit
 
@@ -182,21 +107,21 @@ def index(request):
 
 def dashboard(request):
     """Dashboard view showing user's apartments in table/card format"""
-    firestore_service = FirestoreService()
-
-    # Handle both authenticated and anonymous users
     if request.user.is_authenticated:
-        # Authenticated user - get data from Firestore
-        apartments = firestore_service.get_user_apartments(request.user.id)
-        preferences = firestore_service.get_user_preferences(request.user.id)
+        apartments = list(Apartment.objects.filter(user=request.user).order_by('-created_at'))
+        preferences, _ = UserPreferences.objects.get_or_create(
+            user=request.user,
+            defaults={
+                'price_weight': 50,
+                'sqft_weight': 50,
+                'distance_weight': 50,
+                'discount_calculation': 'daily'
+            }
+        )
     else:
-        # Anonymous user - apartments stored in sessionStorage (client-side)
-        # Return empty list; JavaScript will load from sessionStorage
         apartments = []
-        # Get anonymous user preferences from session (still server-side)
         session_prefs = request.session.get('anonymous_preferences', {})
         if session_prefs:
-            # Create a simple preferences object
             class SessionPreferences:
                 def __init__(self, data):
                     self.price_weight = data.get('price_weight', 50)
@@ -207,7 +132,7 @@ def dashboard(request):
         else:
             preferences = None
 
-    # Handle preferences form submission (for both authenticated and anonymous users)
+    # Handle preferences form submission
     if request.method == "POST":
         form = UserPreferencesForm(request.POST)
         if form.is_valid():
@@ -219,17 +144,17 @@ def dashboard(request):
             }
 
             if request.user.is_authenticated:
-                # Save to Firestore for authenticated users
-                firestore_service.update_user_preferences(request.user.id, preferences_data)
+                UserPreferences.objects.update_or_create(
+                    user=request.user,
+                    defaults=preferences_data
+                )
             else:
-                # Save to session for anonymous users
                 request.session['anonymous_preferences'] = preferences_data
                 request.session.modified = True
 
             messages.success(request, "Preferences updated successfully!")
             return redirect("apartments:dashboard")
     else:
-        # Create form with current preferences values
         initial_data = {}
         if preferences:
             initial_data = {
@@ -240,14 +165,13 @@ def dashboard(request):
             }
         form = UserPreferencesForm(initial=initial_data)
 
-    # Calculate net effective price for each apartment first
+    # Calculate net effective price for each apartment
     discount_calc_method = preferences.discount_calculation if preferences else 'daily'
     for apartment in apartments:
-        if hasattr(apartment, 'net_effective_price') and callable(apartment.net_effective_price):
-            # FirestoreApartment - call method with preferences
-            apartment.net_effective_price = apartment.net_effective_price(preferences)
+        # For Django model apartments, use the property
+        if hasattr(apartment, 'net_effective_price'):
+            apartment.calculated_net_effective = apartment.net_effective_price
         else:
-            # Session apartment - calculate manually
             apt_data = {
                 'price': getattr(apartment, 'price', 0),
                 'lease_length_months': getattr(apartment, 'lease_length_months', 12),
@@ -255,7 +179,7 @@ def dashboard(request):
                 'weeks_free': getattr(apartment, 'weeks_free', 0),
                 'flat_discount': getattr(apartment, 'flat_discount', 0),
             }
-            apartment.net_effective_price = calculate_net_effective_price(apt_data, discount_calc_method)
+            apartment.calculated_net_effective = calculate_net_effective_price(apt_data, discount_calc_method)
 
     # Sort apartments based on user preferences
     if preferences and apartments:
@@ -264,21 +188,17 @@ def dashboard(request):
             key=lambda x: (
                 (float(x.net_effective_price) * preferences.price_weight)
                 + (x.square_footage * preferences.sqft_weight)
-                + (0 * preferences.distance_weight)  # Distance is not implemented yet
+                + (0 * preferences.distance_weight)
             ),
             reverse=True,
-        )  # Sort in descending order
+        )
 
-    # Check if user can add more apartments
-    has_premium = user_has_premium(request.user) if request.user.is_authenticated else False
+    has_premium = user_has_premium(request.user, PRODUCT_SLUG) if request.user.is_authenticated else False
     if request.user.is_authenticated:
-        # Authenticated users: premium = unlimited, free tier = 2
         can_add_apartment = has_premium or len(apartments) < 2
     else:
-        # Anonymous users: max 2 apartments
         can_add_apartment = len(apartments) < 2
 
-    # Check if any apartment has discounts
     has_discounts = any(
         (
             getattr(apt, "months_free", 0) > 0
@@ -291,13 +211,11 @@ def dashboard(request):
     context = {
         "apartments": apartments,
         "preferences": preferences,
-        "form": form,  # Add the form to the context
+        "form": form,
         "is_premium": has_premium,
         "can_add_apartment": can_add_apartment,
         "apartment_count": len(apartments),
-        "apartment_limit": (
-            2 if not has_premium else None
-        ),
+        "apartment_limit": 2 if not has_premium else None,
         "is_anonymous": not request.user.is_authenticated,
         "has_discounts": has_discounts,
     }
@@ -311,30 +229,13 @@ def create_apartment(request):
         if form.is_valid():
             logger.debug("Form is valid")
 
-            apartment_data = {
-                "name": form.cleaned_data["name"],
-                "price": float(form.cleaned_data["price"]),
-                "square_footage": form.cleaned_data["square_footage"],
-                "lease_length_months": form.cleaned_data["lease_length_months"],
-                "months_free": form.cleaned_data["months_free"],
-                "weeks_free": form.cleaned_data["weeks_free"],
-                "flat_discount": float(form.cleaned_data["flat_discount"]),
-            }
-
-            # Only authenticated users should reach this endpoint
-            # Anonymous users store apartments in sessionStorage (client-side)
             if not request.user.is_authenticated:
                 return JsonResponse({"success": False, "error": "Authentication required"}, status=401)
 
-            # Authenticated user - save to Firestore
-            firestore_service = FirestoreService()
-
-            # Check free tier limit for authenticated users
-            has_premium = user_has_premium(request.user)
-            if (
-                not has_premium
-                and len(firestore_service.get_user_apartments(request.user.id)) >= 2
-            ):
+            # Check free tier limit
+            has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+            current_count = Apartment.objects.filter(user=request.user).count()
+            if not has_premium and current_count >= 2:
                 messages.error(
                     request,
                     "Free tier limit reached. Upgrade to premium to add more apartments.",
@@ -342,15 +243,21 @@ def create_apartment(request):
                 return redirect("apartments:index")
 
             try:
-                apartment_data["user_id"] = str(request.user.id)
-                firestore_service.create_apartment(apartment_data)
+                apartment = Apartment.objects.create(
+                    user=request.user,
+                    name=form.cleaned_data["name"],
+                    price=form.cleaned_data["price"],
+                    square_footage=form.cleaned_data["square_footage"],
+                    lease_length_months=form.cleaned_data["lease_length_months"],
+                    months_free=form.cleaned_data["months_free"],
+                    weeks_free=form.cleaned_data["weeks_free"],
+                    flat_discount=form.cleaned_data["flat_discount"],
+                )
                 messages.success(request, "Apartment added successfully!")
                 return redirect("apartments:dashboard")
             except Exception as e:
                 logger.error(f"Error saving apartment: {str(e)}")
-                messages.error(
-                    request, "An error occurred while saving the apartment."
-                )
+                messages.error(request, "An error occurred while saving the apartment.")
         else:
             logger.error(f"Form errors: {form.errors}")
             messages.error(request, "Please correct the errors below.")
@@ -360,31 +267,24 @@ def create_apartment(request):
     return render(request, "apartments/apartment_form.html", {"form": form})
 
 
-@login_required_firestore
+@login_required
 def update_apartment(request, pk):
-    firestore_service = FirestoreService()
-    apartment = firestore_service.get_apartment(pk)
-
-    if not apartment or apartment.user_id != str(request.user.id):
-        raise Http404("Apartment not found")
+    apartment = get_object_or_404(Apartment, pk=pk, user=request.user)
 
     if request.method == "POST":
         form = ApartmentForm(request.POST)
         if form.is_valid():
-            apartment_data = {
-                "name": form.cleaned_data["name"],
-                "price": float(form.cleaned_data["price"]),
-                "square_footage": form.cleaned_data["square_footage"],
-                "lease_length_months": form.cleaned_data["lease_length_months"],
-                "months_free": form.cleaned_data["months_free"],
-                "weeks_free": form.cleaned_data["weeks_free"],
-                "flat_discount": float(form.cleaned_data["flat_discount"]),
-            }
-            firestore_service.update_apartment(pk, apartment_data)
+            apartment.name = form.cleaned_data["name"]
+            apartment.price = form.cleaned_data["price"]
+            apartment.square_footage = form.cleaned_data["square_footage"]
+            apartment.lease_length_months = form.cleaned_data["lease_length_months"]
+            apartment.months_free = form.cleaned_data["months_free"]
+            apartment.weeks_free = form.cleaned_data["weeks_free"]
+            apartment.flat_discount = form.cleaned_data["flat_discount"]
+            apartment.save()
             messages.success(request, "Apartment updated successfully!")
             return redirect("apartments:index")
     else:
-        # Initialize form with current apartment data
         initial_data = {
             "name": apartment.name,
             "price": apartment.price,
@@ -405,72 +305,60 @@ def delete_apartment(request, pk):
         return JsonResponse({"success": False, "error": "Method not allowed"}, status=405)
 
     # Check if this is a session apartment (starts with "session_")
-    if pk.startswith("session_"):
-        # Anonymous user deleting session apartment
-        deleted = delete_session_apartment_by_id(request, pk)
-        if deleted:
-            return JsonResponse({"success": True})
-        else:
-            return JsonResponse({"success": False, "error": "Apartment not found"}, status=404)
+    if str(pk).startswith("session_"):
+        # Anonymous user deleting session apartment - handled by JavaScript
+        return JsonResponse({"success": True})
     else:
-        # Authenticated user deleting Firestore apartment
-        # Check if user is authenticated
         if not request.user.is_authenticated:
             return JsonResponse({"success": False, "error": "Authentication required"}, status=401)
 
-        firestore_service = FirestoreService()
-        apartment = firestore_service.get_apartment(pk)
-
-        if not apartment or apartment.user_id != str(request.user.id):
-            return JsonResponse({"success": False, "error": "Apartment not found"}, status=404)
-
-        firestore_service.delete_apartment(pk)
+        apartment = get_object_or_404(Apartment, pk=pk, user=request.user)
+        apartment.delete()
         messages.success(request, "Apartment deleted successfully!")
 
-        # Return JSON for AJAX requests, redirect for form submissions
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            # Check remaining apartments count
-            remaining_apartments = firestore_service.get_user_apartments(request.user.id)
+            remaining_count = Apartment.objects.filter(user=request.user).count()
             return JsonResponse({
                 "success": True,
-                "remaining_count": len(remaining_apartments)
+                "remaining_count": remaining_count
             })
 
-        # For non-AJAX: Check if user still has apartments
-        remaining_apartments = firestore_service.get_user_apartments(request.user.id)
+        remaining_apartments = Apartment.objects.filter(user=request.user).exists()
         if remaining_apartments:
             return redirect("apartments:dashboard")
         else:
             return redirect("apartments:index")
 
 
-@login_required_firestore
+@login_required
 def update_preferences(request):
-    firestore_service = FirestoreService()
-    preferences = firestore_service.get_user_preferences(request.user.id)
+    preferences, _ = UserPreferences.objects.get_or_create(
+        user=request.user,
+        defaults={
+            'price_weight': 50,
+            'sqft_weight': 50,
+            'distance_weight': 50,
+            'discount_calculation': 'daily'
+        }
+    )
 
     if request.method == "POST":
         form = UserPreferencesForm(request.POST)
         if form.is_valid():
-            preferences_data = {
-                "price_weight": form.cleaned_data["price_weight"],
-                "sqft_weight": form.cleaned_data["sqft_weight"],
-                "distance_weight": form.cleaned_data["distance_weight"],
-                "discount_calculation": form.cleaned_data["discount_calculation"],
-            }
-            firestore_service.update_user_preferences(request.user.id, preferences_data)
+            preferences.price_weight = form.cleaned_data["price_weight"]
+            preferences.sqft_weight = form.cleaned_data["sqft_weight"]
+            preferences.distance_weight = form.cleaned_data["distance_weight"]
+            preferences.discount_calculation = form.cleaned_data["discount_calculation"]
+            preferences.save()
             messages.success(request, "Preferences updated successfully!")
             return redirect("apartments:index")
     else:
-        # Initialize form with current preferences
-        initial_data = {}
-        if preferences:
-            initial_data = {
-                "price_weight": preferences.price_weight,
-                "sqft_weight": preferences.sqft_weight,
-                "distance_weight": preferences.distance_weight,
-                "discount_calculation": preferences.discount_calculation,
-            }
+        initial_data = {
+            "price_weight": preferences.price_weight,
+            "sqft_weight": preferences.sqft_weight,
+            "distance_weight": preferences.distance_weight,
+            "discount_calculation": preferences.discount_calculation,
+        }
         form = UserPreferencesForm(initial=initial_data)
 
     return render(request, "apartments/preferences_form.html", {"form": form})
@@ -478,7 +366,7 @@ def update_preferences(request):
 
 @require_http_methods(["POST"])
 def transfer_apartments(request):
-    """Transfer apartments from sessionStorage to Firestore after user signs up"""
+    """Transfer apartments from sessionStorage to database after user signs up"""
     if not request.user.is_authenticated:
         return JsonResponse({"success": False, "error": "Authentication required"}, status=401)
 
@@ -486,22 +374,20 @@ def transfer_apartments(request):
         data = json.loads(request.body)
         apartments = data.get("apartments", [])
 
-        firestore_service = FirestoreService()
         transferred_count = 0
 
         for apartment in apartments:
             try:
-                apartment_data = {
-                    "name": apartment["name"],
-                    "price": float(apartment["price"]),
-                    "square_footage": int(apartment["square_footage"]),
-                    "lease_length_months": int(apartment.get("lease_length_months", 12)),
-                    "months_free": int(apartment.get("months_free", 0)),
-                    "weeks_free": int(apartment.get("weeks_free", 0)),
-                    "flat_discount": float(apartment.get("flat_discount", 0)),
-                    "user_id": str(request.user.id),
-                }
-                firestore_service.create_apartment(apartment_data)
+                Apartment.objects.create(
+                    user=request.user,
+                    name=apartment["name"],
+                    price=Decimal(str(apartment["price"])),
+                    square_footage=int(apartment["square_footage"]),
+                    lease_length_months=int(apartment.get("lease_length_months", 12)),
+                    months_free=int(apartment.get("months_free", 0)),
+                    weeks_free=int(apartment.get("weeks_free", 0)),
+                    flat_discount=Decimal(str(apartment.get("flat_discount", 0))),
+                )
                 transferred_count += 1
             except Exception as e:
                 logger.error(f"Error transferring apartment: {e}")
@@ -522,22 +408,22 @@ def signup_view(request):
         if form.is_valid():
             try:
                 user = form.save()
-                firestore_login(request, user)
+                # Create UserProfile for the new user
+                UserProfile.objects.get_or_create(user=user)
+                # Specify backend since we have multiple auth backends
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-                # Frontend will transfer apartments from sessionStorage via API call
                 messages.success(
                     request,
                     f"Welcome {user.first_name or user.username}! Your account has been created successfully.",
                 )
 
-                # Check for 'next' parameter for redirect
-                from .auth_utils import is_safe_redirect_url
+                from django.utils.http import url_has_allowed_host_and_scheme
                 next_url = request.POST.get('next') or request.GET.get('next')
 
-                if next_url and is_safe_redirect_url(next_url, request):
+                if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
                     return redirect(next_url)
                 else:
-                    # Default: redirect to homepage
                     return redirect("home")
             except Exception as e:
                 logger.error(f"Error creating user: {e}")
@@ -548,15 +434,22 @@ def signup_view(request):
     else:
         form = CustomUserCreationForm()
 
-    # Check if there are apartments in sessionStorage (client-side check)
-    apartment_count = 0  # Will be checked by JavaScript
+    apartment_count = 0
 
-    # Add Stripe pricing context
-    monthly_price = settings.STRIPE_MONTHLY_PRICE_AMOUNT
-    annual_price = settings.STRIPE_ANNUAL_PRICE_AMOUNT
+    # Fetch plans from database
+    plans = Plan.objects.filter(
+        product__slug=PRODUCT_SLUG,
+        is_active=True,
+        tier='pro'
+    ).order_by('billing_interval')
+
+    monthly_plan = plans.filter(billing_interval='month').first()
+    annual_plan = plans.filter(billing_interval='year').first()
+
+    monthly_price = float(monthly_plan.price_amount) if monthly_plan else 5.00
+    annual_price = float(annual_plan.price_amount) if annual_plan else 50.00
     annual_savings = (monthly_price * 12) - annual_price
 
-    # Pass 'next' parameter to template context for form submission
     next_url = request.GET.get('next', '')
 
     context = {
@@ -566,11 +459,9 @@ def signup_view(request):
         "monthly_price": monthly_price,
         "annual_price": annual_price,
         "annual_savings": annual_savings,
+        "monthly_plan_id": monthly_plan.id if monthly_plan else None,
+        "annual_plan_id": annual_plan.id if annual_plan else None,
         "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
-        "monthly_price_id": settings.STRIPE_MONTHLY_PRICE_ID,
-        "annual_price_id": settings.STRIPE_ANNUAL_PRICE_ID,
-        "monthly_interval": "month",
-        "annual_interval": "year",
         "stripe_enabled": settings.STRIPE_ENABLED,
         "next": next_url,
     }
@@ -586,148 +477,54 @@ def login_view(request):
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
 
-            user = firestore_authenticate(username, password)
+            user = authenticate(request, username=username, password=password)
             if user:
-                firestore_login(request, user)
+                login(request, user)
                 messages.success(request, f"Welcome back, {user.username}!")
 
-                # Check for 'next' parameter for redirect
-                from .auth_utils import is_safe_redirect_url
+                from django.utils.http import url_has_allowed_host_and_scheme
                 next_url = request.POST.get('next') or request.GET.get('next')
 
-                if next_url and is_safe_redirect_url(next_url, request):
+                if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
                     return redirect(next_url)
                 else:
-                    # Default: redirect to homepage
                     return redirect("home")
             else:
                 messages.error(request, "Invalid username or password.")
     else:
         form = LoginForm()
 
-    # Pass 'next' parameter to template context for form submission
     next_url = request.GET.get('next', '')
     return render(request, "apartments/login.html", {"form": form, "next": next_url})
 
 
 def logout_view(request):
     """Handle user logout with GET and POST requests"""
-    firestore_logout(request)
+    logout(request)
     messages.success(request, "You have been successfully logged out.")
     return redirect("apartments:index")
 
 
 def google_oauth_callback(request):
     """Handle Google OAuth callback and redirect after social auth"""
-    # This view is called after successful social auth
-    # The pipeline should have already logged the user in
-
-    # Check if user is in session (Firestore authentication)
-    user_id = request.session.get("user_id")
-    if user_id and hasattr(request, "user") and request.user.is_authenticated:
+    if request.user.is_authenticated:
         logger.info(f"OAuth callback successful for user: {request.user.username}")
         messages.success(request, f"Welcome back, {request.user.username}!")
 
-        # Check for 'next' parameter in session (set by social auth pipeline)
-        from .auth_utils import is_safe_redirect_url
+        from django.utils.http import url_has_allowed_host_and_scheme
         next_url = request.session.get('oauth_next')
 
-        # Clear the oauth_next from session after retrieving it
         if 'oauth_next' in request.session:
             del request.session['oauth_next']
 
-        if next_url and is_safe_redirect_url(next_url, request):
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
             return redirect(next_url)
         else:
-            # Default: redirect to homepage
             return redirect("home")
     else:
-        logger.warning(
-            f"OAuth callback failed - user_id: {user_id}, user authenticated: {hasattr(request, 'user') and request.user.is_authenticated}"
-        )
+        logger.warning("OAuth callback failed - user not authenticated")
         messages.error(request, "Authentication failed. Please try again.")
         return redirect("login")
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def sync_firebase_user(request):
-    """Sync Firebase authenticated user with Firestore user collection"""
-    try:
-        data = json.loads(request.body)
-        firebase_uid = data.get("uid")
-        email = data.get("email")
-        display_name = data.get("displayName", "")
-        photo_url = data.get("photoURL", "")
-
-        if not firebase_uid or not email:
-            return JsonResponse({"error": "Missing required fields"}, status=400)
-
-        firestore_service = FirestoreService()
-
-        # Check if user already exists by email
-        existing_user = firestore_service.get_user_by_email(email)
-
-        if existing_user:
-            # Update existing user with Firebase UID
-            update_data = {
-                "firebase_uid": firebase_uid,
-                "photo_url": photo_url,
-            }
-            firestore_service.update_user(existing_user.doc_id, update_data)
-            user = firestore_service.get_user(existing_user.doc_id)
-        else:
-            # Create new user
-            # Generate username from display_name or email
-            username = (
-                display_name.lower().replace(" ", "")
-                if display_name
-                else email.split("@")[0]
-            )
-
-            # Ensure username is unique
-            counter = 1
-            base_username = username
-            while firestore_service.get_user_by_username(username):
-                username = f"{base_username}{counter}"
-                counter += 1
-
-            user_data = {
-                "username": username,
-                "email": email,
-                "first_name": display_name.split(" ")[0] if display_name else "",
-                "last_name": (
-                    " ".join(display_name.split(" ")[1:])
-                    if display_name and len(display_name.split(" ")) > 1
-                    else ""
-                ),
-                "firebase_uid": firebase_uid,
-                "photo_url": photo_url,
-                "is_staff": False,  # New users start as free tier
-            }
-
-            # Create user without password (Firebase handles auth)
-            user = firestore_service.create_firebase_user(user_data)
-
-        # Log the user into Django session
-        firestore_login(request, user)
-
-        return JsonResponse(
-            {
-                "success": True,
-                "user": {
-                    "id": user.doc_id,
-                    "username": user.username,
-                    "email": user.email,
-                    "is_staff": user.is_staff,  # Legacy field
-                    "has_premium": user_has_premium(user),
-                },
-            }
-        )
-
-    except Exception as e:
-        logger.error(f"Error syncing Firebase user: {e}")
-        return JsonResponse({"error": "Internal server error"}, status=500)
 
 
 def privacy_policy(request):
@@ -750,7 +547,6 @@ def robots_txt(request):
     """Generate robots.txt file dynamically"""
     from django.http import HttpResponse
 
-    # Build the absolute URL for the sitemap
     protocol = "https" if request.is_secure() else "http"
     host = request.get_host()
     sitemap_url = f"{protocol}://{host}/sitemap.xml"
@@ -772,10 +568,9 @@ def pricing_redirect(request):
     return redirect('signup')
 
 
-@login_required_firestore
+@login_required
 def create_checkout_session(request):
     """Create a Stripe checkout session for subscription"""
-    from django.conf import settings
     from .stripe_service import StripeService
     import stripe as stripe_lib
 
@@ -784,23 +579,24 @@ def create_checkout_session(request):
 
     try:
         data = json.loads(request.body)
-        plan_type = data.get('plan_type')  # 'monthly' or 'annual'
+        plan_id = data.get('plan_id')
 
-        if plan_type not in ['monthly', 'annual']:
-            return JsonResponse({'error': 'Invalid plan type'}, status=400)
+        if not plan_id:
+            return JsonResponse({'error': 'Plan ID is required'}, status=400)
 
-        # Get price ID based on plan type
-        price_id = settings.STRIPE_MONTHLY_PRICE_ID if plan_type == 'monthly' else settings.STRIPE_ANNUAL_PRICE_ID
+        # Verify plan exists and is active
+        try:
+            plan = Plan.objects.get(id=plan_id, is_active=True, tier='pro')
+        except Plan.DoesNotExist:
+            return JsonResponse({'error': 'Invalid plan'}, status=400)
 
-        # Create success and cancel URLs
         success_url = request.build_absolute_uri('/apartments/subscription/success/')
         cancel_url = request.build_absolute_uri('/apartments/subscription/cancel/')
 
-        # Create checkout session
         stripe_service = StripeService()
         session = stripe_service.create_checkout_session(
             user=request.user,
-            price_id=price_id,
+            plan_id=plan_id,
             success_url=success_url,
             cancel_url=cancel_url
         )
@@ -809,33 +605,29 @@ def create_checkout_session(request):
 
     except stripe_lib.error.StripeError as e:
         logger.error(f"Stripe error: {e}")
-        logger.error(f"Stripe error type: {type(e).__name__}")
-        logger.error(f"Stripe error dict: {e.__dict__}")
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
         logger.error(f"Error creating checkout session: {e}")
-        logger.error(f"Exception type: {type(e).__name__}")
-        logger.error(f"Exception args: {e.args}")
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         return JsonResponse({'error': 'Internal server error'}, status=500)
 
 
-@login_required_firestore
+@login_required
 def checkout_success(request):
     """Handle successful checkout"""
     messages.success(request, "Thank you for subscribing! Your premium access is now active.")
     return redirect('apartments:dashboard')
 
 
-@login_required_firestore
+@login_required
 def checkout_cancel(request):
     """Handle cancelled checkout"""
     messages.info(request, "Checkout cancelled. You can upgrade to premium anytime.")
     return redirect('apartments:pricing')
 
 
-@login_required_firestore
+@login_required
 def billing_portal(request):
     """Redirect to Stripe billing portal for subscription management"""
     from .stripe_service import StripeService
@@ -869,7 +661,6 @@ def billing_portal(request):
 @require_http_methods(["POST"])
 def stripe_webhook(request):
     """Handle Stripe webhook events"""
-    from django.conf import settings
     from .stripe_service import StripeService
     import stripe as stripe_lib
 
@@ -881,22 +672,17 @@ def stripe_webhook(request):
             payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
         )
     except ValueError:
-        # Invalid payload
         logger.error("Invalid webhook payload")
         return JsonResponse({'error': 'Invalid payload'}, status=400)
     except stripe_lib.error.SignatureVerificationError:
-        # Invalid signature
         logger.error("Invalid webhook signature")
         return JsonResponse({'error': 'Invalid signature'}, status=400)
 
     stripe_service = StripeService()
-
-    # Handle the event
     event_type = event['type']
 
     try:
         if event_type == 'checkout.session.completed':
-            # Payment successful, subscription created
             session = event['data']['object']
             subscription_id = session.get('subscription')
 
@@ -906,19 +692,16 @@ def stripe_webhook(request):
                 logger.info(f"Checkout completed: {subscription_id}")
 
         elif event_type == 'customer.subscription.updated':
-            # Subscription updated (plan change, renewal, etc.)
             subscription = event['data']['object']
             stripe_service.sync_subscription_status(subscription)
             logger.info(f"Subscription updated: {subscription.id}")
 
         elif event_type == 'customer.subscription.deleted':
-            # Subscription cancelled
             subscription = event['data']['object']
             stripe_service.sync_subscription_status(subscription)
             logger.info(f"Subscription deleted: {subscription.id}")
 
         elif event_type == 'invoice.payment_succeeded':
-            # Payment succeeded (renewal)
             invoice = event['data']['object']
             subscription_id = invoice.get('subscription')
 
@@ -928,7 +711,6 @@ def stripe_webhook(request):
                 logger.info(f"Payment succeeded for subscription: {subscription_id}")
 
         elif event_type == 'invoice.payment_failed':
-            # Payment failed
             invoice = event['data']['object']
             subscription_id = invoice.get('subscription')
 
