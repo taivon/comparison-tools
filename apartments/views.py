@@ -585,6 +585,7 @@ def signup_view(request):
         "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
         "stripe_enabled": settings.STRIPE_ENABLED,
         "next": next_url,
+        "google_client_id": getattr(settings, 'SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', ''),
     }
 
     return render(request, "apartments/signup.html", context)
@@ -622,6 +623,7 @@ def login_view(request):
         "form": form,
         "next": next_url,
         "debug": settings.DEBUG,
+        "google_client_id": getattr(settings, 'SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', ''),
     })
 
 

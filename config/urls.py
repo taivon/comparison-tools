@@ -42,7 +42,7 @@ urlpatterns = [
     path("login/", apartment_views.login_view, name="login"),
     path("logout/", apartment_views.logout_view, name="logout"),
     path("signup/", apartment_views.signup_view, name="signup"),
-    path("auth/", include("social_django.urls", namespace="social")),  # Google OAuth
+    path("auth/", include("social_django.urls", namespace="social")),  # Google OAuth + One Tap
 
     # Legal pages (shared across all comparison tools)
     path("privacy/", apartment_views.privacy_policy, name="privacy"),
