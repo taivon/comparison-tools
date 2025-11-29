@@ -6,7 +6,7 @@ import stripe
 import logging
 from datetime import datetime
 from django.conf import settings
-from apartments.firestore_service import FirestoreService
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -17,23 +17,28 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class StripeService:
     """Service for managing Stripe subscriptions and customers."""
 
-    def __init__(self):
-        self.firestore_service = FirestoreService()
+    def get_or_create_profile(self, user):
+        """Get or create UserProfile for a user"""
+        from .models import UserProfile
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        return profile
 
     def get_or_create_customer(self, user):
         """
-        Get or create a Stripe customer for a Firestore user.
+        Get or create a Stripe customer for a Django user.
 
         Args:
-            user: FirestoreUser object
+            user: Django User object
 
         Returns:
             Stripe Customer object
         """
+        profile = self.get_or_create_profile(user)
+
         # If user already has a Stripe customer ID, retrieve it
-        if user.stripe_customer_id:
+        if profile.stripe_customer_id:
             try:
-                customer = stripe.Customer.retrieve(user.stripe_customer_id)
+                customer = stripe.Customer.retrieve(profile.stripe_customer_id)
                 if not getattr(customer, 'deleted', False):
                     return customer
             except stripe.error.StripeError as e:
@@ -45,77 +50,82 @@ class StripeService:
                 email=user.email,
                 name=user.get_full_name(),
                 metadata={
-                    'firestore_user_id': user.doc_id,
+                    'user_id': str(user.id),
                     'username': user.username,
                 }
             )
 
-            # Update user with Stripe customer ID
-            user.stripe_customer_id = customer.id
-            self.firestore_service.update_user(user.doc_id, {
-                'stripe_customer_id': customer.id
-            })
+            # Update profile with Stripe customer ID
+            profile.stripe_customer_id = customer.id
+            profile.save()
 
-            logger.info(f"Created Stripe customer {customer.id} for user {user.doc_id}")
+            logger.info(f"Created Stripe customer {customer.id} for user {user.id}")
             return customer
 
         except stripe.error.StripeError as e:
             logger.error(f"Error creating Stripe customer: {e}")
             raise
 
-    def create_checkout_session(self, user, price_id, success_url, cancel_url):
+    def create_checkout_session(self, user, plan_id, success_url, cancel_url):
         """
         Create a Stripe Checkout session for subscription.
 
         Args:
-            user: FirestoreUser object
-            price_id: Stripe Price ID (monthly or annual)
+            user: Django User object
+            plan_id: Django Plan model ID
             success_url: URL to redirect after successful payment
             cancel_url: URL to redirect if payment is cancelled
 
         Returns:
             Stripe Checkout Session object
         """
+        from .models import Plan
+
         try:
+            # Get the plan
+            plan = Plan.objects.select_related('product').get(id=plan_id)
+
+            if not plan.stripe_price_id:
+                raise ValueError(f"Plan {plan.name} has no Stripe price ID configured")
+
             # Get or create Stripe customer
             customer = self.get_or_create_customer(user)
 
-            # Determine which plan is being purchased
-            plan_type = 'monthly' if price_id == settings.STRIPE_MONTHLY_PRICE_ID else 'annual'
-
-            logger.info(f"About to create checkout session with price_id: {price_id}, customer: {customer.id}")
+            logger.info(f"Creating checkout session for plan: {plan.name}, price_id: {plan.stripe_price_id}")
 
             # Create checkout session
             session = stripe.checkout.Session.create(
                 customer=customer.id,
                 payment_method_types=['card'],
                 line_items=[{
-                    'price': price_id,
+                    'price': plan.stripe_price_id,
                     'quantity': 1,
                 }],
                 mode='subscription',
                 success_url=success_url,
                 cancel_url=cancel_url,
                 metadata={
-                    'firestore_user_id': user.doc_id,
-                    'plan_type': plan_type,
+                    'user_id': str(user.id),
+                    'plan_id': str(plan.id),
+                    'product_slug': plan.product.slug,
                 },
                 subscription_data={
                     'metadata': {
-                        'firestore_user_id': user.doc_id,
-                        'plan_type': plan_type,
+                        'user_id': str(user.id),
+                        'plan_id': str(plan.id),
+                        'product_slug': plan.product.slug,
                     }
                 }
             )
 
-            logger.info(f"Created checkout session {session.id} for user {user.doc_id}")
+            logger.info(f"Created checkout session {session.id} for user {user.id}, plan {plan.name}")
             return session
 
+        except Plan.DoesNotExist:
+            logger.error(f"Plan {plan_id} not found")
+            raise ValueError(f"Plan {plan_id} not found")
         except stripe.error.StripeError as e:
             logger.error(f"Error creating checkout session: {e}")
-            logger.error(f"Stripe error type: {type(e).__name__}")
-            logger.error(f"Stripe error message: {e.user_message if hasattr(e, 'user_message') else 'No user message'}")
-            logger.error(f"Stripe error code: {e.code if hasattr(e, 'code') else 'No code'}")
             raise
 
     def create_billing_portal_session(self, user, return_url):
@@ -123,213 +133,294 @@ class StripeService:
         Create a Stripe billing portal session for customer to manage subscription.
 
         Args:
-            user: FirestoreUser object
+            user: Django User object
             return_url: URL to return to after managing subscription
 
         Returns:
             Stripe BillingPortal.Session object
         """
         try:
-            if not user.stripe_customer_id:
+            profile = self.get_or_create_profile(user)
+
+            if not profile.stripe_customer_id:
                 raise ValueError("User does not have a Stripe customer ID")
 
             session = stripe.billing_portal.Session.create(
-                customer=user.stripe_customer_id,
+                customer=profile.stripe_customer_id,
                 return_url=return_url,
             )
 
-            logger.info(f"Created billing portal session for user {user.doc_id}")
+            logger.info(f"Created billing portal session for user {user.id}")
             return session
 
         except stripe.error.StripeError as e:
             logger.error(f"Error creating billing portal session: {e}")
             raise
 
-    def sync_subscription_status(self, subscription):
+    def sync_subscription_status(self, stripe_subscription):
         """
-        Sync subscription status from Stripe to Firestore user.
+        Sync subscription status from Stripe to Subscription model.
 
         Args:
-            subscription: Stripe Subscription object
+            stripe_subscription: Stripe Subscription object
         """
+        from django.contrib.auth.models import User
+        from .models import Plan, Subscription
+
         try:
-            # Get Firestore user ID from subscription metadata
-            user_id = subscription.metadata.get('firestore_user_id')
+            # Get user ID and plan ID from subscription metadata
+            user_id = stripe_subscription.metadata.get('user_id')
+            plan_id = stripe_subscription.metadata.get('plan_id')
+
             if not user_id:
-                logger.warning(f"Subscription {subscription.id} has no firestore_user_id in metadata")
+                logger.warning(f"Subscription {stripe_subscription.id} has no user_id in metadata")
                 return
 
-            # Get user from Firestore
-            user = self.firestore_service.get_user(user_id)
-            if not user:
-                logger.warning(f"User {user_id} not found in Firestore")
+            if not plan_id:
+                logger.warning(f"Subscription {stripe_subscription.id} has no plan_id in metadata")
                 return
 
-            # Determine plan type
-            plan_type = subscription.metadata.get('plan_type', '')
+            # Get user and plan
+            try:
+                user = User.objects.get(id=int(user_id))
+            except User.DoesNotExist:
+                logger.warning(f"User {user_id} not found")
+                return
 
-            # Update user subscription data
-            update_data = {
-                'stripe_subscription_id': subscription.id,
-                'subscription_status': subscription.status,
-                'subscription_plan': plan_type,
-                'subscription_current_period_end': datetime.fromtimestamp(subscription.current_period_end),
-                'subscription_cancel_at_period_end': subscription.cancel_at_period_end,
-            }
+            try:
+                plan = Plan.objects.get(id=int(plan_id))
+            except Plan.DoesNotExist:
+                logger.warning(f"Plan {plan_id} not found")
+                return
 
-            self.firestore_service.update_user(user_id, update_data)
-            logger.info(f"Synced subscription status for user {user_id}: {subscription.status}")
+            # Get or create subscription
+            subscription, created = Subscription.objects.update_or_create(
+                user=user,
+                plan__product=plan.product,  # One subscription per product
+                defaults={
+                    'plan': plan,
+                    'stripe_subscription_id': stripe_subscription.id,
+                    'status': stripe_subscription.status,
+                    'current_period_end': timezone.make_aware(
+                        datetime.fromtimestamp(stripe_subscription.current_period_end)
+                    ),
+                    'cancel_at_period_end': stripe_subscription.cancel_at_period_end,
+                }
+            )
+
+            action = 'Created' if created else 'Updated'
+            logger.info(f"{action} subscription for user {user_id}, plan {plan.name}: {stripe_subscription.status}")
 
         except Exception as e:
             logger.error(f"Error syncing subscription status: {e}")
             raise
 
-    def cancel_subscription(self, user, at_period_end=True):
+    def cancel_subscription(self, user, product_slug, at_period_end=True):
         """
-        Cancel a user's subscription.
+        Cancel a user's subscription for a product.
 
         Args:
-            user: FirestoreUser object
+            user: Django User object
+            product_slug: Product slug
             at_period_end: If True, cancel at end of billing period. If False, cancel immediately.
 
         Returns:
             Stripe Subscription object
         """
+        from .models import Subscription
+
         try:
-            if not user.stripe_subscription_id:
-                raise ValueError("User does not have an active subscription")
+            subscription = Subscription.objects.select_related('plan__product').get(
+                user=user,
+                plan__product__slug=product_slug,
+                status__in=['active', 'trialing']
+            )
+
+            if not subscription.stripe_subscription_id:
+                raise ValueError("Subscription has no Stripe subscription ID")
 
             if at_period_end:
-                # Cancel at end of billing period (default behavior)
-                subscription = stripe.Subscription.modify(
-                    user.stripe_subscription_id,
+                stripe_sub = stripe.Subscription.modify(
+                    subscription.stripe_subscription_id,
                     cancel_at_period_end=True
                 )
             else:
-                # Cancel immediately
-                subscription = stripe.Subscription.delete(user.stripe_subscription_id)
+                stripe_sub = stripe.Subscription.delete(subscription.stripe_subscription_id)
 
-            # Sync status to Firestore
-            self.sync_subscription_status(subscription)
+            # Sync status
+            self.sync_subscription_status(stripe_sub)
 
-            logger.info(f"Cancelled subscription for user {user.doc_id}")
-            return subscription
+            logger.info(f"Cancelled subscription for user {user.id}, product {product_slug}")
+            return stripe_sub
 
+        except Subscription.DoesNotExist:
+            raise ValueError(f"User does not have an active subscription for {product_slug}")
         except stripe.error.StripeError as e:
             logger.error(f"Error cancelling subscription: {e}")
             raise
 
-    def change_subscription_plan(self, user, new_price_id):
+    def change_subscription_plan(self, user, product_slug, new_plan_id):
         """
-        Change user's subscription plan (upgrade/downgrade with proration).
+        Change user's subscription plan for a product (upgrade/downgrade with proration).
 
         Args:
-            user: FirestoreUser object
-            new_price_id: New Stripe Price ID
+            user: Django User object
+            product_slug: Product slug
+            new_plan_id: New Plan model ID
 
         Returns:
             Stripe Subscription object
         """
+        from .models import Plan, Subscription
+
         try:
-            if not user.stripe_subscription_id:
-                raise ValueError("User does not have an active subscription")
+            subscription = Subscription.objects.select_related('plan__product').get(
+                user=user,
+                plan__product__slug=product_slug,
+                status__in=['active', 'trialing']
+            )
 
-            # Get current subscription
-            subscription = stripe.Subscription.retrieve(user.stripe_subscription_id)
+            new_plan = Plan.objects.get(id=new_plan_id)
 
-            # Update subscription with new price (prorated by default)
-            updated_subscription = stripe.Subscription.modify(
-                user.stripe_subscription_id,
+            if not new_plan.stripe_price_id:
+                raise ValueError(f"New plan {new_plan.name} has no Stripe price ID configured")
+
+            if not subscription.stripe_subscription_id:
+                raise ValueError("Subscription has no Stripe subscription ID")
+
+            # Get current Stripe subscription
+            stripe_sub = stripe.Subscription.retrieve(subscription.stripe_subscription_id)
+
+            # Update subscription with new price
+            updated_sub = stripe.Subscription.modify(
+                subscription.stripe_subscription_id,
                 items=[{
-                    'id': subscription['items']['data'][0].id,
-                    'price': new_price_id,
+                    'id': stripe_sub['items']['data'][0].id,
+                    'price': new_plan.stripe_price_id,
                 }],
-                proration_behavior='create_prorations',  # Prorate the change
+                proration_behavior='create_prorations',
                 metadata={
-                    'firestore_user_id': user.doc_id,
-                    'plan_type': 'monthly' if new_price_id == settings.STRIPE_MONTHLY_PRICE_ID else 'annual',
+                    'user_id': str(user.id),
+                    'plan_id': str(new_plan.id),
+                    'product_slug': product_slug,
                 }
             )
 
-            # Sync status to Firestore
-            self.sync_subscription_status(updated_subscription)
+            # Update local subscription
+            subscription.plan = new_plan
+            subscription.save()
 
-            logger.info(f"Changed subscription plan for user {user.doc_id}")
-            return updated_subscription
+            # Sync full status
+            self.sync_subscription_status(updated_sub)
 
+            logger.info(f"Changed subscription plan for user {user.id} to {new_plan.name}")
+            return updated_sub
+
+        except Subscription.DoesNotExist:
+            raise ValueError(f"User does not have an active subscription for {product_slug}")
+        except Plan.DoesNotExist:
+            raise ValueError(f"Plan {new_plan_id} not found")
         except stripe.error.StripeError as e:
             logger.error(f"Error changing subscription plan: {e}")
             raise
 
     @staticmethod
-    def has_active_subscription(user):
+    def has_active_subscription(user, product_slug: str) -> bool:
         """
-        Check if user has an active subscription with access.
-
-        This checks if the user has an active subscription OR if they're in the grace period
-        after cancellation (access until end of paid period).
+        Check if user has an active subscription for a product.
+        This is a convenience method that wraps user_has_premium from models.
 
         Args:
-            user: FirestoreUser object
+            user: Django User object
+            product_slug: Product slug
 
         Returns:
             Boolean indicating if user has premium access
         """
-        # Check legacy is_staff field (for backward compatibility)
-        if user.is_staff:
-            return True
+        from .models import user_has_premium
+        return user_has_premium(user, product_slug)
 
-        # Check if user has active subscription
-        if user.subscription_status == 'active':
-            return True
-
-        # Check if subscription is cancelled but still in grace period
-        if user.subscription_status == 'canceled' and user.subscription_current_period_end:
-            # Allow access until end of paid period
-            if user.subscription_current_period_end > datetime.now():
-                return True
-
-        # Check if subscription is past_due but still in grace period
-        if user.subscription_status == 'past_due' and user.subscription_current_period_end:
-            # Allow access until end of paid period
-            if user.subscription_current_period_end > datetime.now():
-                return True
-
-        return False
-
-    def get_subscription_info(self, user):
+    def get_subscription_info(self, user, product_slug: str):
         """
-        Get formatted subscription information for display.
+        Get formatted subscription information for a product.
 
         Args:
-            user: FirestoreUser object
+            user: Django User object
+            product_slug: Product slug
 
         Returns:
             Dictionary with subscription details
         """
-        has_subscription = self.has_active_subscription(user)
+        from .models import get_user_subscription, Product
+
+        try:
+            product = Product.objects.get(slug=product_slug)
+        except Product.DoesNotExist:
+            return {
+                'has_subscription': False,
+                'product': None,
+                'status': '',
+                'plan': None,
+                'current_period_end': None,
+                'cancel_at_period_end': False,
+                'status_message': 'Product not found',
+            }
+
+        subscription = get_user_subscription(user, product_slug)
+
+        if not subscription:
+            return {
+                'has_subscription': False,
+                'product': product,
+                'status': '',
+                'plan': None,
+                'current_period_end': None,
+                'cancel_at_period_end': False,
+                'status_message': 'No active subscription',
+            }
+
+        has_premium = subscription.is_premium_active
 
         info = {
-            'has_subscription': has_subscription,
-            'status': user.subscription_status,
-            'plan': user.subscription_plan,
-            'current_period_end': user.subscription_current_period_end,
-            'cancel_at_period_end': user.subscription_cancel_at_period_end,
+            'has_subscription': has_premium,
+            'product': product,
+            'status': subscription.status,
+            'plan': subscription.plan,
+            'current_period_end': subscription.current_period_end,
+            'cancel_at_period_end': subscription.cancel_at_period_end,
         }
 
         # Add human-readable status message
-        if user.subscription_status == 'active' and user.subscription_cancel_at_period_end:
-            info['status_message'] = f"Your subscription will end on {user.subscription_current_period_end.strftime('%B %d, %Y')}"
-        elif user.subscription_status == 'active':
-            info['status_message'] = f"Active {user.subscription_plan} subscription (renews {user.subscription_current_period_end.strftime('%B %d, %Y')})"
-        elif user.subscription_status == 'past_due':
+        if subscription.status == 'active' and subscription.cancel_at_period_end:
+            info['status_message'] = f"Your subscription will end on {subscription.current_period_end.strftime('%B %d, %Y')}"
+        elif subscription.status == 'active':
+            info['status_message'] = f"Active {subscription.plan.name} (renews {subscription.current_period_end.strftime('%B %d, %Y')})"
+        elif subscription.status == 'past_due':
             info['status_message'] = "Payment failed - please update your payment method"
-        elif user.subscription_status == 'canceled':
-            if user.subscription_current_period_end and user.subscription_current_period_end > datetime.now():
-                info['status_message'] = f"Subscription cancelled (access until {user.subscription_current_period_end.strftime('%B %d, %Y')})"
+        elif subscription.status == 'canceled':
+            if subscription.current_period_end and subscription.current_period_end > timezone.now():
+                info['status_message'] = f"Subscription cancelled (access until {subscription.current_period_end.strftime('%B %d, %Y')})"
             else:
                 info['status_message'] = "No active subscription"
         else:
             info['status_message'] = "No active subscription"
 
         return info
+
+    def get_available_plans(self, product_slug: str):
+        """
+        Get available plans for a product.
+
+        Args:
+            product_slug: Product slug
+
+        Returns:
+            QuerySet of Plan objects
+        """
+        from .models import Plan
+
+        return Plan.objects.filter(
+            product__slug=product_slug,
+            is_active=True,
+            tier='pro'  # Only return paid plans
+        ).order_by('billing_interval')
