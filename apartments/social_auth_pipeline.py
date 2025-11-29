@@ -1,7 +1,7 @@
 """
 Custom social auth pipeline steps for Django authentication.
 """
-from django.shortcuts import redirect
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,8 +21,8 @@ def create_user_profile(strategy, details, backend, user=None, *args, **kwargs):
     profile, created = UserProfile.objects.get_or_create(user=user)
 
     # Update photo URL from Google if available
-    response = kwargs.get('response', {})
-    picture = response.get('picture') or details.get('picture')
+    response = kwargs.get("response", {})
+    picture = response.get("picture") or details.get("picture")
 
     if picture and profile.photo_url != picture:
         profile.photo_url = picture

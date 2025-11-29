@@ -2,20 +2,22 @@
 Geocoding service for converting addresses to latitude/longitude coordinates.
 Uses Nominatim (OpenStreetMap) for MVP - free and no API key required.
 """
+
 import logging
-from typing import Tuple, Optional, NamedTuple
+from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 
 
 class GeocodingResult(NamedTuple):
     """Result of a geocoding operation with detailed information"""
-    latitude: Optional[float]
-    longitude: Optional[float]
+
+    latitude: float | None
+    longitude: float | None
     success: bool
-    matched_address: Optional[str] = None
-    error_type: Optional[str] = None  # 'not_found', 'timeout', 'service_error'
-    suggestion: Optional[str] = None
+    matched_address: str | None = None
+    error_type: str | None = None  # 'not_found', 'timeout', 'service_error'
+    suggestion: str | None = None
 
 
 class GeocodingService:
@@ -31,6 +33,7 @@ class GeocodingService:
         if self._geolocator is None:
             try:
                 from geopy.geocoders import Nominatim
+
                 self._geolocator = Nominatim(user_agent="comparison-tools")
             except ImportError:
                 logger.error("geopy is not installed. Run: pip install geopy")
@@ -49,11 +52,7 @@ class GeocodingService:
         """
         if not address or not address.strip():
             return GeocodingResult(
-                latitude=None,
-                longitude=None,
-                success=False,
-                error_type='empty',
-                suggestion='Please enter an address.'
+                latitude=None, longitude=None, success=False, error_type="empty", suggestion="Please enter an address."
             )
 
         if self.geolocator is None:
@@ -61,12 +60,12 @@ class GeocodingService:
                 latitude=None,
                 longitude=None,
                 success=False,
-                error_type='service_error',
-                suggestion='Geocoding service is unavailable.'
+                error_type="service_error",
+                suggestion="Geocoding service is unavailable.",
             )
 
         try:
-            from geopy.exc import GeocoderTimedOut, GeocoderServiceError, GeocoderUnavailable
+            from geopy.exc import GeocoderServiceError, GeocoderTimedOut, GeocoderUnavailable
 
             location = self.geolocator.geocode(address, timeout=10, addressdetails=True)
             if location:
@@ -75,7 +74,7 @@ class GeocodingService:
                     latitude=location.latitude,
                     longitude=location.longitude,
                     success=True,
-                    matched_address=location.address
+                    matched_address=location.address,
                 )
             else:
                 logger.warning(f"No results for address: {address}")
@@ -83,8 +82,8 @@ class GeocodingService:
                     latitude=None,
                     longitude=None,
                     success=False,
-                    error_type='not_found',
-                    suggestion='Address not found. Try simplifying (remove unit/building numbers) or use a nearby landmark or intersection.'
+                    error_type="not_found",
+                    suggestion="Address not found. Try simplifying (remove unit/building numbers) or use a nearby landmark or intersection.",
                 )
 
         except GeocoderTimedOut:
@@ -93,8 +92,8 @@ class GeocodingService:
                 latitude=None,
                 longitude=None,
                 success=False,
-                error_type='timeout',
-                suggestion='Request timed out. Please try again.'
+                error_type="timeout",
+                suggestion="Request timed out. Please try again.",
             )
         except (GeocoderServiceError, GeocoderUnavailable) as e:
             logger.error(f"Geocoding service error for address {address}: {e}")
@@ -102,8 +101,8 @@ class GeocodingService:
                 latitude=None,
                 longitude=None,
                 success=False,
-                error_type='service_error',
-                suggestion='Geocoding service is temporarily unavailable. Please try again later.'
+                error_type="service_error",
+                suggestion="Geocoding service is temporarily unavailable. Please try again later.",
             )
         except Exception as e:
             logger.error(f"Unexpected geocoding error for address {address}: {e}")
@@ -111,11 +110,11 @@ class GeocodingService:
                 latitude=None,
                 longitude=None,
                 success=False,
-                error_type='unknown',
-                suggestion='An error occurred. Please try again.'
+                error_type="unknown",
+                suggestion="An error occurred. Please try again.",
             )
 
-    def geocode_address(self, address: str) -> Tuple[Optional[float], Optional[float]]:
+    def geocode_address(self, address: str) -> tuple[float | None, float | None]:
         """
         Convert an address string to latitude/longitude coordinates.
         Simple interface that returns just coordinates.
@@ -142,7 +141,7 @@ def get_geocoding_service() -> GeocodingService:
     return _geocoding_service
 
 
-def geocode_address(address: str) -> Tuple[Optional[float], Optional[float]]:
+def geocode_address(address: str) -> tuple[float | None, float | None]:
     """
     Convenience function to geocode an address.
 

@@ -1,9 +1,10 @@
+import re
+from decimal import Decimal
+
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from decimal import Decimal
-from django.core.validators import MinValueValidator, MaxValueValidator
-import re
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class CustomUserCreationForm(forms.Form):
@@ -66,9 +67,7 @@ class CustomUserCreationForm(forms.Form):
     def clean_username(self):
         username = self.cleaned_data["username"]
         if not re.match(r"^[\w.@+-]+$", username):
-            raise forms.ValidationError(
-                "Username can only contain letters, numbers, and @/./+/-/_ characters."
-            )
+            raise forms.ValidationError("Username can only contain letters, numbers, and @/./+/-/_ characters.")
 
         # Check if username already exists
         if User.objects.filter(username=username).exists():
@@ -149,7 +148,7 @@ class ApartmentForm(forms.Form):
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
                 "placeholder": "Start typing an address...",
                 "data-address-autocomplete": "true",
-                "autocomplete": "off"
+                "autocomplete": "off",
             }
         ),
     )
@@ -182,7 +181,9 @@ class ApartmentForm(forms.Form):
         ),
     )
     bathrooms = forms.ChoiceField(
-        choices=[(str(Decimal(str(i)) / 2), str(Decimal(str(i)) / 2) if i % 2 == 0 else f"{i // 2}.5") for i in range(1, 31)],
+        choices=[
+            (str(Decimal(str(i)) / 2), str(Decimal(str(i)) / 2) if i % 2 == 0 else f"{i // 2}.5") for i in range(1, 31)
+        ],
         initial="1",
         widget=forms.Select(
             attrs={
@@ -255,21 +256,20 @@ class UserPreferencesForm(forms.Form):
         choices=DISCOUNT_CHOICES,
         initial="daily",
         widget=forms.RadioSelect(
-            attrs={
-                "class": "mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"
-            }
+            attrs={"class": "mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}
         ),
     )
 
 
 class FavoritePlaceForm(forms.Form):
     """Form for creating/editing favorite places"""
+
     label = forms.CharField(
         max_length=100,
         widget=forms.TextInput(
             attrs={
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
-                "placeholder": "e.g., Work, Gym, Parents House"
+                "placeholder": "e.g., Work, Gym, Parents House",
             }
         ),
     )
@@ -280,7 +280,7 @@ class FavoritePlaceForm(forms.Form):
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
                 "placeholder": "Start typing an address...",
                 "data-address-autocomplete": "true",
-                "autocomplete": "off"
+                "autocomplete": "off",
             }
         ),
     )

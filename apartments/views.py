@@ -1,31 +1,39 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, Http404
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.conf import settings
 import json
-from .models import (
-    Apartment, UserPreferences, UserProfile, Plan, FavoritePlace, ApartmentDistance,
-    user_has_premium, get_product_free_tier_limit,
-    get_favorite_place_limit, can_add_favorite_place, get_favorite_place_count
-)
-from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm, LoginForm, FavoritePlaceForm
-from .geocoding_service import geocode_address, get_geocoding_service
-from .google_maps_service import get_google_maps_service
-from .distance_service import (
-    calculate_and_cache_distances, recalculate_distances_for_favorite_place,
-    get_apartments_with_distances
-)
 import logging
 from decimal import Decimal
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+from .distance_service import (
+    calculate_and_cache_distances,
+    get_apartments_with_distances,
+    recalculate_distances_for_favorite_place,
+)
+from .forms import ApartmentForm, CustomUserCreationForm, FavoritePlaceForm, LoginForm, UserPreferencesForm
+from .geocoding_service import get_geocoding_service
+from .google_maps_service import get_google_maps_service
+from .models import (
+    Apartment,
+    FavoritePlace,
+    Plan,
+    UserPreferences,
+    UserProfile,
+    can_add_favorite_place,
+    get_favorite_place_limit,
+    user_has_premium,
+)
 
 logger = logging.getLogger(__name__)
 
 # Product slug for this app
-PRODUCT_SLUG = 'apartments'
+PRODUCT_SLUG = "apartments"
 
 
 def get_or_create_profile(user):
@@ -41,43 +49,51 @@ def main_homepage(request):
 
 def homes_coming_soon(request):
     """Placeholder for homes comparison tool"""
-    return render(request, "coming_soon.html", {
-        "tool_name": "Home Comparison",
-        "tool_description": "Compare homes for purchase by price, features, location, and more.",
-        "icon_path": "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-    })
+    return render(
+        request,
+        "coming_soon.html",
+        {
+            "tool_name": "Home Comparison",
+            "tool_description": "Compare homes for purchase by price, features, location, and more.",
+            "icon_path": "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+        },
+    )
 
 
 def hotels_coming_soon(request):
     """Placeholder for hotels comparison tool"""
-    return render(request, "coming_soon.html", {
-        "tool_name": "Hotel Comparison",
-        "tool_description": "Compare hotels by price, amenities, location, and reviews.",
-        "icon_path": "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-    })
+    return render(
+        request,
+        "coming_soon.html",
+        {
+            "tool_name": "Hotel Comparison",
+            "tool_description": "Compare hotels by price, amenities, location, and reviews.",
+            "icon_path": "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
+        },
+    )
 
 
-def calculate_net_effective_price(apt_data, discount_calculation='daily'):
+def calculate_net_effective_price(apt_data, discount_calculation="daily"):
     """Calculate net effective price for session apartments"""
-    price = Decimal(str(apt_data.get('price', 0)))
-    lease_length_months = apt_data.get('lease_length_months', 12)
-    months_free = apt_data.get('months_free', 0)
-    weeks_free = apt_data.get('weeks_free', 0)
-    flat_discount = Decimal(str(apt_data.get('flat_discount', 0)))
+    price = Decimal(str(apt_data.get("price", 0)))
+    lease_length_months = apt_data.get("lease_length_months", 12)
+    months_free = apt_data.get("months_free", 0)
+    weeks_free = apt_data.get("weeks_free", 0)
+    flat_discount = Decimal(str(apt_data.get("flat_discount", 0)))
 
-    total_discount = Decimal('0')
+    total_discount = Decimal("0")
 
-    if discount_calculation == 'daily':
-        daily_rate = price * Decimal('12') / Decimal('365')
+    if discount_calculation == "daily":
+        daily_rate = price * Decimal("12") / Decimal("365")
         if months_free > 0:
-            days_free_from_months = Decimal(str(months_free)) * Decimal('365') / Decimal('12')
+            days_free_from_months = Decimal(str(months_free)) * Decimal("365") / Decimal("12")
             total_discount += daily_rate * days_free_from_months
         if weeks_free > 0:
-            total_discount += daily_rate * Decimal('7') * Decimal(str(weeks_free))
-    elif discount_calculation == 'weekly':
-        weekly_rate = price * Decimal('12') / Decimal('52')
+            total_discount += daily_rate * Decimal("7") * Decimal(str(weeks_free))
+    elif discount_calculation == "weekly":
+        weekly_rate = price * Decimal("12") / Decimal("52")
         if months_free > 0:
-            weeks_free_from_months = Decimal(str(months_free)) * Decimal('52') / Decimal('12')
+            weeks_free_from_months = Decimal(str(months_free)) * Decimal("52") / Decimal("12")
             total_discount += weekly_rate * weeks_free_from_months
         if weeks_free > 0:
             total_discount += weekly_rate * Decimal(str(weeks_free))
@@ -117,27 +133,24 @@ def dashboard(request):
     favorite_places = []
 
     if request.user.is_authenticated:
-        apartments = list(Apartment.objects.filter(user=request.user).order_by('-created_at'))
+        apartments = list(Apartment.objects.filter(user=request.user).order_by("-created_at"))
         favorite_places = list(FavoritePlace.objects.filter(user=request.user))
         preferences, _ = UserPreferences.objects.get_or_create(
             user=request.user,
-            defaults={
-                'price_weight': 50,
-                'sqft_weight': 50,
-                'distance_weight': 50,
-                'discount_calculation': 'daily'
-            }
+            defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "daily"},
         )
     else:
         apartments = []
-        session_prefs = request.session.get('anonymous_preferences', {})
+        session_prefs = request.session.get("anonymous_preferences", {})
         if session_prefs:
+
             class SessionPreferences:
                 def __init__(self, data):
-                    self.price_weight = data.get('price_weight', 50)
-                    self.sqft_weight = data.get('sqft_weight', 50)
-                    self.distance_weight = data.get('distance_weight', 50)
-                    self.discount_calculation = data.get('discount_calculation', 'daily')
+                    self.price_weight = data.get("price_weight", 50)
+                    self.sqft_weight = data.get("sqft_weight", 50)
+                    self.distance_weight = data.get("distance_weight", 50)
+                    self.discount_calculation = data.get("discount_calculation", "daily")
+
             preferences = SessionPreferences(session_prefs)
         else:
             preferences = None
@@ -154,12 +167,9 @@ def dashboard(request):
             }
 
             if request.user.is_authenticated:
-                UserPreferences.objects.update_or_create(
-                    user=request.user,
-                    defaults=preferences_data
-                )
+                UserPreferences.objects.update_or_create(user=request.user, defaults=preferences_data)
             else:
-                request.session['anonymous_preferences'] = preferences_data
+                request.session["anonymous_preferences"] = preferences_data
                 request.session.modified = True
 
             messages.success(request, "Preferences updated successfully!")
@@ -176,18 +186,18 @@ def dashboard(request):
         form = UserPreferencesForm(initial=initial_data)
 
     # Calculate net effective price for each apartment
-    discount_calc_method = preferences.discount_calculation if preferences else 'daily'
+    discount_calc_method = preferences.discount_calculation if preferences else "daily"
     for apartment in apartments:
         # For Django model apartments, use the property
-        if hasattr(apartment, 'net_effective_price'):
+        if hasattr(apartment, "net_effective_price"):
             apartment.calculated_net_effective = apartment.net_effective_price
         else:
             apt_data = {
-                'price': getattr(apartment, 'price', 0),
-                'lease_length_months': getattr(apartment, 'lease_length_months', 12),
-                'months_free': getattr(apartment, 'months_free', 0),
-                'weeks_free': getattr(apartment, 'weeks_free', 0),
-                'flat_discount': getattr(apartment, 'flat_discount', 0),
+                "price": getattr(apartment, "price", 0),
+                "lease_length_months": getattr(apartment, "lease_length_months", 12),
+                "months_free": getattr(apartment, "months_free", 0),
+                "weeks_free": getattr(apartment, "weeks_free", 0),
+                "flat_discount": getattr(apartment, "flat_discount", 0),
             }
             apartment.calculated_net_effective = calculate_net_effective_price(apt_data, discount_calc_method)
 
@@ -224,10 +234,10 @@ def dashboard(request):
         apartments_with_distances = get_apartments_with_distances(apartments, favorite_places)
         # Add distance data to apartment objects for template access
         for apt_data in apartments_with_distances:
-            apt = apt_data['apartment']
-            apt.distance_data = apt_data['distances']
-            apt.average_distance = apt_data['average_distance']
-            apt.average_travel_time = apt_data.get('average_travel_time')
+            apt = apt_data["apartment"]
+            apt.distance_data = apt_data["distances"]
+            apt.average_distance = apt_data["average_distance"]
+            apt.average_travel_time = apt_data.get("average_travel_time")
     else:
         # No favorite places, just set empty distance data
         for apt in apartments:
@@ -238,7 +248,9 @@ def dashboard(request):
     # Get favorite place stats for the user
     favorite_place_count = len(favorite_places)
     favorite_place_limit = get_favorite_place_limit(request.user, PRODUCT_SLUG) if request.user.is_authenticated else 1
-    can_add_favorite_place_flag = can_add_favorite_place(request.user, PRODUCT_SLUG) if request.user.is_authenticated else False
+    can_add_favorite_place_flag = (
+        can_add_favorite_place(request.user, PRODUCT_SLUG) if request.user.is_authenticated else False
+    )
 
     context = {
         "apartments": apartments,
@@ -375,7 +387,9 @@ def update_apartment(request, pk):
                         try:
                             apartment.latitude = float(google_lat)
                             apartment.longitude = float(google_lng)
-                            logger.info(f"Using Google Places coordinates for apartment update: ({apartment.latitude}, {apartment.longitude})")
+                            logger.info(
+                                f"Using Google Places coordinates for apartment update: ({apartment.latitude}, {apartment.longitude})"
+                            )
                         except ValueError:
                             logger.warning(f"Invalid Google coordinates: ({google_lat}, {google_lng})")
                             apartment.latitude = None
@@ -437,12 +451,9 @@ def delete_apartment(request, pk):
         apartment.delete()
         messages.success(request, "Apartment deleted successfully!")
 
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             remaining_count = Apartment.objects.filter(user=request.user).count()
-            return JsonResponse({
-                "success": True,
-                "remaining_count": remaining_count
-            })
+            return JsonResponse({"success": True, "remaining_count": remaining_count})
 
         remaining_apartments = Apartment.objects.filter(user=request.user).exists()
         if remaining_apartments:
@@ -455,12 +466,7 @@ def delete_apartment(request, pk):
 def update_preferences(request):
     preferences, _ = UserPreferences.objects.get_or_create(
         user=request.user,
-        defaults={
-            'price_weight': 50,
-            'sqft_weight': 50,
-            'distance_weight': 50,
-            'discount_calculation': 'daily'
-        }
+        defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "daily"},
     )
 
     if request.method == "POST":
@@ -513,10 +519,7 @@ def transfer_apartments(request):
             except Exception as e:
                 logger.error(f"Error transferring apartment: {e}")
 
-        return JsonResponse({
-            "success": True,
-            "transferred_count": transferred_count
-        })
+        return JsonResponse({"success": True, "transferred_count": transferred_count})
     except Exception as e:
         logger.error(f"Error in transfer_apartments: {e}")
         return JsonResponse({"success": False, "error": str(e)}, status=500)
@@ -532,7 +535,7 @@ def signup_view(request):
                 # Create UserProfile for the new user
                 UserProfile.objects.get_or_create(user=user)
                 # Specify backend since we have multiple auth backends
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
                 messages.success(
                     request,
@@ -540,7 +543,8 @@ def signup_view(request):
                 )
 
                 from django.utils.http import url_has_allowed_host_and_scheme
-                next_url = request.POST.get('next') or request.GET.get('next')
+
+                next_url = request.POST.get("next") or request.GET.get("next")
 
                 if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
                     return redirect(next_url)
@@ -558,20 +562,16 @@ def signup_view(request):
     apartment_count = 0
 
     # Fetch plans from database
-    plans = Plan.objects.filter(
-        product__slug=PRODUCT_SLUG,
-        is_active=True,
-        tier='pro'
-    ).order_by('billing_interval')
+    plans = Plan.objects.filter(product__slug=PRODUCT_SLUG, is_active=True, tier="pro").order_by("billing_interval")
 
-    monthly_plan = plans.filter(billing_interval='month').first()
-    annual_plan = plans.filter(billing_interval='year').first()
+    monthly_plan = plans.filter(billing_interval="month").first()
+    annual_plan = plans.filter(billing_interval="year").first()
 
     monthly_price = float(monthly_plan.price_amount) if monthly_plan else 5.00
     annual_price = float(annual_plan.price_amount) if annual_plan else 50.00
     annual_savings = (monthly_price * 12) - annual_price
 
-    next_url = request.GET.get('next', '')
+    next_url = request.GET.get("next", "")
 
     context = {
         "form": form,
@@ -585,7 +585,7 @@ def signup_view(request):
         "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
         "stripe_enabled": settings.STRIPE_ENABLED,
         "next": next_url,
-        "google_client_id": getattr(settings, 'SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', ''),
+        "google_client_id": getattr(settings, "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""),
     }
 
     return render(request, "apartments/signup.html", context)
@@ -607,7 +607,8 @@ def login_view(request):
                 messages.success(request, f"Welcome back, {user.username}!")
 
                 from django.utils.http import url_has_allowed_host_and_scheme
-                next_url = request.POST.get('next') or request.GET.get('next')
+
+                next_url = request.POST.get("next") or request.GET.get("next")
 
                 if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
                     return redirect(next_url)
@@ -618,13 +619,17 @@ def login_view(request):
     else:
         form = LoginForm()
 
-    next_url = request.GET.get('next', '')
-    return render(request, "apartments/login.html", {
-        "form": form,
-        "next": next_url,
-        "debug": settings.DEBUG,
-        "google_client_id": getattr(settings, 'SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', ''),
-    })
+    next_url = request.GET.get("next", "")
+    return render(
+        request,
+        "apartments/login.html",
+        {
+            "form": form,
+            "next": next_url,
+            "debug": settings.DEBUG,
+            "google_client_id": getattr(settings, "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""),
+        },
+    )
 
 
 def logout_view(request):
@@ -641,10 +646,11 @@ def google_oauth_callback(request):
         messages.success(request, f"Welcome back, {request.user.username}!")
 
         from django.utils.http import url_has_allowed_host_and_scheme
-        next_url = request.session.get('oauth_next')
 
-        if 'oauth_next' in request.session:
-            del request.session['oauth_next']
+        next_url = request.session.get("oauth_next")
+
+        if "oauth_next" in request.session:
+            del request.session["oauth_next"]
 
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
             return redirect(next_url)
@@ -659,17 +665,15 @@ def google_oauth_callback(request):
 def privacy_policy(request):
     """Display privacy policy page"""
     from datetime import datetime
-    return render(request, "apartments/privacy.html", {
-        "current_date": datetime.now().strftime("%B %d, %Y")
-    })
+
+    return render(request, "apartments/privacy.html", {"current_date": datetime.now().strftime("%B %d, %Y")})
 
 
 def terms_of_service(request):
     """Display terms of service page"""
     from datetime import datetime
-    return render(request, "apartments/terms.html", {
-        "current_date": datetime.now().strftime("%B %d, %Y")
-    })
+
+    return render(request, "apartments/terms.html", {"current_date": datetime.now().strftime("%B %d, %Y")})
 
 
 def robots_txt(request):
@@ -692,173 +696,165 @@ def robots_txt(request):
 
 # Subscription Views
 
+
 def pricing_redirect(request):
     """Redirect pricing page to signup page (all pricing info is on signup page)"""
-    return redirect('signup')
+    return redirect("signup")
 
 
 @login_required
 def create_checkout_session(request):
     """Create a Stripe checkout session for subscription"""
-    from .stripe_service import StripeService
-    from .models import Product
     import stripe as stripe_lib
 
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    from .models import Product
+    from .stripe_service import StripeService
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
 
     try:
         data = json.loads(request.body)
-        plan_id = data.get('plan_id')
-        plan_type = data.get('plan_type')  # 'monthly' or 'annual'
+        plan_id = data.get("plan_id")
+        plan_type = data.get("plan_type")  # 'monthly' or 'annual'
 
         # If plan_type is provided, look up the plan by type
         if plan_type and not plan_id:
             try:
                 product = Product.objects.get(slug=PRODUCT_SLUG)
-                billing_interval = 'month' if plan_type == 'monthly' else 'year'
-                plan = Plan.objects.get(
-                    product=product,
-                    tier='pro',
-                    billing_interval=billing_interval,
-                    is_active=True
-                )
+                billing_interval = "month" if plan_type == "monthly" else "year"
+                plan = Plan.objects.get(product=product, tier="pro", billing_interval=billing_interval, is_active=True)
                 plan_id = plan.id
             except (Product.DoesNotExist, Plan.DoesNotExist):
-                return JsonResponse({'error': f'No {plan_type} plan found for this product'}, status=400)
+                return JsonResponse({"error": f"No {plan_type} plan found for this product"}, status=400)
 
         if not plan_id:
-            return JsonResponse({'error': 'Plan ID or plan type is required'}, status=400)
+            return JsonResponse({"error": "Plan ID or plan type is required"}, status=400)
 
         # Verify plan exists and is active
         try:
-            plan = Plan.objects.get(id=plan_id, is_active=True, tier='pro')
+            plan = Plan.objects.get(id=plan_id, is_active=True, tier="pro")
         except Plan.DoesNotExist:
-            return JsonResponse({'error': 'Invalid plan'}, status=400)
+            return JsonResponse({"error": "Invalid plan"}, status=400)
 
-        success_url = request.build_absolute_uri('/apartments/subscription/success/')
-        cancel_url = request.build_absolute_uri('/apartments/subscription/cancel/')
+        success_url = request.build_absolute_uri("/apartments/subscription/success/")
+        cancel_url = request.build_absolute_uri("/apartments/subscription/cancel/")
 
         stripe_service = StripeService()
         session = stripe_service.create_checkout_session(
-            user=request.user,
-            plan_id=plan_id,
-            success_url=success_url,
-            cancel_url=cancel_url
+            user=request.user, plan_id=plan_id, success_url=success_url, cancel_url=cancel_url
         )
 
-        return JsonResponse({'sessionId': session.id})
+        return JsonResponse({"sessionId": session.id})
 
     except stripe_lib.error.StripeError as e:
         logger.error(f"Stripe error: {e}")
-        return JsonResponse({'error': str(e)}, status=400)
+        return JsonResponse({"error": str(e)}, status=400)
     except Exception as e:
         logger.error(f"Error creating checkout session: {e}")
         import traceback
+
         logger.error(f"Traceback: {traceback.format_exc()}")
-        return JsonResponse({'error': 'Internal server error'}, status=500)
+        return JsonResponse({"error": "Internal server error"}, status=500)
 
 
 @login_required
 def checkout_success(request):
     """Handle successful checkout"""
     messages.success(request, "Thank you for subscribing! Your premium access is now active.")
-    return redirect('apartments:dashboard')
+    return redirect("apartments:dashboard")
 
 
 @login_required
 def checkout_cancel(request):
     """Handle cancelled checkout"""
     messages.info(request, "Checkout cancelled. You can upgrade to premium anytime.")
-    return redirect('apartments:pricing')
+    return redirect("apartments:pricing")
 
 
 @login_required
 def billing_portal(request):
     """Redirect to Stripe billing portal for subscription management"""
-    from .stripe_service import StripeService
     import stripe as stripe_lib
+
+    from .stripe_service import StripeService
 
     try:
         stripe_service = StripeService()
-        return_url = request.build_absolute_uri('/apartments/dashboard/')
+        return_url = request.build_absolute_uri("/apartments/dashboard/")
 
-        session = stripe_service.create_billing_portal_session(
-            user=request.user,
-            return_url=return_url
-        )
+        session = stripe_service.create_billing_portal_session(user=request.user, return_url=return_url)
 
         return redirect(session.url)
 
-    except ValueError as e:
+    except ValueError:
         messages.error(request, "You don't have an active subscription.")
-        return redirect('apartments:pricing')
+        return redirect("apartments:pricing")
     except stripe_lib.error.StripeError as e:
         logger.error(f"Stripe error: {e}")
         messages.error(request, "Unable to access billing portal. Please try again.")
-        return redirect('apartments:dashboard')
+        return redirect("apartments:dashboard")
     except Exception as e:
         logger.error(f"Error creating billing portal session: {e}")
         messages.error(request, "An error occurred. Please try again.")
-        return redirect('apartments:dashboard')
+        return redirect("apartments:dashboard")
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def stripe_webhook(request):
     """Handle Stripe webhook events"""
-    from .stripe_service import StripeService
     import stripe as stripe_lib
 
+    from .stripe_service import StripeService
+
     payload = request.body
-    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
 
     try:
-        event = stripe_lib.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-        )
+        event = stripe_lib.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
     except ValueError:
         logger.error("Invalid webhook payload")
-        return JsonResponse({'error': 'Invalid payload'}, status=400)
+        return JsonResponse({"error": "Invalid payload"}, status=400)
     except stripe_lib.error.SignatureVerificationError:
         logger.error("Invalid webhook signature")
-        return JsonResponse({'error': 'Invalid signature'}, status=400)
+        return JsonResponse({"error": "Invalid signature"}, status=400)
 
     stripe_service = StripeService()
-    event_type = event['type']
+    event_type = event["type"]
 
     try:
-        if event_type == 'checkout.session.completed':
-            session = event['data']['object']
-            subscription_id = session.get('subscription')
+        if event_type == "checkout.session.completed":
+            session = event["data"]["object"]
+            subscription_id = session.get("subscription")
 
             if subscription_id:
                 subscription = stripe_lib.Subscription.retrieve(subscription_id)
                 stripe_service.sync_subscription_status(subscription)
                 logger.info(f"Checkout completed: {subscription_id}")
 
-        elif event_type == 'customer.subscription.updated':
-            subscription = event['data']['object']
+        elif event_type == "customer.subscription.updated":
+            subscription = event["data"]["object"]
             stripe_service.sync_subscription_status(subscription)
             logger.info(f"Subscription updated: {subscription.id}")
 
-        elif event_type == 'customer.subscription.deleted':
-            subscription = event['data']['object']
+        elif event_type == "customer.subscription.deleted":
+            subscription = event["data"]["object"]
             stripe_service.sync_subscription_status(subscription)
             logger.info(f"Subscription deleted: {subscription.id}")
 
-        elif event_type == 'invoice.payment_succeeded':
-            invoice = event['data']['object']
-            subscription_id = invoice.get('subscription')
+        elif event_type == "invoice.payment_succeeded":
+            invoice = event["data"]["object"]
+            subscription_id = invoice.get("subscription")
 
             if subscription_id:
                 subscription = stripe_lib.Subscription.retrieve(subscription_id)
                 stripe_service.sync_subscription_status(subscription)
                 logger.info(f"Payment succeeded for subscription: {subscription_id}")
 
-        elif event_type == 'invoice.payment_failed':
-            invoice = event['data']['object']
-            subscription_id = invoice.get('subscription')
+        elif event_type == "invoice.payment_failed":
+            invoice = event["data"]["object"]
+            subscription_id = invoice.get("subscription")
 
             if subscription_id:
                 subscription = stripe_lib.Subscription.retrieve(subscription_id)
@@ -870,14 +866,15 @@ def stripe_webhook(request):
 
     except Exception as e:
         logger.error(f"Error processing webhook event {event_type}: {e}")
-        return JsonResponse({'error': 'Webhook processing failed'}, status=500)
+        return JsonResponse({"error": "Webhook processing failed"}, status=500)
 
-    return JsonResponse({'status': 'success'})
+    return JsonResponse({"status": "success"})
 
 
 # =============================================================================
 # Favorite Places Views
 # =============================================================================
+
 
 @login_required
 def favorite_places_list(request):
@@ -953,7 +950,10 @@ def create_favorite_place(request):
             )
 
             if geocode_failed or (latitude is None and longitude is None):
-                messages.warning(request, f"Added '{label}' but couldn't locate the address. Distance calculations won't be available.")
+                messages.warning(
+                    request,
+                    f"Added '{label}' but couldn't locate the address. Distance calculations won't be available.",
+                )
             else:
                 messages.success(request, f"Added '{label}' to your favorite places!")
                 # Calculate distances to all apartments
@@ -996,7 +996,9 @@ def update_favorite_place(request, pk):
                     try:
                         place.latitude = float(google_lat)
                         place.longitude = float(google_lng)
-                        logger.info(f"Using Google Places coordinates for '{place.label}': ({place.latitude}, {place.longitude})")
+                        logger.info(
+                            f"Using Google Places coordinates for '{place.label}': ({place.latitude}, {place.longitude})"
+                        )
                     except ValueError:
                         logger.warning(f"Invalid Google coordinates for '{place.label}': ({google_lat}, {google_lng})")
                         geocode_failed = True
@@ -1023,10 +1025,12 @@ def update_favorite_place(request, pk):
                 messages.success(request, f"Updated '{place.label}'!")
             return redirect("apartments:favorite_places")
     else:
-        form = FavoritePlaceForm(initial={
-            "label": place.label,
-            "address": place.address,
-        })
+        form = FavoritePlaceForm(
+            initial={
+                "label": place.label,
+                "address": place.address,
+            }
+        )
 
     context = {
         "form": form,
@@ -1046,7 +1050,7 @@ def delete_favorite_place(request, pk):
         place.delete()
         messages.success(request, f"Deleted '{label}' from your favorite places.")
 
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
 
         return redirect("apartments:favorite_places")
@@ -1058,6 +1062,7 @@ def delete_favorite_place(request, pk):
 # Google Maps API Endpoints
 # =============================================================================
 
+
 @login_required
 @require_http_methods(["GET"])
 def address_autocomplete(request):
@@ -1065,34 +1070,34 @@ def address_autocomplete(request):
     API endpoint for address autocomplete suggestions.
     Uses Google Places Autocomplete API.
     """
-    query = request.GET.get('q', '').strip()
-    session_token = request.GET.get('session_token', '')
+    query = request.GET.get("q", "").strip()
+    session_token = request.GET.get("session_token", "")
 
     if not query or len(query) < 3:
-        return JsonResponse({'suggestions': []})
+        return JsonResponse({"suggestions": []})
 
     google_maps = get_google_maps_service()
 
     if not google_maps.is_available:
         # Fall back to empty results if Google Maps is not configured
         logger.warning("Google Maps API not available for autocomplete")
-        return JsonResponse({'suggestions': [], 'error': 'Address autocomplete not available'})
+        return JsonResponse({"suggestions": [], "error": "Address autocomplete not available"})
 
     try:
         results = google_maps.autocomplete(query, session_token=session_token or None)
         suggestions = [
             {
-                'place_id': r.place_id,
-                'description': r.description,
-                'main_text': r.main_text,
-                'secondary_text': r.secondary_text,
+                "place_id": r.place_id,
+                "description": r.description,
+                "main_text": r.main_text,
+                "secondary_text": r.secondary_text,
             }
             for r in results
         ]
-        return JsonResponse({'suggestions': suggestions})
+        return JsonResponse({"suggestions": suggestions})
     except Exception as e:
         logger.error(f"Autocomplete error: {e}")
-        return JsonResponse({'suggestions': [], 'error': str(e)})
+        return JsonResponse({"suggestions": [], "error": str(e)})
 
 
 @login_required
@@ -1102,38 +1107,42 @@ def place_details(request):
     API endpoint to get place details including coordinates.
     Uses Google Places Details API.
     """
-    place_id = request.GET.get('place_id', '').strip()
-    session_token = request.GET.get('session_token', '')
+    place_id = request.GET.get("place_id", "").strip()
+    session_token = request.GET.get("session_token", "")
 
     if not place_id:
-        return JsonResponse({'error': 'place_id is required'}, status=400)
+        return JsonResponse({"error": "place_id is required"}, status=400)
 
     google_maps = get_google_maps_service()
 
     if not google_maps.is_available:
-        return JsonResponse({'error': 'Google Maps API not available'}, status=503)
+        return JsonResponse({"error": "Google Maps API not available"}, status=503)
 
     try:
         details = google_maps.get_place_details(place_id, session_token=session_token or None)
         if details:
-            return JsonResponse({
-                'place_id': details.place_id,
-                'formatted_address': details.formatted_address,
-                'latitude': details.latitude,
-                'longitude': details.longitude,
-            })
+            return JsonResponse(
+                {
+                    "place_id": details.place_id,
+                    "formatted_address": details.formatted_address,
+                    "latitude": details.latitude,
+                    "longitude": details.longitude,
+                }
+            )
         else:
-            return JsonResponse({'error': 'Place not found'}, status=404)
+            return JsonResponse({"error": "Place not found"}, status=404)
     except Exception as e:
         logger.error(f"Place details error: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @login_required
 def google_maps_status(request):
     """Check if Google Maps API is available and configured."""
     google_maps = get_google_maps_service()
-    return JsonResponse({
-        'available': google_maps.is_available,
-        'api_key_configured': bool(settings.GOOGLE_MAPS_API_KEY),
-    })
+    return JsonResponse(
+        {
+            "available": google_maps.is_available,
+            "api_key_configured": bool(settings.GOOGLE_MAPS_API_KEY),
+        }
+    )

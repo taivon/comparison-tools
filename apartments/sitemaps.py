@@ -1,12 +1,12 @@
+from datetime import datetime
+
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
-from datetime import datetime
 
 
 class StaticViewSitemap(Sitemap):
     """Sitemap for static pages with individual priorities"""
 
-    changefreq = "weekly"
     protocol = "https"
 
     # Define priorities for each page
@@ -59,5 +59,3 @@ class StaticViewSitemap(Sitemap):
         if item in ["home", "apartments:index"]:
             return datetime.now()
         return None
-
-

@@ -16,8 +16,9 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import include, path
 from django.contrib.sitemaps.views import sitemap
+from django.urls import include, path
+
 from apartments import views as apartment_views
 from apartments.sitemaps import StaticViewSitemap
 
@@ -29,25 +30,20 @@ sitemaps = {
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("__reload__/", include("django_browser_reload.urls")),
-
     # Main homepage showcasing all comparison tools
     path("", apartment_views.main_homepage, name="home"),
-
     # Comparison tool apps
     path("apartments/", include("apartments.urls")),
     path("homes/", apartment_views.homes_coming_soon, name="homes"),
     path("hotels/", apartment_views.hotels_coming_soon, name="hotels"),
-
     # Authentication (kept at root level for consistency)
     path("login/", apartment_views.login_view, name="login"),
     path("logout/", apartment_views.logout_view, name="logout"),
     path("signup/", apartment_views.signup_view, name="signup"),
     path("auth/", include("social_django.urls", namespace="social")),  # Google OAuth + One Tap
-
     # Legal pages (shared across all comparison tools)
     path("privacy/", apartment_views.privacy_policy, name="privacy"),
     path("terms/", apartment_views.terms_of_service, name="terms"),
-
     # SEO: Sitemap and Robots
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
     path("robots.txt", apartment_views.robots_txt, name="robots_txt"),

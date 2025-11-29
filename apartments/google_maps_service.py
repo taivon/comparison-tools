@@ -2,8 +2,10 @@
 Google Maps API service for Places Autocomplete and Distance Matrix.
 Provides premium geocoding and real driving distance/time calculations.
 """
+
 import logging
-from typing import Optional, List, Dict, Tuple, NamedTuple
+from typing import NamedTuple
+
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -11,14 +13,16 @@ logger = logging.getLogger(__name__)
 
 class AutocompleteResult(NamedTuple):
     """Result from Places Autocomplete"""
+
     place_id: str
     description: str  # Full address description
-    main_text: str    # Primary text (e.g., street address)
+    main_text: str  # Primary text (e.g., street address)
     secondary_text: str  # Secondary text (e.g., city, state)
 
 
 class PlaceDetails(NamedTuple):
     """Details for a place including coordinates"""
+
     place_id: str
     formatted_address: str
     latitude: float
@@ -27,6 +31,7 @@ class PlaceDetails(NamedTuple):
 
 class DistanceResult(NamedTuple):
     """Result from Distance Matrix API"""
+
     origin_place_id: str
     destination_place_id: str
     distance_meters: int
@@ -42,7 +47,7 @@ class GoogleMapsService:
 
     def __init__(self):
         self._client = None
-        self._api_key = getattr(settings, 'GOOGLE_MAPS_API_KEY', None)
+        self._api_key = getattr(settings, "GOOGLE_MAPS_API_KEY", None)
 
     @property
     def client(self):
@@ -53,6 +58,7 @@ class GoogleMapsService:
                 return None
             try:
                 import googlemaps
+
                 self._client = googlemaps.Client(key=self._api_key)
             except ImportError:
                 logger.error("googlemaps package not installed. Run: pip install googlemaps")
@@ -65,11 +71,8 @@ class GoogleMapsService:
         return self.client is not None
 
     def autocomplete(
-        self,
-        input_text: str,
-        session_token: Optional[str] = None,
-        location_bias: Optional[Tuple[float, float]] = None
-    ) -> List[AutocompleteResult]:
+        self, input_text: str, session_token: str | None = None, location_bias: tuple[float, float] | None = None
+    ) -> list[AutocompleteResult]:
         """
         Get address autocomplete suggestions.
 
@@ -89,29 +92,31 @@ class GoogleMapsService:
             # Use 'geocode' type to get addresses and places (not just 'address')
             # This allows searching for businesses like "Starbucks" or landmarks
             params = {
-                'input_text': input_text,
-                'types': 'geocode|establishment',  # Addresses AND places/businesses
-                'components': {'country': 'us'},  # Bias to US addresses
+                "input_text": input_text,
+                "types": "geocode|establishment",  # Addresses AND places/businesses
+                "components": {"country": "us"},  # Bias to US addresses
             }
 
             if session_token:
-                params['session_token'] = session_token
+                params["session_token"] = session_token
 
             if location_bias:
-                params['location'] = location_bias
-                params['radius'] = 50000  # 50km radius bias
+                params["location"] = location_bias
+                params["radius"] = 50000  # 50km radius bias
 
             results = self.client.places_autocomplete(**params)
 
             suggestions = []
             for result in results[:5]:  # Limit to 5 suggestions
-                structured = result.get('structured_formatting', {})
-                suggestions.append(AutocompleteResult(
-                    place_id=result['place_id'],
-                    description=result['description'],
-                    main_text=structured.get('main_text', result['description']),
-                    secondary_text=structured.get('secondary_text', '')
-                ))
+                structured = result.get("structured_formatting", {})
+                suggestions.append(
+                    AutocompleteResult(
+                        place_id=result["place_id"],
+                        description=result["description"],
+                        main_text=structured.get("main_text", result["description"]),
+                        secondary_text=structured.get("secondary_text", ""),
+                    )
+                )
 
             logger.info(f"Autocomplete for '{input_text}': {len(suggestions)} results")
             return suggestions
@@ -120,11 +125,7 @@ class GoogleMapsService:
             logger.error(f"Autocomplete error for '{input_text}': {e}")
             return []
 
-    def get_place_details(
-        self,
-        place_id: str,
-        session_token: Optional[str] = None
-    ) -> Optional[PlaceDetails]:
+    def get_place_details(self, place_id: str, session_token: str | None = None) -> PlaceDetails | None:
         """
         Get details for a place including coordinates.
 
@@ -139,25 +140,22 @@ class GoogleMapsService:
             return None
 
         try:
-            params = {
-                'place_id': place_id,
-                'fields': ['formatted_address', 'geometry']
-            }
+            params = {"place_id": place_id, "fields": ["formatted_address", "geometry"]}
 
             if session_token:
-                params['session_token'] = session_token
+                params["session_token"] = session_token
 
-            result = self.client.place(place_id=place_id, fields=['formatted_address', 'geometry'])
+            result = self.client.place(place_id=place_id, fields=["formatted_address", "geometry"])
 
-            if result and result.get('result'):
-                place = result['result']
-                location = place.get('geometry', {}).get('location', {})
+            if result and result.get("result"):
+                place = result["result"]
+                location = place.get("geometry", {}).get("location", {})
 
                 return PlaceDetails(
                     place_id=place_id,
-                    formatted_address=place.get('formatted_address', ''),
-                    latitude=location.get('lat'),
-                    longitude=location.get('lng')
+                    formatted_address=place.get("formatted_address", ""),
+                    latitude=location.get("lat"),
+                    longitude=location.get("lng"),
                 )
 
             return None
@@ -167,11 +165,8 @@ class GoogleMapsService:
             return None
 
     def get_distance_matrix(
-        self,
-        origins: List[Tuple[float, float]],
-        destinations: List[Tuple[float, float]],
-        mode: str = 'driving'
-    ) -> List[List[Optional[DistanceResult]]]:
+        self, origins: list[tuple[float, float]], destinations: list[tuple[float, float]], mode: str = "driving"
+    ) -> list[list[DistanceResult | None]]:
         """
         Calculate distances and travel times between origins and destinations.
 
@@ -191,31 +186,33 @@ class GoogleMapsService:
                 origins=origins,
                 destinations=destinations,
                 mode=mode,
-                units='imperial'  # Use miles
+                units="imperial",  # Use miles
             )
 
             distance_results = []
 
-            for i, row in enumerate(result.get('rows', [])):
+            for i, row in enumerate(result.get("rows", [])):
                 row_results = []
-                for j, element in enumerate(row.get('elements', [])):
-                    if element.get('status') == 'OK':
-                        distance = element.get('distance', {})
-                        duration = element.get('duration', {})
+                for j, element in enumerate(row.get("elements", [])):
+                    if element.get("status") == "OK":
+                        distance = element.get("distance", {})
+                        duration = element.get("duration", {})
 
-                        distance_meters = distance.get('value', 0)
-                        duration_seconds = duration.get('value', 0)
+                        distance_meters = distance.get("value", 0)
+                        duration_seconds = duration.get("value", 0)
 
-                        row_results.append(DistanceResult(
-                            origin_place_id=f"origin_{i}",
-                            destination_place_id=f"dest_{j}",
-                            distance_meters=distance_meters,
-                            distance_miles=round(distance_meters / 1609.34, 2),
-                            duration_seconds=duration_seconds,
-                            duration_minutes=round(duration_seconds / 60),
-                            duration_text=duration.get('text', ''),
-                            distance_text=distance.get('text', '')
-                        ))
+                        row_results.append(
+                            DistanceResult(
+                                origin_place_id=f"origin_{i}",
+                                destination_place_id=f"dest_{j}",
+                                distance_meters=distance_meters,
+                                distance_miles=round(distance_meters / 1609.34, 2),
+                                duration_seconds=duration_seconds,
+                                duration_minutes=round(duration_seconds / 60),
+                                duration_text=duration.get("text", ""),
+                                distance_text=distance.get("text", ""),
+                            )
+                        )
                     else:
                         row_results.append(None)
                 distance_results.append(row_results)
@@ -228,11 +225,8 @@ class GoogleMapsService:
             return []
 
     def get_single_distance(
-        self,
-        origin: Tuple[float, float],
-        destination: Tuple[float, float],
-        mode: str = 'driving'
-    ) -> Optional[DistanceResult]:
+        self, origin: tuple[float, float], destination: tuple[float, float], mode: str = "driving"
+    ) -> DistanceResult | None:
         """
         Calculate distance and travel time between two points.
 

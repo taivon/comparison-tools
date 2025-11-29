@@ -1,5 +1,5 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
@@ -19,5 +19,5 @@ class Command(BaseCommand):
                 f"Email: {user.email:30s} | "
                 f"Status: {premium_status:7s} | "
                 f"Active: {user.is_active} | "
-                f'Date Joined: {user.date_joined.strftime("%Y-%m-%d")}'
+                f"Date Joined: {user.date_joined.strftime('%Y-%m-%d')}"
             )

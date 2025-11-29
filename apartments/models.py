@@ -1,16 +1,18 @@
-from django.db import models
-from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.utils import timezone
 from decimal import Decimal
 
+from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from django.utils import timezone
 
 # =============================================================================
 # Product & Subscription Models
 # =============================================================================
 
+
 class Product(models.Model):
     """Represents a comparison tool product (apartments, homes, cars, hotels, bundle)"""
+
     slug = models.SlugField(unique=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
@@ -19,7 +21,7 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -27,26 +29,27 @@ class Product(models.Model):
 
 class Plan(models.Model):
     """Subscription plan for a product (Free, Pro Monthly, Pro Annual)"""
+
     TIER_CHOICES = [
-        ('free', 'Free'),
-        ('pro', 'Pro'),
+        ("free", "Free"),
+        ("pro", "Pro"),
     ]
     INTERVAL_CHOICES = [
-        ('', 'None'),
-        ('month', 'Monthly'),
-        ('year', 'Annual'),
+        ("", "None"),
+        ("month", "Monthly"),
+        ("year", "Annual"),
     ]
 
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='plans')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="plans")
     name = models.CharField(max_length=100)  # "Free", "Pro Monthly", "Pro Annual"
-    tier = models.CharField(max_length=50, choices=TIER_CHOICES, default='free')
+    tier = models.CharField(max_length=50, choices=TIER_CHOICES, default="free")
     stripe_price_id = models.CharField(max_length=200, blank=True)
     price_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     billing_interval = models.CharField(max_length=20, choices=INTERVAL_CHOICES, blank=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['product', 'tier', 'billing_interval']
+        ordering = ["product", "tier", "billing_interval"]
 
     def __str__(self):
         return f"{self.product.name} - {self.name}"
@@ -54,25 +57,26 @@ class Plan(models.Model):
 
 class Subscription(models.Model):
     """User's subscription to a product plan"""
+
     STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('canceled', 'Canceled'),
-        ('past_due', 'Past Due'),
-        ('trialing', 'Trialing'),
-        ('incomplete', 'Incomplete'),
+        ("active", "Active"),
+        ("canceled", "Canceled"),
+        ("past_due", "Past Due"),
+        ("trialing", "Trialing"),
+        ("incomplete", "Incomplete"),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
-    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name='subscriptions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="subscriptions")
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="subscriptions")
     stripe_subscription_id = models.CharField(max_length=255, blank=True)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='active')
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="active")
     current_period_end = models.DateTimeField(null=True, blank=True)
     cancel_at_period_end = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.user.username} - {self.plan}"
@@ -80,14 +84,14 @@ class Subscription(models.Model):
     @property
     def is_premium_active(self):
         """Check if this subscription grants premium access"""
-        if self.plan.tier != 'pro':
+        if self.plan.tier != "pro":
             return False
 
-        if self.status == 'active':
+        if self.status == "active":
             return True
 
         # Grace period for canceled/past_due
-        if self.status in ['canceled', 'past_due'] and self.current_period_end:
+        if self.status in ["canceled", "past_due"] and self.current_period_end:
             return self.current_period_end > timezone.now()
 
         return False
@@ -96,6 +100,7 @@ class Subscription(models.Model):
 # =============================================================================
 # Subscription Helper Functions
 # =============================================================================
+
 
 def get_user_subscription(user, product_slug: str):
     """
@@ -107,20 +112,16 @@ def get_user_subscription(user, product_slug: str):
 
     # First check for product-specific subscription
     try:
-        return Subscription.objects.select_related('plan', 'plan__product').get(
-            user=user,
-            plan__product__slug=product_slug,
-            status__in=['active', 'trialing', 'canceled', 'past_due']
+        return Subscription.objects.select_related("plan", "plan__product").get(
+            user=user, plan__product__slug=product_slug, status__in=["active", "trialing", "canceled", "past_due"]
         )
     except Subscription.DoesNotExist:
         pass
 
     # Check for bundle subscription
     try:
-        return Subscription.objects.select_related('plan', 'plan__product').get(
-            user=user,
-            plan__product__slug='bundle',
-            status__in=['active', 'trialing', 'canceled', 'past_due']
+        return Subscription.objects.select_related("plan", "plan__product").get(
+            user=user, plan__product__slug="bundle", status__in=["active", "trialing", "canceled", "past_due"]
         )
     except Subscription.DoesNotExist:
         return None
@@ -155,11 +156,13 @@ def get_product_free_tier_limit(product_slug: str) -> int:
 # User Profile Model
 # =============================================================================
 
+
 class UserProfile(models.Model):
     """Extended user profile with Stripe customer data"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    photo_url = models.URLField(max_length=500, blank=True, default='')
-    stripe_customer_id = models.CharField(max_length=255, blank=True, default='')
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    photo_url = models.URLField(max_length=500, blank=True, default="")
+    stripe_customer_id = models.CharField(max_length=255, blank=True, default="")
 
     def __str__(self):
         return f"Profile for {self.user.username}"
@@ -169,30 +172,37 @@ class UserProfile(models.Model):
 # Apartment Comparison Models
 # =============================================================================
 
+
 class Apartment(models.Model):
     name = models.CharField(max_length=200)
-    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0"))])
     square_footage = models.IntegerField(validators=[MinValueValidator(0)])
-    bedrooms = models.DecimalField(max_digits=3, decimal_places=1, default=1, validators=[MinValueValidator(Decimal('0'))])  # Supports 0.5 for studios
-    bathrooms = models.DecimalField(max_digits=3, decimal_places=1, default=1, validators=[MinValueValidator(Decimal('0.5'))])  # Supports 1.5, 2.5, etc.
+    bedrooms = models.DecimalField(
+        max_digits=3, decimal_places=1, default=1, validators=[MinValueValidator(Decimal("0"))]
+    )  # Supports 0.5 for studios
+    bathrooms = models.DecimalField(
+        max_digits=3, decimal_places=1, default=1, validators=[MinValueValidator(Decimal("0.5"))]
+    )  # Supports 1.5, 2.5, etc.
     lease_length_months = models.IntegerField(validators=[MinValueValidator(1)])
 
     # Location fields
-    address = models.CharField(max_length=500, blank=True, default='')
+    address = models.CharField(max_length=500, blank=True, default="")
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     # Discount fields
     months_free = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     weeks_free = models.IntegerField(default=0, validators=[MinValueValidator(0)])
-    flat_discount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0'), validators=[MinValueValidator(Decimal('0'))])
+    flat_discount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0"), validators=[MinValueValidator(Decimal("0"))]
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.name
@@ -202,32 +212,27 @@ class Apartment(models.Model):
         if self.square_footage > 0:
             return round(self.price / Decimal(str(self.square_footage)), 2)
         else:
-            return Decimal('0')
+            return Decimal("0")
 
     @property
     def net_effective_price(self):
-        total_discount = Decimal('0')
+        total_discount = Decimal("0")
         user_preferences, _ = UserPreferences.objects.get_or_create(
             user=self.user,
-            defaults={
-                'price_weight': 50,
-                'sqft_weight': 50,
-                'distance_weight': 50,
-                'discount_calculation': 'daily'
-            }
+            defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "daily"},
         )
 
-        if user_preferences.discount_calculation == 'daily':
-            daily_rate = self.price * Decimal('12') / Decimal('365')
+        if user_preferences.discount_calculation == "daily":
+            daily_rate = self.price * Decimal("12") / Decimal("365")
             if self.months_free > 0:
-                days_free_from_months = Decimal(str(self.months_free)) * Decimal('365') / Decimal('12')
+                days_free_from_months = Decimal(str(self.months_free)) * Decimal("365") / Decimal("12")
                 total_discount += daily_rate * days_free_from_months
             if self.weeks_free > 0:
-                total_discount += daily_rate * Decimal('7') * Decimal(str(self.weeks_free))
-        elif user_preferences.discount_calculation == 'weekly':
-            weekly_rate = self.price * Decimal('12') / Decimal('52')
+                total_discount += daily_rate * Decimal("7") * Decimal(str(self.weeks_free))
+        elif user_preferences.discount_calculation == "weekly":
+            weekly_rate = self.price * Decimal("12") / Decimal("52")
             if self.months_free > 0:
-                weeks_free_from_months = Decimal(str(self.months_free)) * Decimal('52') / Decimal('12')
+                weeks_free_from_months = Decimal(str(self.months_free)) * Decimal("52") / Decimal("12")
                 total_discount += weekly_rate * weeks_free_from_months
             if self.weeks_free > 0:
                 total_discount += weekly_rate * Decimal(str(self.weeks_free))
@@ -244,18 +249,12 @@ class Apartment(models.Model):
 
 
 class UserPreferences(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="preferences")
     price_weight = models.IntegerField(default=50, validators=[MinValueValidator(0), MaxValueValidator(100)])
     sqft_weight = models.IntegerField(default=50, validators=[MinValueValidator(0), MaxValueValidator(100)])
     distance_weight = models.IntegerField(default=50, validators=[MinValueValidator(0), MaxValueValidator(100)])
     discount_calculation = models.CharField(
-        max_length=20,
-        choices=[
-            ('monthly', 'Monthly'),
-            ('weekly', 'Weekly'),
-            ('daily', 'Daily')
-        ],
-        default='daily'
+        max_length=20, choices=[("monthly", "Monthly"), ("weekly", "Weekly"), ("daily", "Daily")], default="daily"
     )
 
     def __str__(self):
@@ -266,9 +265,11 @@ class UserPreferences(models.Model):
 # Favorite Places Models
 # =============================================================================
 
+
 class FavoritePlace(models.Model):
     """A user's favorite place (e.g., Work, Gym) for distance calculations"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorite_places')
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="favorite_places")
     label = models.CharField(max_length=100)  # e.g., "Work", "Gym"
     address = models.CharField(max_length=500)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
@@ -277,7 +278,7 @@ class FavoritePlace(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['label']
+        ordering = ["label"]
 
     def __str__(self):
         return f"{self.label} ({self.user.username})"
@@ -290,16 +291,17 @@ class FavoritePlace(models.Model):
 
 class ApartmentDistance(models.Model):
     """Cached distance between an apartment and a favorite place"""
-    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='distances')
-    favorite_place = models.ForeignKey(FavoritePlace, on_delete=models.CASCADE, related_name='apartment_distances')
+
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name="distances")
+    favorite_place = models.ForeignKey(FavoritePlace, on_delete=models.CASCADE, related_name="apartment_distances")
     distance_miles = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     travel_time_minutes = models.IntegerField(null=True, blank=True)  # Optional for MVP
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ['apartment', 'favorite_place']
-        ordering = ['favorite_place__label']
+        unique_together = ["apartment", "favorite_place"]
+        ordering = ["favorite_place__label"]
 
     def __str__(self):
         return f"{self.apartment.name} -> {self.favorite_place.label}: {self.distance_miles} mi"
@@ -309,14 +311,15 @@ class ApartmentDistance(models.Model):
 # Favorite Places Helper Functions
 # =============================================================================
 
-def get_favorite_place_limit(user, product_slug: str = 'apartments') -> int:
+
+def get_favorite_place_limit(user, product_slug: str = "apartments") -> int:
     """Returns max favorite places allowed: 1 for free, 5 for pro"""
     if user_has_premium(user, product_slug):
         return 5
     return 1
 
 
-def can_add_favorite_place(user, product_slug: str = 'apartments') -> bool:
+def can_add_favorite_place(user, product_slug: str = "apartments") -> bool:
     """Check if user can add another favorite place"""
     if not user.is_authenticated:
         return False

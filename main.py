@@ -3,6 +3,7 @@ WSGI entry point for Google App Engine
 """
 
 import os
+
 import django
 from django.conf import settings
 from django.core.management import execute_from_command_line
@@ -14,9 +15,10 @@ django.setup()
 # Initialize database on App Engine startup (only in production)
 if not settings.DEBUG:
     try:
-        from django.core.management.base import CommandError
-        from io import StringIO
         import sys
+        from io import StringIO
+
+        from django.core.management.base import CommandError
 
         # Capture output to avoid cluttering logs
         old_stdout = sys.stdout

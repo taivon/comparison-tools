@@ -3,10 +3,11 @@ Distance calculation service for computing distances between apartments and favo
 Uses Google Maps Distance Matrix API for accurate driving distances when available,
 falls back to Haversine formula for straight-line distance calculation.
 """
+
 import logging
-from math import radians, sin, cos, sqrt, atan2
 from decimal import Decimal
-from typing import List, Dict, Optional, Any, Tuple
+from math import atan2, cos, radians, sin, sqrt
+from typing import Any
 
 from django.conf import settings
 
@@ -48,9 +49,8 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
 
 def _get_google_maps_distance(
-    origin: Tuple[float, float],
-    destination: Tuple[float, float]
-) -> Optional[Tuple[float, int]]:
+    origin: tuple[float, float], destination: tuple[float, float]
+) -> tuple[float, int] | None:
     """
     Get driving distance and time using Google Maps Distance Matrix API.
 
@@ -68,7 +68,7 @@ def _get_google_maps_distance(
         if not google_maps.is_available:
             return None
 
-        result = google_maps.get_single_distance(origin, destination, mode='driving')
+        result = google_maps.get_single_distance(origin, destination, mode="driving")
         if result:
             return (result.distance_miles, result.duration_minutes)
         return None
@@ -78,12 +78,8 @@ def _get_google_maps_distance(
 
 
 def _calculate_distance_with_fallback(
-    origin_lat: float,
-    origin_lng: float,
-    dest_lat: float,
-    dest_lng: float,
-    use_google_maps: bool = True
-) -> Tuple[float, Optional[int], bool]:
+    origin_lat: float, origin_lng: float, dest_lat: float, dest_lng: float, use_google_maps: bool = True
+) -> tuple[float, int | None, bool]:
     """
     Calculate distance, trying Google Maps first then falling back to Haversine.
 
@@ -100,8 +96,7 @@ def _calculate_distance_with_fallback(
     """
     if use_google_maps:
         google_result = _get_google_maps_distance(
-            (float(origin_lat), float(origin_lng)),
-            (float(dest_lat), float(dest_lng))
+            (float(origin_lat), float(origin_lng)), (float(dest_lat), float(dest_lng))
         )
         if google_result:
             distance_miles, travel_time = google_result
@@ -139,23 +134,24 @@ def calculate_and_cache_distances(apartment, use_google_maps: bool = True) -> No
             continue
 
         distance_miles, travel_time, is_driving = _calculate_distance_with_fallback(
-            apartment.latitude, apartment.longitude,
-            place.latitude, place.longitude,
-            use_google_maps=google_maps_available
+            apartment.latitude,
+            apartment.longitude,
+            place.latitude,
+            place.longitude,
+            use_google_maps=google_maps_available,
         )
 
         ApartmentDistance.objects.update_or_create(
             apartment=apartment,
             favorite_place=place,
-            defaults={
-                'distance_miles': Decimal(str(distance_miles)),
-                'travel_time_minutes': travel_time
-            }
+            defaults={"distance_miles": Decimal(str(distance_miles)), "travel_time_minutes": travel_time},
         )
 
         distance_type = "driving" if is_driving else "straight-line"
         time_str = f" ({travel_time} min)" if travel_time else ""
-        logger.info(f"Cached {distance_type} distance: {apartment.name} -> {place.label} = {distance_miles} mi{time_str}")
+        logger.info(
+            f"Cached {distance_type} distance: {apartment.name} -> {place.label} = {distance_miles} mi{time_str}"
+        )
 
 
 def recalculate_distances_for_favorite_place(favorite_place, use_google_maps: bool = True) -> None:
@@ -167,7 +163,7 @@ def recalculate_distances_for_favorite_place(favorite_place, use_google_maps: bo
         favorite_place: The FavoritePlace instance that was changed
         use_google_maps: Whether to use Google Maps API (default True)
     """
-    from .models import ApartmentDistance, Apartment
+    from .models import Apartment, ApartmentDistance
 
     if not favorite_place.latitude or not favorite_place.longitude:
         logger.info(f"Favorite place {favorite_place.id} has no coordinates, skipping distance calculation")
@@ -185,23 +181,24 @@ def recalculate_distances_for_favorite_place(favorite_place, use_google_maps: bo
             continue
 
         distance_miles, travel_time, is_driving = _calculate_distance_with_fallback(
-            apartment.latitude, apartment.longitude,
-            favorite_place.latitude, favorite_place.longitude,
-            use_google_maps=google_maps_available
+            apartment.latitude,
+            apartment.longitude,
+            favorite_place.latitude,
+            favorite_place.longitude,
+            use_google_maps=google_maps_available,
         )
 
         ApartmentDistance.objects.update_or_create(
             apartment=apartment,
             favorite_place=favorite_place,
-            defaults={
-                'distance_miles': Decimal(str(distance_miles)),
-                'travel_time_minutes': travel_time
-            }
+            defaults={"distance_miles": Decimal(str(distance_miles)), "travel_time_minutes": travel_time},
         )
 
         distance_type = "driving" if is_driving else "straight-line"
         time_str = f" ({travel_time} min)" if travel_time else ""
-        logger.info(f"Cached {distance_type} distance: {apartment.name} -> {favorite_place.label} = {distance_miles} mi{time_str}")
+        logger.info(
+            f"Cached {distance_type} distance: {apartment.name} -> {favorite_place.label} = {distance_miles} mi{time_str}"
+        )
 
 
 def recalculate_all_distances_for_user(user, use_google_maps: bool = True) -> None:
@@ -219,7 +216,7 @@ def recalculate_all_distances_for_user(user, use_google_maps: bool = True) -> No
         calculate_and_cache_distances(apartment, use_google_maps=use_google_maps)
 
 
-def get_apartment_distances(apartment) -> Dict[str, Any]:
+def get_apartment_distances(apartment) -> dict[str, Any]:
     """
     Get all cached distances for an apartment, including average distance.
 
@@ -234,11 +231,9 @@ def get_apartment_distances(apartment) -> Dict[str, Any]:
     """
     from .models import ApartmentDistance
 
-    distances = ApartmentDistance.objects.filter(
-        apartment=apartment
-    ).select_related('favorite_place')
+    distances = ApartmentDistance.objects.filter(apartment=apartment).select_related("favorite_place")
 
-    distance_list: List[Dict[str, Any]] = []
+    distance_list: list[dict[str, Any]] = []
     total_distance = 0.0
     total_time = 0
     count = 0
@@ -247,11 +242,9 @@ def get_apartment_distances(apartment) -> Dict[str, Any]:
     for d in distances:
         if d.distance_miles is not None:
             dist_float = float(d.distance_miles)
-            distance_list.append({
-                'label': d.favorite_place.label,
-                'distance': dist_float,
-                'travel_time': d.travel_time_minutes
-            })
+            distance_list.append(
+                {"label": d.favorite_place.label, "distance": dist_float, "travel_time": d.travel_time_minutes}
+            )
             total_distance += dist_float
             count += 1
 
@@ -263,13 +256,13 @@ def get_apartment_distances(apartment) -> Dict[str, Any]:
     average_travel_time = round(total_time / time_count) if time_count > 0 else None
 
     return {
-        'distances': distance_list,
-        'average_distance': average_distance,
-        'average_travel_time': average_travel_time
+        "distances": distance_list,
+        "average_distance": average_distance,
+        "average_travel_time": average_travel_time,
     }
 
 
-def get_apartments_with_distances(apartments, favorite_places) -> List[Dict[str, Any]]:
+def get_apartments_with_distances(apartments, favorite_places) -> list[dict[str, Any]]:
     """
     Get distance data for a list of apartments organized for template rendering.
 
@@ -291,12 +284,10 @@ def get_apartments_with_distances(apartments, favorite_places) -> List[Dict[str,
 
     for apartment in apartments:
         # Initialize distances dict with None for all places
-        distances_dict = {label: {'distance': None, 'travel_time': None} for label in place_labels}
+        distances_dict = {label: {"distance": None, "travel_time": None} for label in place_labels}
 
         # Get cached distances
-        cached_distances = ApartmentDistance.objects.filter(
-            apartment=apartment
-        ).select_related('favorite_place')
+        cached_distances = ApartmentDistance.objects.filter(apartment=apartment).select_related("favorite_place")
 
         total_distance = 0.0
         total_time = 0
@@ -306,10 +297,7 @@ def get_apartments_with_distances(apartments, favorite_places) -> List[Dict[str,
         for d in cached_distances:
             if d.distance_miles is not None:
                 dist_float = float(d.distance_miles)
-                distances_dict[d.favorite_place.label] = {
-                    'distance': dist_float,
-                    'travel_time': d.travel_time_minutes
-                }
+                distances_dict[d.favorite_place.label] = {"distance": dist_float, "travel_time": d.travel_time_minutes}
                 total_distance += dist_float
                 count += 1
 
@@ -320,11 +308,13 @@ def get_apartments_with_distances(apartments, favorite_places) -> List[Dict[str,
         average_distance = round(total_distance / count, 2) if count > 0 else None
         average_travel_time = round(total_time / time_count) if time_count > 0 else None
 
-        result.append({
-            'apartment': apartment,
-            'distances': distances_dict,
-            'average_distance': average_distance,
-            'average_travel_time': average_travel_time
-        })
+        result.append(
+            {
+                "apartment": apartment,
+                "distances": distances_dict,
+                "average_distance": average_distance,
+                "average_travel_time": average_travel_time,
+            }
+        )
 
     return result

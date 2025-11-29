@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from urllib.parse import urlparse
+
 import environ
 
 # Initialize environ
@@ -33,9 +34,7 @@ if os.path.isfile(env_file):
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    "SECRET_KEY", "django-insecure-e&f)15o0*-pg2ul$(w&on#i5kz+a-(kk=hvyff3wg%k&!pqsor"
-)
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-e&f)15o0*-pg2ul$(w&on#i5kz+a-(kk=hvyff3wg%k&!pqsor")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Set DEBUG to False if running in Google App Engine
@@ -161,6 +160,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
 
 # Supabase PostgreSQL configuration
 # All application data is stored in Supabase PostgreSQL
@@ -318,9 +318,7 @@ if not STRIPE_SECRET_KEY:
     import logging
 
     logger = logging.getLogger(__name__)
-    logger.warning(
-        "Stripe is not configured. Subscription functionality will be disabled."
-    )
+    logger.warning("Stripe is not configured. Subscription functionality will be disabled.")
 
 
 # Password validation
@@ -424,7 +422,7 @@ def get_oauth_credentials():
             client = secretmanager.SecretManagerServiceClient()
 
             # Fetch OAuth key
-            key_name = f"projects/comparison-tools-479102/secrets/google-oauth2-key/versions/latest"
+            key_name = "projects/comparison-tools-479102/secrets/google-oauth2-key/versions/latest"
             key_response = client.access_secret_version(request={"name": key_name})
             oauth_key = key_response.payload.data.decode("UTF-8")
 
@@ -435,10 +433,8 @@ def get_oauth_credentials():
             logger.error(f"DEBUG_OAUTH_KEY: '{oauth_key}' (length: {len(oauth_key)})")
 
             # Fetch OAuth secret
-            secret_name = f"projects/comparison-tools-479102/secrets/google-oauth2-secret/versions/latest"
-            secret_response = client.access_secret_version(
-                request={"name": secret_name}
-            )
+            secret_name = "projects/comparison-tools-479102/secrets/google-oauth2-secret/versions/latest"
+            secret_response = client.access_secret_version(request={"name": secret_name})
             oauth_secret = secret_response.payload.data.decode("UTF-8")
 
             # Debug: Log OAuth secret value
@@ -485,11 +481,9 @@ if SOCIAL_AUTH_GOOGLE_OAUTH2_KEY and SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET:
 SOCIAL_AUTH_GOOGLE_ONETAP_KEY = SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
 
 # Security validation for OAuth credentials
-if not DEBUG and (
-    not SOCIAL_AUTH_GOOGLE_OAUTH2_KEY or not SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
-):
-    import sys
+if not DEBUG and (not SOCIAL_AUTH_GOOGLE_OAUTH2_KEY or not SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET):
     import logging
+    import sys
 
     logger = logging.getLogger(__name__)
     logger.warning("WARNING: Google OAuth credentials not configured for production!")
@@ -503,9 +497,7 @@ if not DEBUG and (
     #     raise ValueError("Google OAuth credentials required for production deployment")
 
 # Development warning for missing credentials
-if DEBUG and (
-    not SOCIAL_AUTH_GOOGLE_OAUTH2_KEY or not SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
-):
+if DEBUG and (not SOCIAL_AUTH_GOOGLE_OAUTH2_KEY or not SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET):
     import logging
 
     logger = logging.getLogger(__name__)
@@ -607,6 +599,4 @@ if not GOOGLE_MAPS_API_KEY:
     import logging
 
     logger = logging.getLogger(__name__)
-    logger.warning(
-        "Google Maps API key not configured. Address autocomplete and driving distances will be disabled."
-    )
+    logger.warning("Google Maps API key not configured. Address autocomplete and driving distances will be disabled.")

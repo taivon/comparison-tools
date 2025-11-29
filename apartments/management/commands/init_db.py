@@ -1,9 +1,9 @@
-from django.core.management.base import BaseCommand
-from django.core.management import execute_from_command_line
-from django.conf import settings
-from django.db import connection
 import os
-import sys
+
+from django.conf import settings
+from django.core.management import execute_from_command_line
+from django.core.management.base import BaseCommand
+from django.db import connection
 
 
 class Command(BaseCommand):
@@ -24,9 +24,7 @@ class Command(BaseCommand):
 
             # Check if we have the essential tables
             essential_tables = ["auth_user", "django_session", "django_content_type"]
-            missing_tables = [
-                table for table in essential_tables if table not in tables
-            ]
+            missing_tables = [table for table in essential_tables if table not in tables]
 
             if missing_tables:
                 self.stdout.write(f"Missing tables: {missing_tables}")
@@ -36,9 +34,7 @@ class Command(BaseCommand):
                 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
                 execute_from_command_line(["manage.py", "migrate", "--run-syncdb"])
 
-                self.stdout.write(
-                    self.style.SUCCESS("Database initialized successfully")
-                )
+                self.stdout.write(self.style.SUCCESS("Database initialized successfully"))
             else:
                 self.stdout.write(self.style.SUCCESS("Database already initialized"))
 
