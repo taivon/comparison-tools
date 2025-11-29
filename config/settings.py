@@ -59,24 +59,40 @@ else:
         ALLOWED_HOSTS = [
             domain,
             "comparison.tools",
+            "www.comparison.tools",
             "apartments.comparison.tools",
+            "apartment.comparison.tools",
+            "apts.comparison.tools",
+            "apt.comparison.tools",
             "comparison-tools-479102.uc.r.appspot.com",  # Fallback to App Engine URL
         ]
         CSRF_TRUSTED_ORIGINS = [
             APPENGINE_URL,
             "https://comparison.tools",
+            "https://www.comparison.tools",
             "https://apartments.comparison.tools",
+            "https://apartment.comparison.tools",
+            "https://apts.comparison.tools",
+            "https://apt.comparison.tools",
         ]
         SECURE_SSL_REDIRECT = True
     else:
         ALLOWED_HOSTS = [
             "comparison.tools",
+            "www.comparison.tools",
             "apartments.comparison.tools",
+            "apartment.comparison.tools",
+            "apts.comparison.tools",
+            "apt.comparison.tools",
             "comparison-tools-479102.uc.r.appspot.com",
         ]
         CSRF_TRUSTED_ORIGINS = [
             "https://comparison.tools",
+            "https://www.comparison.tools",
             "https://apartments.comparison.tools",
+            "https://apartment.comparison.tools",
+            "https://apts.comparison.tools",
+            "https://apt.comparison.tools",
         ]
         SECURE_SSL_REDIRECT = True
 
