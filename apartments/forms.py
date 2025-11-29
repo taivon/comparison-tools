@@ -174,6 +174,7 @@ class ApartmentForm(forms.Form):
     bedrooms = forms.ChoiceField(
         choices=[("0", "Studio")] + [(str(i), str(i)) for i in range(1, 16)],
         initial="1",
+        required=False,
         widget=forms.Select(
             attrs={
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
@@ -185,6 +186,7 @@ class ApartmentForm(forms.Form):
             (str(Decimal(str(i)) / 2), str(Decimal(str(i)) / 2) if i % 2 == 0 else f"{i // 2}.5") for i in range(1, 31)
         ],
         initial="1",
+        required=False,
         widget=forms.Select(
             attrs={
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",

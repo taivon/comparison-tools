@@ -118,7 +118,25 @@
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Total apartment square footage</p>
                         </div>
 
-                        <div class="col-span-6 sm:col-span-3">
+                        <div class="col-span-6 sm:col-span-2">
+                            <label for="{{ form.bedrooms.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Bedrooms</label>
+                            {{ form.bedrooms }}
+                            {% if form.bedrooms.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.bedrooms.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Number of bedrooms (0 for studio)</p>
+                        </div>
+
+                        <div class="col-span-6 sm:col-span-2">
+                            <label for="{{ form.bathrooms.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Bathrooms</label>
+                            {{ form.bathrooms }}
+                            {% if form.bathrooms.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.bathrooms.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Number of bathrooms</p>
+                        </div>
+
+                        <div class="col-span-6 sm:col-span-2">
                             <label for="{{ form.lease_length_months.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Lease Length (months)</label>
                             {{ form.lease_length_months }}
                             {% if form.lease_length_months.errors %}
