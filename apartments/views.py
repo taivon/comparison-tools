@@ -29,6 +29,7 @@ from .models import (
     get_favorite_place_limit,
     user_has_premium,
 )
+from .scoring_service import ScoringService, recalculate_user_scores
 
 logger = logging.getLogger(__name__)
 
@@ -171,11 +172,16 @@ def dashboard(request):
                 "price_weight": form.cleaned_data["price_weight"],
                 "sqft_weight": form.cleaned_data["sqft_weight"],
                 "distance_weight": form.cleaned_data["distance_weight"],
+                "net_rent_weight": form.cleaned_data.get("net_rent_weight", 0),
+                "bedrooms_weight": form.cleaned_data.get("bedrooms_weight", 0),
+                "bathrooms_weight": form.cleaned_data.get("bathrooms_weight", 0),
                 "discount_calculation": form.cleaned_data["discount_calculation"],
             }
 
             if request.user.is_authenticated:
                 UserPreferences.objects.update_or_create(user=request.user, defaults=preferences_data)
+                # Recalculate scores when preferences change
+                recalculate_user_scores(request.user, PRODUCT_SLUG)
             else:
                 request.session["anonymous_preferences"] = preferences_data
                 request.session.modified = True
@@ -189,6 +195,9 @@ def dashboard(request):
                 "price_weight": preferences.price_weight,
                 "sqft_weight": preferences.sqft_weight,
                 "distance_weight": preferences.distance_weight,
+                "net_rent_weight": getattr(preferences, "net_rent_weight", 0),
+                "bedrooms_weight": getattr(preferences, "bedrooms_weight", 0),
+                "bathrooms_weight": getattr(preferences, "bathrooms_weight", 0),
                 "discount_calculation": preferences.discount_calculation,
             }
         form = UserPreferencesForm(initial=initial_data)
@@ -209,8 +218,25 @@ def dashboard(request):
             }
             apartment.calculated_net_effective = calculate_net_effective_price(apt_data, discount_calc_method)
 
-    # Sort apartments based on user preferences
-    if preferences and apartments:
+    # Calculate apartment scores
+    apartment_scores = {}
+    if apartments and request.user.is_authenticated:
+        scoring_service = ScoringService(request.user, apartments, PRODUCT_SLUG)
+        apartment_scores = scoring_service.get_or_calculate_scores()
+
+        # Attach scores to apartments for template use
+        for apartment in apartments:
+            apartment.score = apartment_scores.get(apartment.id)
+
+    # Sort apartments by score (highest first) if scores available, otherwise use old sorting
+    if apartment_scores:
+        apartments = sorted(
+            apartments,
+            key=lambda x: apartment_scores.get(x.id, 0),
+            reverse=True,
+        )
+    elif preferences and apartments:
+        # Fallback to old sorting method
         apartments = sorted(
             apartments,
             key=lambda x: (
