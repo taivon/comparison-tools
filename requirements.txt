@@ -31,6 +31,6 @@ urllib3==2.4.0
 social-auth-app-django==5.4.2
 social-auth-core==4.5.4
 google-cloud-secret-manager==2.20.2
-google-cloud-firestore==2.18.0
 google-auth==2.34.0
+psycopg2-binary==2.9.11
 stripe==11.2.0
