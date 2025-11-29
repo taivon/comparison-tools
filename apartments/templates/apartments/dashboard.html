@@ -2546,7 +2546,7 @@ function createScoreTunerModal() {
         <!-- Premium: Drag and Drop Priority List -->
         <div class="space-y-4">
             <p class="text-sm text-gray-600 dark:text-gray-400">
-                Drag factors to prioritize them. Top 4 get weighted: <span class="font-semibold text-brand-purple">40%, 30%, 20%, 10%</span>
+                Drag to rank by importance. Your top 4 factors will be used in scoring.
             </p>
 
             <!-- Priority List -->
@@ -2727,10 +2727,9 @@ function createFactorItem(factor, index, isPriority) {
         </div>
         <div class="flex items-center">
             ${isPriority ? `
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-purple text-white mr-2">
-                    ${weight}%
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold bg-brand-purple text-white">
+                    ${index + 1}
                 </span>
-                <span class="text-xs text-gray-500 dark:text-gray-400">#${index + 1}</span>
             ` : `
                 <span class="text-xs text-gray-400 dark:text-gray-500">Unused</span>
             `}
@@ -2853,10 +2852,9 @@ function rebuildPriorityLists() {
                     <span class="text-sm font-medium text-gray-900 dark:text-white">${label}</span>
                 </div>
                 <div class="flex items-center">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-purple text-white mr-2">
-                        ${weight}%
+                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold bg-brand-purple text-white">
+                        ${index + 1}
                     </span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">#${index + 1}</span>
                 </div>
             `;
 
