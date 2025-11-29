@@ -1,0 +1,106 @@
+{% extends "apartments/base.html" %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit{% else %}Add{% endif %} Favorite Place | Apartment Comparison Tool{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    {% if is_edit %}Edit Favorite Place{% else %}Add Favorite Place{% endif %}
+                </h1>
+                <p class="mt-1 text-gray-600 dark:text-gray-400">
+                    {% if is_edit %}
+                        Update the details for "{{ place.label }}"
+                    {% else %}
+                        Add a place to calculate distances from your apartments
+                    {% endif %}
+                </p>
+            </div>
+            <a href="{% url 'apartments:favorite_places' %}" class="text-brand-purple hover:text-brand-purple-dark text-sm font-medium">
+                Cancel
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-200 dark:border-neutral-700 p-6">
+        <form method="POST" action="">
+            {% csrf_token %}
+
+            <!-- Hidden fields to store Google Places coordinates -->
+            <input type="hidden" name="google_latitude" id="google_latitude" value="">
+            <input type="hidden" name="google_longitude" id="google_longitude" value="">
+            <input type="hidden" name="google_place_id" id="google_place_id" value="">
+
+            <div class="space-y-6">
+                <!-- Label field -->
+                <div>
+                    <label for="id_label" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Label <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
+                        A short name for this place (e.g., "Work", "Gym", "Mom's House")
+                    </p>
+                    {{ form.label }}
+                    {% if form.label.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.label.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Address field -->
+                <div>
+                    <label for="id_address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Address <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
+                        The full street address for accurate distance calculations
+                    </p>
+                    {{ form.address }}
+                    {% if form.address.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.address.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tips -->
+                <div class="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tips for best results</h4>
+                    <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Start typing and select from the dropdown suggestions
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Driving distance and estimated travel time will be calculated
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Example: "123 Main St, Austin, TX 78701"
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Submit buttons -->
+            <div class="mt-8 flex justify-end space-x-3">
+                <a href="{% url 'apartments:favorite_places' %}" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-brand-purple text-white text-sm font-medium rounded-lg hover:bg-brand-purple-dark transition-colors">
+                    {% if is_edit %}Save Changes{% else %}Add Place{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

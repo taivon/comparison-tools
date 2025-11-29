@@ -141,6 +141,18 @@ class ApartmentForm(forms.Form):
             }
         ),
     )
+    address = forms.CharField(
+        max_length=500,
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
+                "placeholder": "Start typing an address...",
+                "data-address-autocomplete": "true",
+                "autocomplete": "off"
+            }
+        ),
+    )
     price = forms.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -227,6 +239,30 @@ class UserPreferencesForm(forms.Form):
         widget=forms.RadioSelect(
             attrs={
                 "class": "mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"
+            }
+        ),
+    )
+
+
+class FavoritePlaceForm(forms.Form):
+    """Form for creating/editing favorite places"""
+    label = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
+                "placeholder": "e.g., Work, Gym, Parents House"
+            }
+        ),
+    )
+    address = forms.CharField(
+        max_length=500,
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
+                "placeholder": "Start typing an address...",
+                "data-address-autocomplete": "true",
+                "autocomplete": "off"
             }
         ),
     )

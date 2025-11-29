@@ -175,6 +175,11 @@ class Apartment(models.Model):
     square_footage = models.IntegerField(validators=[MinValueValidator(0)])
     lease_length_months = models.IntegerField(validators=[MinValueValidator(1)])
 
+    # Location fields
+    address = models.CharField(max_length=500, blank=True, default='')
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
     # Discount fields
     months_free = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     weeks_free = models.IntegerField(default=0, validators=[MinValueValidator(0)])
@@ -253,3 +258,73 @@ class UserPreferences(models.Model):
 
     def __str__(self):
         return f"Preferences for {self.user.username}"
+
+
+# =============================================================================
+# Favorite Places Models
+# =============================================================================
+
+class FavoritePlace(models.Model):
+    """A user's favorite place (e.g., Work, Gym) for distance calculations"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorite_places')
+    label = models.CharField(max_length=100)  # e.g., "Work", "Gym"
+    address = models.CharField(max_length=500)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['label']
+
+    def __str__(self):
+        return f"{self.label} ({self.user.username})"
+
+    @property
+    def is_geocoded(self):
+        """Check if this place has valid coordinates"""
+        return self.latitude is not None and self.longitude is not None
+
+
+class ApartmentDistance(models.Model):
+    """Cached distance between an apartment and a favorite place"""
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='distances')
+    favorite_place = models.ForeignKey(FavoritePlace, on_delete=models.CASCADE, related_name='apartment_distances')
+    distance_miles = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    travel_time_minutes = models.IntegerField(null=True, blank=True)  # Optional for MVP
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['apartment', 'favorite_place']
+        ordering = ['favorite_place__label']
+
+    def __str__(self):
+        return f"{self.apartment.name} -> {self.favorite_place.label}: {self.distance_miles} mi"
+
+
+# =============================================================================
+# Favorite Places Helper Functions
+# =============================================================================
+
+def get_favorite_place_limit(user, product_slug: str = 'apartments') -> int:
+    """Returns max favorite places allowed: 1 for free, 5 for pro"""
+    if user_has_premium(user, product_slug):
+        return 5
+    return 1
+
+
+def can_add_favorite_place(user, product_slug: str = 'apartments') -> bool:
+    """Check if user can add another favorite place"""
+    if not user.is_authenticated:
+        return False
+    current_count = FavoritePlace.objects.filter(user=user).count()
+    limit = get_favorite_place_limit(user, product_slug)
+    return current_count < limit
+
+
+def get_favorite_place_count(user) -> int:
+    """Get current count of user's favorite places"""
+    if not user.is_authenticated:
+        return 0
+    return FavoritePlace.objects.filter(user=user).count()

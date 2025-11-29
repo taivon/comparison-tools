@@ -8,10 +8,17 @@ from django.views.decorators.http import require_http_methods
 from django.conf import settings
 import json
 from .models import (
-    Apartment, UserPreferences, UserProfile, Plan,
-    user_has_premium, get_product_free_tier_limit
+    Apartment, UserPreferences, UserProfile, Plan, FavoritePlace, ApartmentDistance,
+    user_has_premium, get_product_free_tier_limit,
+    get_favorite_place_limit, can_add_favorite_place, get_favorite_place_count
 )
-from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm, LoginForm
+from .forms import ApartmentForm, UserPreferencesForm, CustomUserCreationForm, LoginForm, FavoritePlaceForm
+from .geocoding_service import geocode_address, get_geocoding_service
+from .google_maps_service import get_google_maps_service
+from .distance_service import (
+    calculate_and_cache_distances, recalculate_distances_for_favorite_place,
+    get_apartments_with_distances
+)
 import logging
 from decimal import Decimal
 
@@ -107,8 +114,11 @@ def index(request):
 
 def dashboard(request):
     """Dashboard view showing user's apartments in table/card format"""
+    favorite_places = []
+
     if request.user.is_authenticated:
         apartments = list(Apartment.objects.filter(user=request.user).order_by('-created_at'))
+        favorite_places = list(FavoritePlace.objects.filter(user=request.user))
         preferences, _ = UserPreferences.objects.get_or_create(
             user=request.user,
             defaults={
@@ -208,6 +218,28 @@ def dashboard(request):
         for apt in apartments
     )
 
+    # Get distance data for apartments
+    apartments_with_distances = []
+    if favorite_places and apartments:
+        apartments_with_distances = get_apartments_with_distances(apartments, favorite_places)
+        # Add distance data to apartment objects for template access
+        for apt_data in apartments_with_distances:
+            apt = apt_data['apartment']
+            apt.distance_data = apt_data['distances']
+            apt.average_distance = apt_data['average_distance']
+            apt.average_travel_time = apt_data.get('average_travel_time')
+    else:
+        # No favorite places, just set empty distance data
+        for apt in apartments:
+            apt.distance_data = {}
+            apt.average_distance = None
+            apt.average_travel_time = None
+
+    # Get favorite place stats for the user
+    favorite_place_count = len(favorite_places)
+    favorite_place_limit = get_favorite_place_limit(request.user, PRODUCT_SLUG) if request.user.is_authenticated else 1
+    can_add_favorite_place_flag = can_add_favorite_place(request.user, PRODUCT_SLUG) if request.user.is_authenticated else False
+
     context = {
         "apartments": apartments,
         "preferences": preferences,
@@ -218,6 +250,10 @@ def dashboard(request):
         "apartment_limit": 2 if not has_premium else None,
         "is_anonymous": not request.user.is_authenticated,
         "has_discounts": has_discounts,
+        "favorite_places": favorite_places,
+        "favorite_place_count": favorite_place_count,
+        "favorite_place_limit": favorite_place_limit,
+        "can_add_favorite_place": can_add_favorite_place_flag,
     }
     return render(request, "apartments/dashboard.html", context)
 
@@ -243,9 +279,37 @@ def create_apartment(request):
                 return redirect("apartments:index")
 
             try:
+                address = form.cleaned_data.get("address", "")
+                latitude, longitude = None, None
+                geocode_warning = None
+
+                # Check if we have pre-fetched coordinates from Google Places
+                google_lat = request.POST.get("google_latitude", "").strip()
+                google_lng = request.POST.get("google_longitude", "").strip()
+
+                if google_lat and google_lng:
+                    # Use coordinates from Google Places (user selected from dropdown)
+                    try:
+                        latitude = float(google_lat)
+                        longitude = float(google_lng)
+                        logger.info(f"Using Google Places coordinates for apartment: ({latitude}, {longitude})")
+                    except ValueError:
+                        logger.warning(f"Invalid Google coordinates: ({google_lat}, {google_lng})")
+                elif address:
+                    # Fall back to geocoding (user typed address manually)
+                    geocoding_service = get_geocoding_service()
+                    result = geocoding_service.geocode_address_detailed(address)
+                    latitude, longitude = result.latitude, result.longitude
+                    if not result.success:
+                        logger.warning(f"Could not geocode address: {address}")
+                        geocode_warning = result.suggestion
+
                 apartment = Apartment.objects.create(
                     user=request.user,
                     name=form.cleaned_data["name"],
+                    address=address,
+                    latitude=latitude,
+                    longitude=longitude,
                     price=form.cleaned_data["price"],
                     square_footage=form.cleaned_data["square_footage"],
                     lease_length_months=form.cleaned_data["lease_length_months"],
@@ -253,7 +317,15 @@ def create_apartment(request):
                     weeks_free=form.cleaned_data["weeks_free"],
                     flat_discount=form.cleaned_data["flat_discount"],
                 )
-                messages.success(request, "Apartment added successfully!")
+
+                # Calculate distances to favorite places
+                if apartment.latitude and apartment.longitude:
+                    calculate_and_cache_distances(apartment)
+
+                if geocode_warning:
+                    messages.warning(request, f"Apartment added, but couldn't locate the address. {geocode_warning}")
+                else:
+                    messages.success(request, "Apartment added successfully!")
                 return redirect("apartments:dashboard")
             except Exception as e:
                 logger.error(f"Error saving apartment: {str(e)}")
@@ -274,19 +346,64 @@ def update_apartment(request, pk):
     if request.method == "POST":
         form = ApartmentForm(request.POST)
         if form.is_valid():
+            new_address = form.cleaned_data.get("address", "")
+            address_changed = new_address != apartment.address
+
             apartment.name = form.cleaned_data["name"]
+            apartment.address = new_address
             apartment.price = form.cleaned_data["price"]
             apartment.square_footage = form.cleaned_data["square_footage"]
             apartment.lease_length_months = form.cleaned_data["lease_length_months"]
             apartment.months_free = form.cleaned_data["months_free"]
             apartment.weeks_free = form.cleaned_data["weeks_free"]
             apartment.flat_discount = form.cleaned_data["flat_discount"]
+
+            # Re-geocode if address changed
+            geocode_warning = None
+            if address_changed:
+                if new_address:
+                    # Check if we have pre-fetched coordinates from Google Places
+                    google_lat = request.POST.get("google_latitude", "").strip()
+                    google_lng = request.POST.get("google_longitude", "").strip()
+
+                    if google_lat and google_lng:
+                        # Use coordinates from Google Places
+                        try:
+                            apartment.latitude = float(google_lat)
+                            apartment.longitude = float(google_lng)
+                            logger.info(f"Using Google Places coordinates for apartment update: ({apartment.latitude}, {apartment.longitude})")
+                        except ValueError:
+                            logger.warning(f"Invalid Google coordinates: ({google_lat}, {google_lng})")
+                            apartment.latitude = None
+                            apartment.longitude = None
+                    else:
+                        # Fall back to geocoding
+                        geocoding_service = get_geocoding_service()
+                        result = geocoding_service.geocode_address_detailed(new_address)
+                        apartment.latitude = result.latitude
+                        apartment.longitude = result.longitude
+                        if not result.success:
+                            logger.warning(f"Could not geocode address: {new_address}")
+                            geocode_warning = result.suggestion
+                else:
+                    apartment.latitude = None
+                    apartment.longitude = None
+
             apartment.save()
-            messages.success(request, "Apartment updated successfully!")
-            return redirect("apartments:index")
+
+            # Recalculate distances if address changed
+            if address_changed and apartment.latitude and apartment.longitude:
+                calculate_and_cache_distances(apartment)
+
+            if geocode_warning:
+                messages.warning(request, f"Apartment updated, but couldn't locate the address. {geocode_warning}")
+            else:
+                messages.success(request, "Apartment updated successfully!")
+            return redirect("apartments:dashboard")
     else:
         initial_data = {
             "name": apartment.name,
+            "address": apartment.address,
             "price": apartment.price,
             "square_footage": apartment.square_footage,
             "lease_length_months": apartment.lease_length_months,
@@ -471,6 +588,8 @@ def signup_view(request):
 
 def login_view(request):
     """Handle user login"""
+    from django.conf import settings
+
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -495,7 +614,11 @@ def login_view(request):
         form = LoginForm()
 
     next_url = request.GET.get('next', '')
-    return render(request, "apartments/login.html", {"form": form, "next": next_url})
+    return render(request, "apartments/login.html", {
+        "form": form,
+        "next": next_url,
+        "debug": settings.DEBUG,
+    })
 
 
 def logout_view(request):
@@ -572,6 +695,7 @@ def pricing_redirect(request):
 def create_checkout_session(request):
     """Create a Stripe checkout session for subscription"""
     from .stripe_service import StripeService
+    from .models import Product
     import stripe as stripe_lib
 
     if request.method != 'POST':
@@ -580,9 +704,25 @@ def create_checkout_session(request):
     try:
         data = json.loads(request.body)
         plan_id = data.get('plan_id')
+        plan_type = data.get('plan_type')  # 'monthly' or 'annual'
+
+        # If plan_type is provided, look up the plan by type
+        if plan_type and not plan_id:
+            try:
+                product = Product.objects.get(slug=PRODUCT_SLUG)
+                billing_interval = 'month' if plan_type == 'monthly' else 'year'
+                plan = Plan.objects.get(
+                    product=product,
+                    tier='pro',
+                    billing_interval=billing_interval,
+                    is_active=True
+                )
+                plan_id = plan.id
+            except (Product.DoesNotExist, Plan.DoesNotExist):
+                return JsonResponse({'error': f'No {plan_type} plan found for this product'}, status=400)
 
         if not plan_id:
-            return JsonResponse({'error': 'Plan ID is required'}, status=400)
+            return JsonResponse({'error': 'Plan ID or plan type is required'}, status=400)
 
         # Verify plan exists and is active
         try:
@@ -727,3 +867,267 @@ def stripe_webhook(request):
         return JsonResponse({'error': 'Webhook processing failed'}, status=500)
 
     return JsonResponse({'status': 'success'})
+
+
+# =============================================================================
+# Favorite Places Views
+# =============================================================================
+
+@login_required
+def favorite_places_list(request):
+    """List user's favorite places with management options"""
+    places = FavoritePlace.objects.filter(user=request.user)
+    has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+
+    place_count = places.count()
+    place_limit = get_favorite_place_limit(request.user, PRODUCT_SLUG)
+    can_add = place_count < place_limit
+
+    context = {
+        "favorite_places": places,
+        "place_count": place_count,
+        "place_limit": place_limit,
+        "can_add_place": can_add,
+        "is_premium": has_premium,
+    }
+    return render(request, "apartments/favorite_places.html", context)
+
+
+@login_required
+def create_favorite_place(request):
+    """Create a new favorite place with geocoding"""
+    # Check limit
+    if not can_add_favorite_place(request.user, PRODUCT_SLUG):
+        has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+        if has_premium:
+            messages.error(request, "You've reached the maximum of 5 favorite places.")
+        else:
+            messages.error(request, "Free users can only have 1 favorite place. Upgrade to Pro for up to 5!")
+        return redirect("apartments:favorite_places")
+
+    if request.method == "POST":
+        form = FavoritePlaceForm(request.POST)
+        if form.is_valid():
+            label = form.cleaned_data["label"]
+            address = form.cleaned_data["address"]
+
+            # Check if we have pre-fetched coordinates from Google Places
+            google_lat = request.POST.get("google_latitude", "").strip()
+            google_lng = request.POST.get("google_longitude", "").strip()
+
+            latitude = None
+            longitude = None
+            geocode_failed = False
+
+            if google_lat and google_lng:
+                # Use coordinates from Google Places (user selected from dropdown)
+                try:
+                    latitude = float(google_lat)
+                    longitude = float(google_lng)
+                    logger.info(f"Using Google Places coordinates for '{label}': ({latitude}, {longitude})")
+                except ValueError:
+                    logger.warning(f"Invalid Google coordinates for '{label}': ({google_lat}, {google_lng})")
+                    geocode_failed = True
+
+            if latitude is None or longitude is None:
+                # Fall back to geocoding (user typed address manually)
+                geocoding_service = get_geocoding_service()
+                result = geocoding_service.geocode_address_detailed(address)
+                latitude = result.latitude
+                longitude = result.longitude
+                if not result.success:
+                    geocode_failed = True
+
+            place = FavoritePlace.objects.create(
+                user=request.user,
+                label=label,
+                address=address,
+                latitude=latitude,
+                longitude=longitude,
+            )
+
+            if geocode_failed or (latitude is None and longitude is None):
+                messages.warning(request, f"Added '{label}' but couldn't locate the address. Distance calculations won't be available.")
+            else:
+                messages.success(request, f"Added '{label}' to your favorite places!")
+                # Calculate distances to all apartments
+                recalculate_distances_for_favorite_place(place)
+
+            return redirect("apartments:favorite_places")
+    else:
+        form = FavoritePlaceForm()
+
+    context = {
+        "form": form,
+        "is_edit": False,
+    }
+    return render(request, "apartments/favorite_place_form.html", context)
+
+
+@login_required
+def update_favorite_place(request, pk):
+    """Update an existing favorite place"""
+    place = get_object_or_404(FavoritePlace, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        form = FavoritePlaceForm(request.POST)
+        if form.is_valid():
+            new_address = form.cleaned_data["address"]
+            address_changed = new_address != place.address
+
+            place.label = form.cleaned_data["label"]
+            place.address = new_address
+
+            # Re-geocode if address changed
+            geocode_failed = False
+            if address_changed:
+                # Check if we have pre-fetched coordinates from Google Places
+                google_lat = request.POST.get("google_latitude", "").strip()
+                google_lng = request.POST.get("google_longitude", "").strip()
+
+                if google_lat and google_lng:
+                    # Use coordinates from Google Places
+                    try:
+                        place.latitude = float(google_lat)
+                        place.longitude = float(google_lng)
+                        logger.info(f"Using Google Places coordinates for '{place.label}': ({place.latitude}, {place.longitude})")
+                    except ValueError:
+                        logger.warning(f"Invalid Google coordinates for '{place.label}': ({google_lat}, {google_lng})")
+                        geocode_failed = True
+                        place.latitude = None
+                        place.longitude = None
+                else:
+                    # Fall back to geocoding
+                    geocoding_service = get_geocoding_service()
+                    result = geocoding_service.geocode_address_detailed(new_address)
+                    place.latitude = result.latitude
+                    place.longitude = result.longitude
+                    if not result.success:
+                        geocode_failed = True
+
+            place.save()
+
+            # Recalculate distances if address changed
+            if address_changed and place.latitude and place.longitude:
+                recalculate_distances_for_favorite_place(place)
+
+            if geocode_failed:
+                messages.warning(request, f"Updated '{place.label}' but couldn't locate the new address.")
+            else:
+                messages.success(request, f"Updated '{place.label}'!")
+            return redirect("apartments:favorite_places")
+    else:
+        form = FavoritePlaceForm(initial={
+            "label": place.label,
+            "address": place.address,
+        })
+
+    context = {
+        "form": form,
+        "place": place,
+        "is_edit": True,
+    }
+    return render(request, "apartments/favorite_place_form.html", context)
+
+
+@login_required
+def delete_favorite_place(request, pk):
+    """Delete a favorite place"""
+    place = get_object_or_404(FavoritePlace, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        label = place.label
+        place.delete()
+        messages.success(request, f"Deleted '{label}' from your favorite places.")
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({"success": True})
+
+        return redirect("apartments:favorite_places")
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)
+
+
+# =============================================================================
+# Google Maps API Endpoints
+# =============================================================================
+
+@login_required
+@require_http_methods(["GET"])
+def address_autocomplete(request):
+    """
+    API endpoint for address autocomplete suggestions.
+    Uses Google Places Autocomplete API.
+    """
+    query = request.GET.get('q', '').strip()
+    session_token = request.GET.get('session_token', '')
+
+    if not query or len(query) < 3:
+        return JsonResponse({'suggestions': []})
+
+    google_maps = get_google_maps_service()
+
+    if not google_maps.is_available:
+        # Fall back to empty results if Google Maps is not configured
+        logger.warning("Google Maps API not available for autocomplete")
+        return JsonResponse({'suggestions': [], 'error': 'Address autocomplete not available'})
+
+    try:
+        results = google_maps.autocomplete(query, session_token=session_token or None)
+        suggestions = [
+            {
+                'place_id': r.place_id,
+                'description': r.description,
+                'main_text': r.main_text,
+                'secondary_text': r.secondary_text,
+            }
+            for r in results
+        ]
+        return JsonResponse({'suggestions': suggestions})
+    except Exception as e:
+        logger.error(f"Autocomplete error: {e}")
+        return JsonResponse({'suggestions': [], 'error': str(e)})
+
+
+@login_required
+@require_http_methods(["GET"])
+def place_details(request):
+    """
+    API endpoint to get place details including coordinates.
+    Uses Google Places Details API.
+    """
+    place_id = request.GET.get('place_id', '').strip()
+    session_token = request.GET.get('session_token', '')
+
+    if not place_id:
+        return JsonResponse({'error': 'place_id is required'}, status=400)
+
+    google_maps = get_google_maps_service()
+
+    if not google_maps.is_available:
+        return JsonResponse({'error': 'Google Maps API not available'}, status=503)
+
+    try:
+        details = google_maps.get_place_details(place_id, session_token=session_token or None)
+        if details:
+            return JsonResponse({
+                'place_id': details.place_id,
+                'formatted_address': details.formatted_address,
+                'latitude': details.latitude,
+                'longitude': details.longitude,
+            })
+        else:
+            return JsonResponse({'error': 'Place not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Place details error: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def google_maps_status(request):
+    """Check if Google Maps API is available and configured."""
+    google_maps = get_google_maps_service()
+    return JsonResponse({
+        'available': google_maps.is_available,
+        'api_key_configured': bool(settings.GOOGLE_MAPS_API_KEY),
+    })
