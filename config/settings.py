@@ -98,16 +98,15 @@ else:
 
 # Application definition
 
-# Conditional apps based on environment
 INSTALLED_APPS = [
-    # "django.contrib.admin",  # Disabled for Firestore-only setup
-    "django.contrib.auth",  # Keep for session management
+    "django.contrib.admin",
+    "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",  # For SEO sitemap generation
-    "social_django",  # Re-enabled for Google OAuth
+    "social_django",  # For Google OAuth
     "apartments",
 ]
 
@@ -127,9 +126,10 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "apartments.middleware.FirestoreSessionMiddleware",  # Custom Firestore auth
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "social_django.middleware.SocialAuthExceptionMiddleware",
 ]
 
 # Only add browser reload middleware in DEBUG mode
@@ -162,42 +162,80 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# SQLite is used only for Django admin and auth (not sessions in production)
-# Application data (apartments, user preferences) is stored in Firestore
-if not DEBUG:
-    # On App Engine, we'll create a minimal database setup in /tmp
-    # Since /tmp is writable but not persistent on App Engine
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": "/tmp/db.sqlite3",
-            "OPTIONS": {
-                "timeout": 30,
-            },
+# Supabase PostgreSQL configuration
+# All application data is stored in Supabase PostgreSQL
+def get_database_credentials():
+    """Get database credentials from Secret Manager in production or env vars in development."""
+    if DEBUG:
+        # Use environment variables in development
+        return {
+            "host": os.getenv("SUPABASE_DB_HOST", "localhost"),
+            "name": os.getenv("SUPABASE_DB_NAME", "postgres"),
+            "user": os.getenv("SUPABASE_DB_USER", "postgres"),
+            "password": os.getenv("SUPABASE_DB_PASSWORD", ""),
+            "port": os.getenv("SUPABASE_DB_PORT", "5432"),
         }
-    }
-else:
-    # In development, use regular file-based SQLite
+    else:
+        # Fetch from Google Secret Manager in production
+        try:
+            from google.cloud import secretmanager
+
+            client = secretmanager.SecretManagerServiceClient()
+            project_id = "comparison-tools-479102"
+
+            def get_secret(secret_name):
+                """Helper to fetch a secret from Secret Manager"""
+                name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+                response = client.access_secret_version(request={"name": name})
+                return response.payload.data.decode("UTF-8").strip()
+
+            return {
+                "host": get_secret("supabase-db-host"),
+                "name": get_secret("supabase-db-name"),
+                "user": get_secret("supabase-db-user"),
+                "password": get_secret("supabase-db-password"),
+                "port": get_secret("supabase-db-port"),
+            }
+
+        except Exception as e:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to fetch database credentials from Secret Manager: {e}")
+            # Fallback to environment variables
+            return {
+                "host": os.getenv("SUPABASE_DB_HOST", ""),
+                "name": os.getenv("SUPABASE_DB_NAME", "postgres"),
+                "user": os.getenv("SUPABASE_DB_USER", "postgres"),
+                "password": os.getenv("SUPABASE_DB_PASSWORD", ""),
+                "port": os.getenv("SUPABASE_DB_PORT", "5432"),
+            }
+
+
+db_creds = get_database_credentials()
+
+# Use SQLite for development if Supabase credentials are not set
+if DEBUG and not db_creds["password"]:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-
-# Firestore Configuration
-# Firestore is used for all application data (apartments, user preferences)
-# Django's built-in features (admin, auth, sessions) continue to use SQLite
-FIRESTORE_PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "comparison-tools-479102")
-
-# In production (App Engine), Firestore uses default service account
-# In development, use Application Default Credentials or service account key
-if not DEBUG:
-    # Production: Use default App Engine service account
-    USE_FIRESTORE_EMULATOR = False
 else:
-    # Development: Can use emulator or real Firestore
-    USE_FIRESTORE_EMULATOR = os.environ.get("FIRESTORE_EMULATOR_HOST") is not None
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": db_creds["name"],
+            "USER": db_creds["user"],
+            "PASSWORD": db_creds["password"],
+            "HOST": db_creds["host"],
+            "PORT": db_creds["port"],
+            "OPTIONS": {
+                "sslmode": "require",
+            },
+        }
+    }
 
 
 # Stripe Configuration - Fetch from Secret Manager in production, env vars in development
@@ -365,11 +403,6 @@ LOGGING = {
             "level": "INFO" if not DEBUG else "DEBUG",
             "propagate": False,
         },
-        "google.cloud.firestore": {
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
     },
 }
 
@@ -476,20 +509,26 @@ if DEBUG and (
     logger.warning("See ENVIRONMENT_SECURITY.md for setup instructions")
 
 # Social Auth URLs
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/auth/callback/"
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"  # Redirect to home after social auth
 SOCIAL_AUTH_LOGOUT_REDIRECT_URL = "/login/"
 SOCIAL_AUTH_LOGIN_ERROR_URL = "/login/"
 LOGIN_URL = "/login/"
-LOGIN_REDIRECT_URL = "home"  # Redirect to homepage by default
+LOGIN_REDIRECT_URL = "/"  # Redirect to homepage by default
 LOGOUT_REDIRECT_URL = "/login/"
 
-# Social Auth Pipeline (customize user creation)
+# Social Auth Pipeline
 SOCIAL_AUTH_PIPELINE = [
     "social_core.pipeline.social_auth.social_details",
     "social_core.pipeline.social_auth.social_uid",
     "social_core.pipeline.social_auth.auth_allowed",
-    # Custom pipeline step for Firestore users
-    "apartments.social_auth_pipeline.create_firestore_user",
+    "social_core.pipeline.social_auth.social_user",
+    "social_core.pipeline.user.get_username",
+    "social_core.pipeline.user.create_user",
+    "social_core.pipeline.social_auth.associate_user",
+    "social_core.pipeline.social_auth.load_extra_data",
+    "social_core.pipeline.user.user_details",
+    # Custom step to create UserProfile after user creation
+    "apartments.social_auth_pipeline.create_user_profile",
 ]
 
 # Additional Social Auth Settings
@@ -497,12 +536,11 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
 ]
-SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ["first_name", "last_name"]
+SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ["first_name", "last_name", "picture"]
 
-# Disable creating Django User objects since we use Firestore
-SOCIAL_AUTH_USER_MODEL = None
-SOCIAL_AUTH_CREATE_USERS = False
-SOCIAL_AUTH_ASSOCIATE_BY_EMAIL = False
+# Enable Django User creation via social auth
+SOCIAL_AUTH_CREATE_USERS = True
+SOCIAL_AUTH_ASSOCIATE_BY_EMAIL = True
 
 # Cache Configuration
 CACHES = {
@@ -513,13 +551,11 @@ CACHES = {
 }
 
 # Session Configuration
-# Use cache-based sessions in both development and production to avoid SQLite entirely
-# All user data is stored in Firestore, sessions are just for Django's internal auth
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+# Use database-backed sessions for persistence
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 if not DEBUG:
-    # Also configure messages to not use database in production
+    # Use fallback message storage in production
     MESSAGE_STORAGE = "django.contrib.messages.storage.fallback.FallbackStorage"
 
 # Session security settings

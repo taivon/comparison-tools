@@ -1,94 +1,36 @@
-from apartments.firestore_service import FirestoreService
-from apartments.auth_utils import firestore_login
+"""
+Custom social auth pipeline steps for Django authentication.
+"""
 from django.shortcuts import redirect
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-def create_firestore_user(strategy, details, backend, user=None, *args, **kwargs):
+def create_user_profile(strategy, details, backend, user=None, *args, **kwargs):
     """
-    Custom social auth pipeline step to create/sync user in Firestore
-    This replaces Django's default user creation
+    Custom social auth pipeline step to create UserProfile after user creation.
+    This is called after the standard user creation pipeline.
     """
-    firestore_service = FirestoreService()
-    request = strategy.request
-
-    # Get user data from social auth
-    email = details.get("email")
-    if not email:
-        logger.error("No email provided by social auth")
+    if user is None:
         return None
 
-    # Note: OAuth flow currently redirects to homepage after login
-    # The 'next' parameter preservation through OAuth is complex and can be added later if needed
+    from .models import UserProfile
 
-    # Check if user already exists in Firestore
-    existing_user = firestore_service.get_user_by_email(email)
+    # Get or create UserProfile
+    profile, created = UserProfile.objects.get_or_create(user=user)
 
-    if existing_user:
-        # User exists, log them into Django session
-        login_success = firestore_login(request, existing_user)
-        logger.info(
-            f"Existing Firestore user login attempt: {existing_user.username}, success: {login_success}"
-        )
-        logger.info(f"Session after login: user_id = {request.session.get('user_id')}")
-        # Redirect to callback which will handle the 'next' parameter
-        return redirect("/apartments/auth/callback/")
+    # Update photo URL from Google if available
+    response = kwargs.get('response', {})
+    picture = response.get('picture') or details.get('picture')
 
-    # Create new Firestore user
-    first_name = details.get("first_name", "")
-    last_name = details.get("last_name", "")
-    full_name = details.get("fullname", "")
+    if picture and profile.photo_url != picture:
+        profile.photo_url = picture
+        profile.save()
 
-    # Try to split full name if first/last not provided
-    if not first_name and not last_name and full_name:
-        name_parts = full_name.split(" ", 1)
-        first_name = name_parts[0] if len(name_parts) > 0 else ""
-        last_name = name_parts[1] if len(name_parts) > 1 else ""
+    if created:
+        logger.info(f"Created UserProfile for user: {user.username}")
+    else:
+        logger.info(f"UserProfile already exists for user: {user.username}")
 
-    # Generate username from email
-    username = email.split("@")[0]
-
-    # Ensure username is unique
-    counter = 1
-    base_username = username
-    while firestore_service.get_user_by_username(username):
-        username = f"{base_username}{counter}"
-        counter += 1
-
-    user_data = {
-        "username": username,
-        "email": email,
-        "first_name": first_name,
-        "last_name": last_name,
-        "is_staff": False,  # New users start as free tier
-    }
-
-    try:
-        # Create user in Firestore
-        firestore_user = firestore_service.create_firebase_user(user_data)
-
-        # Log user into Django session
-        login_success = firestore_login(request, firestore_user)
-
-        logger.info(
-            f"Created new Firestore user: {firestore_user.username} ({firestore_user.email}), login success: {login_success}"
-        )
-        logger.info(f"Session after login: user_id = {request.session.get('user_id')}")
-
-        # Redirect to callback which will handle the 'next' parameter
-        return redirect("/apartments/auth/callback/")
-
-    except Exception as e:
-        logger.error(f"Error creating Firestore user: {e}")
-        return None
-
-
-def associate_firestore_user(
-    strategy, details, backend, uid, user=None, *args, **kwargs
-):
-    """
-    Skip Django's user association since we handle everything in Firestore
-    """
-    return None  # Don't create Django User objects
+    return None

@@ -13,11 +13,7 @@ urlpatterns = [
     path("apartment/<str:pk>/update/", views.update_apartment, name="update_apartment"),
     path("apartment/<str:pk>/delete/", views.delete_apartment, name="delete_apartment"),
 
-    # OAuth callback (app-specific)
-    path("auth/callback/", views.google_oauth_callback, name="google_oauth_callback"),
-
     # API endpoints
-    path("api/sync-firebase-user/", views.sync_firebase_user, name="sync_firebase_user"),
     path("api/transfer-apartments/", views.transfer_apartments, name="transfer_apartments"),
 
     # Static pages

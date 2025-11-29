@@ -1,7 +1,8 @@
 from django import forms
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
-from .firestore_service import FirestoreService
 import re
 
 
@@ -70,8 +71,7 @@ class CustomUserCreationForm(forms.Form):
             )
 
         # Check if username already exists
-        firestore_service = FirestoreService()
-        if firestore_service.get_user_by_username(username):
+        if User.objects.filter(username=username).exists():
             raise forms.ValidationError("A user with this username already exists.")
 
         return username
@@ -80,11 +80,16 @@ class CustomUserCreationForm(forms.Form):
         email = self.cleaned_data["email"]
 
         # Check if email already exists
-        firestore_service = FirestoreService()
-        if firestore_service.get_user_by_email(email):
+        if User.objects.filter(email=email).exists():
             raise forms.ValidationError("A user with this email already exists.")
 
         return email
+
+    def clean_password1(self):
+        password1 = self.cleaned_data.get("password1")
+        if password1:
+            validate_password(password1)
+        return password1
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
@@ -96,16 +101,15 @@ class CustomUserCreationForm(forms.Form):
         return password2
 
     def save(self):
-        """Create and return a new Firestore user"""
-        firestore_service = FirestoreService()
-        user_data = {
-            "username": self.cleaned_data["username"],
-            "email": self.cleaned_data["email"],
-            "first_name": self.cleaned_data.get("first_name", ""),
-            "last_name": self.cleaned_data.get("last_name", ""),
-            "is_staff": False,  # New users start as free tier
-        }
-        return firestore_service.create_user(user_data, self.cleaned_data["password1"])
+        """Create and return a new Django user"""
+        user = User.objects.create_user(
+            username=self.cleaned_data["username"],
+            email=self.cleaned_data["email"],
+            password=self.cleaned_data["password1"],
+            first_name=self.cleaned_data.get("first_name", ""),
+            last_name=self.cleaned_data.get("last_name", ""),
+        )
+        return user
 
 
 class LoginForm(forms.Form):

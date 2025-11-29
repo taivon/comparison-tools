@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.contrib import admin
 from django.urls import include, path
 from django.contrib.sitemaps.views import sitemap
 from apartments import views as apartment_views
@@ -26,7 +27,7 @@ sitemaps = {
 }
 
 urlpatterns = [
-    # path("admin/", admin.site.urls),  # Disabled for Firestore-only setup
+    path("admin/", admin.site.urls),
     path("__reload__/", include("django_browser_reload.urls")),
 
     # Main homepage showcasing all comparison tools
