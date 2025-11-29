@@ -44,7 +44,15 @@ def get_or_create_profile(user):
 
 def main_homepage(request):
     """Main landing page showcasing all comparison tools"""
-    return render(request, "home.html")
+    context = {}
+
+    # Check if user has apartments to show appropriate CTA
+    if request.user.is_authenticated:
+        apartment_count = Apartment.objects.filter(user=request.user).count()
+        context["apartment_count"] = apartment_count
+        context["has_apartments"] = apartment_count > 0
+
+    return render(request, "home.html", context)
 
 
 def homes_coming_soon(request):

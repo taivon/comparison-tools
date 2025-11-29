@@ -110,17 +110,75 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-4">
-                    <!-- Theme Toggle -->
-                    <button onclick="toggleTheme()" class="p-1.5 sm:p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
-                        <!-- Moon icon (visible in light mode, click to go dark) -->
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-                        <!-- Sun icon (visible in dark mode, click to go light) -->
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                    </button>
+                    {% if user.is_authenticated %}
+                        <!-- Theme Toggle -->
+                        <button onclick="toggleTheme()" class="p-1.5 sm:p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
+                            <!-- Moon icon (visible in light mode, click to go dark) -->
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                            <!-- Sun icon (visible in dark mode, click to go light) -->
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </button>
+                        <!-- User dropdown menu -->
+                        <div class="relative group">
+                            <button type="button" class="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-brand-purple focus:outline-none border border-gray-200 dark:border-gray-600 rounded-lg">
+                                <span class="hidden sm:inline">{{ user.first_name|default:user.username }}</span>
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 ml-0.5 sm:ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div class="absolute right-0 pt-2 z-50 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
+                                <div class="w-48 rounded-lg shadow-lg bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700">
+                                    {% if has_apartments %}
+                                        <a href="{% url 'apartments:dashboard' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-t-lg">
+                                            Dashboard
+                                        </a>
+                                        <a href="{% url 'apartments:favorite_places' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700">
+                                            Favorite Places
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 {% if has_apartments %}rounded-b-lg{% else %}rounded-lg{% endif %}">
+                                        Sign Out
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Person icon dropdown for login/signup -->
+                        <div class="relative group">
+                            <button id="user-menu-button" type="button" class="flex items-center px-1.5 sm:px-2 py-1.5 sm:py-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-brand-purple" aria-expanded="false">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 ml-0.5 sm:ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div class="absolute right-0 pt-2 z-50 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
+                                <div class="w-40 rounded-lg shadow-lg bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700">
+                                    <a href="{% url 'login' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-t-lg">Login</a>
+                                    <a href="{% url 'signup' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-b-lg">Sign Up</a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Theme Toggle remains outside -->
+                        <button onclick="toggleTheme()" class="p-1.5 sm:p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" title="Toggle theme">
+                            <!-- Moon icon (visible in light mode, click to go dark) -->
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                            <!-- Sun icon (visible in dark mode, click to go light) -->
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -137,13 +195,6 @@
                 <p class="mt-6 max-w-3xl mx-auto text-xl text-gray-500 dark:text-gray-300">
                     Compare apartments, homes, and hotels side-by-side. Calculate net effective rent with our built-in rent concession calculator and make data-driven decisions.
                 </p>
-
-                <!-- Product Hunt Badge -->
-                <div class="mt-8 flex justify-center">
-                    <a href="https://www.producthunt.com/products/comparison-tools?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-comparison&#0045;tools" target="_blank">
-                        <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1041911&theme=neutral&t=1764004401060" alt="Comparison&#0032;Tools - Compare&#0032;apartments&#0044;&#0032;homes&#0032;&#0038;&#0032;hotels | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" />
-                    </a>
-                </div>
             </div>
         </div>
     </div>
@@ -154,10 +205,16 @@
             <!-- Apartments Tool - Available -->
             <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-brand-purple dark:border-brand-purple overflow-hidden hover:shadow-lg transition-shadow">
                 <div class="p-8">
-                    <div class="w-12 h-12 bg-brand-purple/10 dark:bg-brand-purple/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-7 h-7 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                        </svg>
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 bg-brand-purple/10 dark:bg-brand-purple/20 rounded-lg flex items-center justify-center">
+                            <svg class="w-7 h-7 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                        </div>
+                        <!-- Product Hunt Badge -->
+                        <a href="https://www.producthunt.com/products/comparison-tools?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-comparison&#0045;tools" target="_blank" class="flex-shrink-0">
+                            <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1041911&theme=neutral&t=1764004401060" alt="Comparison&#0032;Tools - Compare&#0032;apartments&#0044;&#0032;homes&#0032;&#0038;&#0032;hotels | Product Hunt" style="width: 200px; height: 43px;" width="200" height="43" />
+                        </a>
                     </div>
                     <div class="mb-4">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
@@ -168,6 +225,7 @@
                     <p class="text-gray-600 dark:text-gray-300 mb-6">
                         Compare apartments by rent, square footage, and lease terms. Built-in rent concession calculator helps you find the best value.
                     </p>
+
                     <ul class="space-y-2 mb-8">
                         <li class="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,9 +252,15 @@
                             Custom ranking by price, size, location
                         </li>
                     </ul>
-                    <a href="{% url 'apartments:index' %}" class="block w-full text-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors shadow-sm">
-                        Start Comparing Apartments
-                    </a>
+                    {% if user.is_authenticated and has_apartments %}
+                        <a href="{% url 'apartments:dashboard' %}" class="block w-full text-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors shadow-sm">
+                            View My Apartments{% if apartment_count %} ({{ apartment_count }}){% endif %}
+                        </a>
+                    {% else %}
+                        <a href="{% url 'apartments:index' %}" class="block w-full text-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors shadow-sm">
+                            Start Comparing Apartments
+                        </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -330,17 +394,31 @@
     <!-- CTA Section -->
     <div class="bg-brand-purple">
         <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
-            <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                <span class="block">Ready to find your perfect place?</span>
-                <span class="block text-brand-purple-light">Start comparing apartments today.</span>
-            </h2>
-            <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-                <div class="inline-flex rounded-lg shadow">
-                    <a href="{% url 'apartments:index' %}" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-brand-purple bg-white hover:bg-gray-50 transition-colors">
-                        Get Started
-                    </a>
+            {% if user.is_authenticated and has_apartments %}
+                <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                    <span class="block">Continue your apartment search</span>
+                    <span class="block text-brand-purple-light">View your saved comparisons.</span>
+                </h2>
+                <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+                    <div class="inline-flex rounded-lg shadow">
+                        <a href="{% url 'apartments:dashboard' %}" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-brand-purple bg-white hover:bg-gray-50 transition-colors">
+                            View Dashboard
+                        </a>
+                    </div>
                 </div>
-            </div>
+            {% else %}
+                <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                    <span class="block">Ready to find your perfect place?</span>
+                    <span class="block text-brand-purple-light">Start comparing apartments today.</span>
+                </h2>
+                <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+                    <div class="inline-flex rounded-lg shadow">
+                        <a href="{% url 'apartments:index' %}" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-brand-purple bg-white hover:bg-gray-50 transition-colors">
+                            Get Started
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 
