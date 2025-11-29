@@ -1034,6 +1034,14 @@ def update_favorite_place(request, pk):
             day_of_week = form.cleaned_data["day_of_week"]
             time_of_day = form.cleaned_data["time_of_day"]
 
+            # Check if travel preferences changed
+            travel_prefs_changed = (
+                place.travel_mode != travel_mode
+                or place.time_type != time_type
+                or place.day_of_week != int(day_of_week)
+                or place.time_of_day != time_of_day
+            )
+
             place.travel_mode = travel_mode
             place.time_type = time_type
             place.day_of_week = int(day_of_week)
@@ -1070,8 +1078,8 @@ def update_favorite_place(request, pk):
 
             place.save()
 
-            # Recalculate distances if address changed
-            if address_changed and place.latitude and place.longitude:
+            # Recalculate distances if address or travel preferences changed
+            if (address_changed or travel_prefs_changed) and place.latitude and place.longitude:
                 recalculate_distances_for_favorite_place(place)
 
             if geocode_failed:
