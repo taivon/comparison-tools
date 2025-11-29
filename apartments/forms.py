@@ -308,16 +308,12 @@ class FavoritePlaceForm(forms.Form):
     travel_mode = forms.ChoiceField(
         choices=[("driving", "Driving"), ("transit", "Transit")],
         initial="driving",
-        widget=forms.RadioSelect(
-            attrs={"class": "h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}
-        ),
+        widget=forms.RadioSelect(attrs={"class": "h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}),
     )
     time_type = forms.ChoiceField(
         choices=[("departure", "Departure Time"), ("arrival", "Arrival Time")],
         initial="departure",
-        widget=forms.RadioSelect(
-            attrs={"class": "h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}
-        ),
+        widget=forms.RadioSelect(attrs={"class": "h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}),
     )
     day_of_week = forms.ChoiceField(
         choices=[

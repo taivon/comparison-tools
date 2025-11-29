@@ -52,9 +52,7 @@ class ScoringService:
             return self.PRO_TIER_FACTORS
         return self.FREE_TIER_FACTORS
 
-    def normalize_value(
-        self, value: Decimal, min_val: Decimal, max_val: Decimal, invert: bool = False
-    ) -> float:
+    def normalize_value(self, value: Decimal, min_val: Decimal, max_val: Decimal, invert: bool = False) -> float:
         """
         Normalize a value to 0-1 range using min-max normalization
 
@@ -139,9 +137,9 @@ class ScoringService:
         Returns:
             Average distance in miles, or None if no distances available
         """
-        distances = ApartmentDistance.objects.filter(
-            apartment=apartment, distance_miles__isnull=False
-        ).values_list("distance_miles", flat=True)
+        distances = ApartmentDistance.objects.filter(apartment=apartment, distance_miles__isnull=False).values_list(
+            "distance_miles", flat=True
+        )
 
         if not distances:
             return None
@@ -291,9 +289,7 @@ class ScoringService:
         score_objects = []
         for apartment_id, score_value in scores.items():
             score_objects.append(
-                ApartmentScore(
-                    apartment_id=apartment_id, user=self.user, score=Decimal(str(score_value))
-                )
+                ApartmentScore(apartment_id=apartment_id, user=self.user, score=Decimal(str(score_value)))
             )
 
         # Delete old scores and create new ones
