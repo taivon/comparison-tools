@@ -206,11 +206,10 @@ class GoogleMapsService:
                         # Extract fare if available (transit mode only)
                         fare = None
                         if fare_data:
-                            # Fare value is in the currency's smallest unit (e.g., cents)
-                            # Convert to dollars
+                            # Fare value is already in the actual currency amount (e.g., 6 = $6.00)
                             fare_value = fare_data.get("value")
                             if fare_value is not None:
-                                fare = round(fare_value / 100, 2)
+                                fare = round(fare_value, 2)
 
                         row_results.append(
                             DistanceResult(
