@@ -29,7 +29,12 @@
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <form method="post" class="space-y-8">
             {% csrf_token %}
-            
+
+            <!-- Hidden fields to store Google Places coordinates -->
+            <input type="hidden" name="google_latitude" id="google_latitude" value="">
+            <input type="hidden" name="google_longitude" id="google_longitude" value="">
+            <input type="hidden" name="google_place_id" id="google_place_id" value="">
+
             <!-- Basic Information -->
             <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
@@ -45,6 +50,15 @@
                                 <p class="mt-2 text-sm text-red-600">{{ form.name.errors.0 }}</p>
                             {% endif %}
                             <p class="mt-1 text-xs text-gray-500">Building name, apartment number, or any identifying name</p>
+                        </div>
+
+                        <div class="col-span-6">
+                            <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Address</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Start typing to search for an address or place name</p>
                         </div>
 
                         <div class="col-span-6 sm:col-span-3">
