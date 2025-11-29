@@ -253,12 +253,39 @@ class UserPreferences(models.Model):
     price_weight = models.IntegerField(default=50, validators=[MinValueValidator(0), MaxValueValidator(100)])
     sqft_weight = models.IntegerField(default=50, validators=[MinValueValidator(0), MaxValueValidator(100)])
     distance_weight = models.IntegerField(default=50, validators=[MinValueValidator(0), MaxValueValidator(100)])
+
+    # Additional scoring weights (Pro features)
+    net_rent_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    bedrooms_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    bathrooms_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+
     discount_calculation = models.CharField(
         max_length=20, choices=[("monthly", "Monthly"), ("weekly", "Weekly"), ("daily", "Daily")], default="daily"
     )
 
     def __str__(self):
         return f"Preferences for {self.user.username}"
+
+
+class ApartmentScore(models.Model):
+    """
+    Cached apartment scores for each user.
+    Scores are user-specific since they depend on user preferences.
+    """
+
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name="scores")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="apartment_scores")
+    score = models.DecimalField(
+        max_digits=3, decimal_places=1, validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("10"))]
+    )
+    calculated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["apartment", "user"]
+        ordering = ["-score", "apartment__name"]
+
+    def __str__(self):
+        return f"{self.apartment.name} - {self.user.username}: {self.score}/10"
 
 
 # =============================================================================

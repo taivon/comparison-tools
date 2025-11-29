@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Apartment, Plan, Product, Subscription, UserPreferences, UserProfile
+from .models import Apartment, ApartmentScore, Plan, Product, Subscription, UserPreferences, UserProfile
 
 
 @admin.register(Product)
@@ -53,3 +53,12 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "stripe_customer_id")
     search_fields = ("user__username", "user__email", "stripe_customer_id")
     readonly_fields = ("stripe_customer_id",)
+
+
+@admin.register(ApartmentScore)
+class ApartmentScoreAdmin(admin.ModelAdmin):
+    list_display = ("apartment", "user", "score", "calculated_at")
+    list_filter = ("user", "calculated_at")
+    search_fields = ("apartment__name", "user__username")
+    readonly_fields = ("calculated_at",)
+    ordering = ("-score", "apartment__name")
