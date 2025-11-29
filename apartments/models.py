@@ -306,6 +306,16 @@ class FavoritePlace(models.Model):
         ("arrival", "Arrival Time"),
     ]
 
+    DAY_OF_WEEK_CHOICES = [
+        (0, "Monday"),
+        (1, "Tuesday"),
+        (2, "Wednesday"),
+        (3, "Thursday"),
+        (4, "Friday"),
+        (5, "Saturday"),
+        (6, "Sunday"),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="favorite_places")
     label = models.CharField(max_length=100)  # e.g., "Work", "Gym"
     address = models.CharField(max_length=500)
@@ -315,8 +325,10 @@ class FavoritePlace(models.Model):
     # Travel preferences
     travel_mode = models.CharField(max_length=20, choices=TRAVEL_MODE_CHOICES, default="driving")
     time_type = models.CharField(max_length=20, choices=TIME_TYPE_CHOICES, default="departure")
-    arrival_time = models.DateTimeField(null=True, blank=True)
-    departure_time = models.DateTimeField(null=True, blank=True)
+    day_of_week = models.IntegerField(
+        choices=DAY_OF_WEEK_CHOICES, default=5, help_text="Day of week (0=Monday, 6=Sunday)"
+    )
+    time_of_day = models.TimeField(default="12:00", help_text="Time of day for arrival/departure")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -331,6 +343,25 @@ class FavoritePlace(models.Model):
     def is_geocoded(self):
         """Check if this place has valid coordinates"""
         return self.latitude is not None and self.longitude is not None
+
+    def get_next_datetime(self):
+        """Calculate the next occurrence of the selected day/time"""
+        from datetime import datetime, timedelta
+
+        now = timezone.now()
+        current_weekday = now.weekday()
+
+        # Calculate days until target weekday
+        days_ahead = self.day_of_week - current_weekday
+        if days_ahead <= 0:  # Target day already happened this week or is today
+            days_ahead += 7
+
+        next_date = now.date() + timedelta(days=days_ahead)
+        next_datetime = timezone.make_aware(
+            datetime.combine(next_date, self.time_of_day), timezone=timezone.get_current_timezone()
+        )
+
+        return next_datetime
 
 
 class ApartmentDistance(models.Model):

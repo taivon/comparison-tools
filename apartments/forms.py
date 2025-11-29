@@ -319,20 +319,28 @@ class FavoritePlaceForm(forms.Form):
             attrs={"class": "h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}
         ),
     )
-    departure_time = forms.DateTimeField(
-        required=False,
-        widget=forms.DateTimeInput(
+    day_of_week = forms.ChoiceField(
+        choices=[
+            (0, "Monday"),
+            (1, "Tuesday"),
+            (2, "Wednesday"),
+            (3, "Thursday"),
+            (4, "Friday"),
+            (5, "Saturday"),
+            (6, "Sunday"),
+        ],
+        initial=5,
+        widget=forms.Select(
             attrs={
-                "type": "datetime-local",
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
             }
         ),
     )
-    arrival_time = forms.DateTimeField(
-        required=False,
-        widget=forms.DateTimeInput(
+    time_of_day = forms.TimeField(
+        initial="12:00",
+        widget=forms.TimeInput(
             attrs={
-                "type": "datetime-local",
+                "type": "time",
                 "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
             }
         ),

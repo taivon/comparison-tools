@@ -107,31 +107,31 @@
                     {% endif %}
                 </div>
 
-                <!-- Departure Time -->
-                <div id="departure_time_field" style="display: none;">
-                    <label for="id_departure_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Departure Time
+                <!-- Day of Week -->
+                <div>
+                    <label for="id_day_of_week" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Day of Week <span class="text-red-500">*</span>
                     </label>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
-                        When you plan to leave for this place
+                        Which day of the week you typically travel to this place
                     </p>
-                    {{ form.departure_time }}
-                    {% if form.departure_time.errors %}
-                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.departure_time.errors.0 }}</p>
+                    {{ form.day_of_week }}
+                    {% if form.day_of_week.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.day_of_week.errors.0 }}</p>
                     {% endif %}
                 </div>
 
-                <!-- Arrival Time -->
-                <div id="arrival_time_field" style="display: none;">
-                    <label for="id_arrival_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Arrival Time
+                <!-- Time of Day -->
+                <div>
+                    <label for="id_time_of_day" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Time of Day <span class="text-red-500">*</span>
                     </label>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
-                        When you need to arrive at this place
+                        What time you typically <span id="time_action">depart</span>
                     </p>
-                    {{ form.arrival_time }}
-                    {% if form.arrival_time.errors %}
-                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.arrival_time.errors.0 }}</p>
+                    {{ form.time_of_day }}
+                    {% if form.time_of_day.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.time_of_day.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -178,60 +178,26 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Get time type radio buttons
     const timeTypeRadios = document.querySelectorAll('input[name="time_type"]');
-    const departureField = document.getElementById('departure_time_field');
-    const arrivalField = document.getElementById('arrival_time_field');
-    const departureInput = document.getElementById('id_departure_time');
-    const arrivalInput = document.getElementById('id_arrival_time');
+    const timeActionText = document.getElementById('time_action');
 
-    // Function to get next Saturday at 12:00 PM
-    function getNextSaturdayNoon() {
-        const now = new Date();
-        const daysUntilSaturday = (6 - now.getDay() + 7) % 7 || 7; // Days until next Saturday
-        const nextSaturday = new Date(now);
-        nextSaturday.setDate(now.getDate() + daysUntilSaturday);
-        nextSaturday.setHours(12, 0, 0, 0);
-
-        // Format for datetime-local input (YYYY-MM-DDTHH:MM)
-        const year = nextSaturday.getFullYear();
-        const month = String(nextSaturday.getMonth() + 1).padStart(2, '0');
-        const day = String(nextSaturday.getDate()).padStart(2, '0');
-        const hours = String(nextSaturday.getHours()).padStart(2, '0');
-        const minutes = String(nextSaturday.getMinutes()).padStart(2, '0');
-
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
-
-    // Function to toggle time fields based on selected time type
-    function toggleTimeFields() {
+    // Function to update the time action text based on selected time type
+    function updateTimeActionText() {
         const selectedTimeType = document.querySelector('input[name="time_type"]:checked').value;
 
         if (selectedTimeType === 'departure') {
-            departureField.style.display = 'block';
-            arrivalField.style.display = 'none';
-
-            // Set default departure time if empty
-            if (!departureInput.value) {
-                departureInput.value = getNextSaturdayNoon();
-            }
-
-            // Clear arrival time when switching to departure
-            arrivalInput.value = '';
+            timeActionText.textContent = 'depart';
         } else {
-            departureField.style.display = 'none';
-            arrivalField.style.display = 'block';
-
-            // Clear departure time when switching to arrival
-            departureInput.value = '';
+            timeActionText.textContent = 'arrive';
         }
     }
 
     // Add event listeners to time type radio buttons
     timeTypeRadios.forEach(radio => {
-        radio.addEventListener('change', toggleTimeFields);
+        radio.addEventListener('change', updateTimeActionText);
     });
 
     // Initialize on page load
-    toggleTimeFields();
+    updateTimeActionText();
 });
 </script>
 {% endblock %}
