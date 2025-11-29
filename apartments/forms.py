@@ -252,6 +252,25 @@ class UserPreferencesForm(forms.Form):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         widget=forms.HiddenInput(),
     )
+    # Premium scoring factors
+    net_rent_weight = forms.IntegerField(
+        initial=0,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.HiddenInput(),
+    )
+    bedrooms_weight = forms.IntegerField(
+        initial=0,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.HiddenInput(),
+    )
+    bathrooms_weight = forms.IntegerField(
+        initial=0,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.HiddenInput(),
+    )
     discount_calculation = forms.ChoiceField(
         choices=DISCOUNT_CHOICES,
         initial="daily",
