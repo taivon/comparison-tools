@@ -101,6 +101,9 @@
                         <div class="flex items-start justify-between">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center space-x-2">
+                                    <span class="text-lg" title="{{ place.get_travel_mode_display }}">
+                                        {% if place.travel_mode == "transit" %}🚌{% else %}🚗{% endif %}
+                                    </span>
                                     <h3 class="text-base font-semibold text-gray-900 dark:text-white truncate">
                                         {{ place.label }}
                                     </h3>

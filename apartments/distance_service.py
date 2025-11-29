@@ -284,7 +284,9 @@ def get_apartments_with_distances(apartments, favorite_places) -> list[dict[str,
 
     for apartment in apartments:
         # Initialize distances dict with None for all places
-        distances_dict = {label: {"distance": None, "travel_time": None} for label in place_labels}
+        distances_dict = {
+            label: {"distance": None, "travel_time": None, "transit_fare": None} for label in place_labels
+        }
 
         # Get cached distances
         cached_distances = ApartmentDistance.objects.filter(apartment=apartment).select_related("favorite_place")
@@ -297,7 +299,11 @@ def get_apartments_with_distances(apartments, favorite_places) -> list[dict[str,
         for d in cached_distances:
             if d.distance_miles is not None:
                 dist_float = float(d.distance_miles)
-                distances_dict[d.favorite_place.label] = {"distance": dist_float, "travel_time": d.travel_time_minutes}
+                distances_dict[d.favorite_place.label] = {
+                    "distance": dist_float,
+                    "travel_time": d.travel_time_minutes,
+                    "transit_fare": float(d.transit_fare) if d.transit_fare else None,
+                }
                 total_distance += dist_float
                 count += 1
 

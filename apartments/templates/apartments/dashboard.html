@@ -940,7 +940,10 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                                     {% if info.distance != None %}
                                                         {{ info.distance|floatformat:1 }} mi
                                                         {% if info.travel_time %}
-                                                            <div class="text-xs text-gray-500">{{ info.travel_time }} min</div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ info.travel_time }} min</div>
+                                                        {% endif %}
+                                                        {% if info.transit_fare %}
+                                                            <div class="text-xs text-green-600 dark:text-green-400">${{ info.transit_fare|floatformat:2 }} fare</div>
                                                         {% endif %}
                                                     {% else %}
                                                         <span class="text-gray-400">N/A</span>
