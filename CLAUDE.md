@@ -33,3 +33,4 @@ gcloud app deploy
 - `SOCIAL_AUTH_GOOGLE_OAUTH2_KEY` - Google OAuth client ID
 - `SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET` - Google OAuth client secret
 - `SECRET_KEY` - Django secret key
+- `GOOGLE_MAPS_API_KEY` - Google Maps API key (for address autocomplete and driving distances)
