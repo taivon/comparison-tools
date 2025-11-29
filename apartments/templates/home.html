@@ -203,8 +203,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
             <!-- Apartments Tool - Available -->
-            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-brand-purple dark:border-brand-purple overflow-hidden hover:shadow-lg transition-shadow">
-                <div class="p-8">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-brand-purple dark:border-brand-purple overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+                <div class="p-8 flex flex-col flex-1">
                     <div class="flex items-start justify-between mb-4">
                         <div class="w-12 h-12 bg-brand-purple/10 dark:bg-brand-purple/20 rounded-lg flex items-center justify-center">
                             <svg class="w-7 h-7 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +226,7 @@
                         Compare apartments by rent, square footage, and lease terms. Built-in rent concession calculator helps you find the best value.
                     </p>
 
-                    <ul class="space-y-2 mb-8">
+                    <ul class="space-y-2 mb-8 flex-1">
                         <li class="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -252,6 +252,7 @@
                             Custom ranking by price, size, location
                         </li>
                     </ul>
+                    <div>
                     {% if user.is_authenticated and has_apartments %}
                         <a href="{% url 'apartments:dashboard' %}" class="block w-full text-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors shadow-sm">
                             View My Apartments{% if apartment_count %} ({{ apartment_count }}){% endif %}
@@ -261,12 +262,13 @@
                             Start Comparing Apartments
                         </a>
                     {% endif %}
+                    </div>
                 </div>
             </div>
 
             <!-- Homes Tool - Coming Soon -->
-            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-gray-200 dark:border-neutral-700 overflow-hidden opacity-75">
-                <div class="p-8">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-gray-200 dark:border-neutral-700 overflow-hidden opacity-75 flex flex-col">
+                <div class="p-8 flex flex-col flex-1">
                     <div class="w-12 h-12 bg-gray-100 dark:bg-neutral-700 rounded-lg flex items-center justify-center mb-4">
                         <svg class="w-7 h-7 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
@@ -281,7 +283,7 @@
                     <p class="text-gray-600 dark:text-gray-300 mb-6">
                         Compare homes for purchase by price, features, location, and more. Perfect for home buyers making a big decision.
                     </p>
-                    <ul class="space-y-2 mb-8">
+                    <ul class="space-y-2 mb-8 flex-1">
                         <li class="flex items-center text-sm text-gray-500 dark:text-gray-400">
                             <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -301,15 +303,17 @@
                             Location scoring
                         </li>
                     </ul>
+                    <div>
                     <button disabled class="block w-full text-center px-6 py-3 border-2 border-gray-300 dark:border-neutral-600 text-base font-medium rounded-lg text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 cursor-not-allowed">
                         Coming Soon
                     </button>
+                    </div>
                 </div>
             </div>
 
             <!-- Hotels Tool - Coming Soon -->
-            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-gray-200 dark:border-neutral-700 overflow-hidden opacity-75">
-                <div class="p-8">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md border-2 border-gray-200 dark:border-neutral-700 overflow-hidden opacity-75 flex flex-col">
+                <div class="p-8 flex flex-col flex-1">
                     <div class="w-12 h-12 bg-gray-100 dark:bg-neutral-700 rounded-lg flex items-center justify-center mb-4">
                         <svg class="w-7 h-7 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
@@ -324,7 +328,7 @@
                     <p class="text-gray-600 dark:text-gray-300 mb-6">
                         Compare hotels by price, amenities, location, and reviews. Find the best deal for your next trip.
                     </p>
-                    <ul class="space-y-2 mb-8">
+                    <ul class="space-y-2 mb-8 flex-1">
                         <li class="flex items-center text-sm text-gray-500 dark:text-gray-400">
                             <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -344,9 +348,11 @@
                             Review aggregation
                         </li>
                     </ul>
+                    <div>
                     <button disabled class="block w-full text-center px-6 py-3 border-2 border-gray-300 dark:border-neutral-600 text-base font-medium rounded-lg text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 cursor-not-allowed">
                         Coming Soon
                     </button>
+                    </div>
                 </div>
             </div>
         </div>
