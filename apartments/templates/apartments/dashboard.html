@@ -1029,6 +1029,20 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         </div>
                     </div>
 
+                    <!-- Error Alert -->
+                    <div id="addApartmentError" class="hidden mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-red-800" id="addApartmentErrorMessage"></p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Basic Fields -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
@@ -1384,6 +1398,20 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div id="editApartmentError" class="hidden mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-red-800" id="editApartmentErrorMessage"></p>
+                            </div>
                         </div>
                     </div>
 
@@ -1878,6 +1906,8 @@ function closeAddApartmentModal() {
     document.getElementById('addApartmentModal').classList.add('hidden');
     // Reset form
     document.getElementById('addApartmentForm').reset();
+    // Hide error message
+    document.getElementById('addApartmentError').classList.add('hidden');
     // Hide advanced options
     const advancedOptions = document.getElementById('modalAdvancedOptions');
     const chevron = document.getElementById('modalAdvancedChevron');
@@ -2220,6 +2250,8 @@ function closeEditApartmentModal() {
     document.getElementById('editApartmentModal').classList.add('hidden');
     // Reset form
     document.getElementById('editApartmentForm').reset();
+    // Hide error message
+    document.getElementById('editApartmentError').classList.add('hidden');
     // Hide advanced options
     const advancedOptions = document.getElementById('editAdvancedOptions');
     const chevron = document.getElementById('editAdvancedChevron');
