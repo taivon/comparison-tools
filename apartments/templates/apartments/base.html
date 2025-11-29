@@ -805,8 +805,10 @@
         }
     </script>
 
-    <!-- Address Autocomplete -->
+    <!-- Address Autocomplete (Premium only) -->
+    {% if user.is_authenticated and is_premium %}
     <script src="{% static 'js/address-autocomplete.js' %}"></script>
+    {% endif %}
 
 </body>
 </html> 

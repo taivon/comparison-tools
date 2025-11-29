@@ -28,6 +28,7 @@ def subscription_status(request):
 
     return {
         "user_has_premium": has_premium,
+        "is_premium": has_premium,  # Alias for convenience
         "stripe_enabled": settings.STRIPE_ENABLED,
         "current_product_slug": product_slug,
         "google_client_id": getattr(settings, "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""),
