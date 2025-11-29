@@ -49,17 +49,19 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
 
 def _get_google_maps_distance(
-    origin: tuple[float, float], destination: tuple[float, float]
-) -> tuple[float, int] | None:
+    origin: tuple[float, float], destination: tuple[float, float], mode: str = "driving"
+) -> tuple[float, int, float | None] | None:
     """
-    Get driving distance and time using Google Maps Distance Matrix API.
+    Get distance, time, and fare using Google Maps Distance Matrix API.
 
     Args:
         origin: (latitude, longitude) of origin
         destination: (latitude, longitude) of destination
+        mode: Travel mode - 'driving', 'walking', 'bicycling', 'transit'
 
     Returns:
-        Tuple of (distance_miles, travel_time_minutes) or None if failed
+        Tuple of (distance_miles, travel_time_minutes, fare) or None if failed
+        fare is only populated for transit mode
     """
     try:
         from .google_maps_service import get_google_maps_service
@@ -68,9 +70,9 @@ def _get_google_maps_distance(
         if not google_maps.is_available:
             return None
 
-        result = google_maps.get_single_distance(origin, destination, mode="driving")
+        result = google_maps.get_single_distance(origin, destination, mode=mode)
         if result:
-            return (result.distance_miles, result.duration_minutes)
+            return (result.distance_miles, result.duration_minutes, result.fare)
         return None
     except Exception as e:
         logger.error(f"Google Maps distance calculation failed: {e}")
@@ -78,8 +80,13 @@ def _get_google_maps_distance(
 
 
 def _calculate_distance_with_fallback(
-    origin_lat: float, origin_lng: float, dest_lat: float, dest_lng: float, use_google_maps: bool = True
-) -> tuple[float, int | None, bool]:
+    origin_lat: float,
+    origin_lng: float,
+    dest_lat: float,
+    dest_lng: float,
+    use_google_maps: bool = True,
+    mode: str = "driving",
+) -> tuple[float, int | None, float | None, bool]:
     """
     Calculate distance, trying Google Maps first then falling back to Haversine.
 
@@ -89,22 +96,24 @@ def _calculate_distance_with_fallback(
         dest_lat: Destination latitude
         dest_lng: Destination longitude
         use_google_maps: Whether to attempt Google Maps API
+        mode: Travel mode - 'driving', 'transit', etc.
 
     Returns:
-        Tuple of (distance_miles, travel_time_minutes, is_driving_distance)
-        is_driving_distance is True if from Google Maps, False if Haversine fallback
+        Tuple of (distance_miles, travel_time_minutes, fare, is_google_maps)
+        is_google_maps is True if from Google Maps, False if Haversine fallback
+        fare is only populated for transit mode
     """
     if use_google_maps:
         google_result = _get_google_maps_distance(
-            (float(origin_lat), float(origin_lng)), (float(dest_lat), float(dest_lng))
+            (float(origin_lat), float(origin_lng)), (float(dest_lat), float(dest_lng)), mode=mode
         )
         if google_result:
-            distance_miles, travel_time = google_result
-            return (distance_miles, travel_time, True)
+            distance_miles, travel_time, fare = google_result
+            return (distance_miles, travel_time, fare, True)
 
     # Fallback to Haversine (straight-line distance)
     distance = haversine_distance(origin_lat, origin_lng, dest_lat, dest_lng)
-    return (round(distance, 2), None, False)
+    return (round(distance, 2), None, None, False)
 
 
 def calculate_and_cache_distances(apartment, use_google_maps: bool = True) -> None:
@@ -133,24 +142,34 @@ def calculate_and_cache_distances(apartment, use_google_maps: bool = True) -> No
             logger.info(f"Favorite place {place.id} has no coordinates, skipping")
             continue
 
-        distance_miles, travel_time, is_driving = _calculate_distance_with_fallback(
+        distance_miles, travel_time, fare, is_google = _calculate_distance_with_fallback(
             apartment.latitude,
             apartment.longitude,
             place.latitude,
             place.longitude,
             use_google_maps=google_maps_available,
+            mode=place.travel_mode,
         )
+
+        # Prepare defaults with fare if available
+        defaults = {
+            "distance_miles": Decimal(str(distance_miles)),
+            "travel_time_minutes": travel_time,
+        }
+        if fare is not None:
+            defaults["transit_fare"] = Decimal(str(fare))
 
         ApartmentDistance.objects.update_or_create(
             apartment=apartment,
             favorite_place=place,
-            defaults={"distance_miles": Decimal(str(distance_miles)), "travel_time_minutes": travel_time},
+            defaults=defaults,
         )
 
-        distance_type = "driving" if is_driving else "straight-line"
+        distance_type = place.get_travel_mode_display() if is_google else "straight-line"
         time_str = f" ({travel_time} min)" if travel_time else ""
+        fare_str = f" (${fare} fare)" if fare else ""
         logger.info(
-            f"Cached {distance_type} distance: {apartment.name} -> {place.label} = {distance_miles} mi{time_str}"
+            f"Cached {distance_type} distance: {apartment.name} -> {place.label} = {distance_miles} mi{time_str}{fare_str}"
         )
 
 
@@ -180,24 +199,34 @@ def recalculate_distances_for_favorite_place(favorite_place, use_google_maps: bo
             logger.info(f"Apartment {apartment.id} has no coordinates, skipping")
             continue
 
-        distance_miles, travel_time, is_driving = _calculate_distance_with_fallback(
+        distance_miles, travel_time, fare, is_google = _calculate_distance_with_fallback(
             apartment.latitude,
             apartment.longitude,
             favorite_place.latitude,
             favorite_place.longitude,
             use_google_maps=google_maps_available,
+            mode=favorite_place.travel_mode,
         )
+
+        # Prepare defaults with fare if available
+        defaults = {
+            "distance_miles": Decimal(str(distance_miles)),
+            "travel_time_minutes": travel_time,
+        }
+        if fare is not None:
+            defaults["transit_fare"] = Decimal(str(fare))
 
         ApartmentDistance.objects.update_or_create(
             apartment=apartment,
             favorite_place=favorite_place,
-            defaults={"distance_miles": Decimal(str(distance_miles)), "travel_time_minutes": travel_time},
+            defaults=defaults,
         )
 
-        distance_type = "driving" if is_driving else "straight-line"
+        distance_type = favorite_place.get_travel_mode_display() if is_google else "straight-line"
         time_str = f" ({travel_time} min)" if travel_time else ""
+        fare_str = f" (${fare} fare)" if fare else ""
         logger.info(
-            f"Cached {distance_type} distance: {apartment.name} -> {favorite_place.label} = {distance_miles} mi{time_str}"
+            f"Cached {distance_type} distance: {apartment.name} -> {favorite_place.label} = {distance_miles} mi{time_str}{fare_str}"
         )
 
 

@@ -40,6 +40,7 @@ class DistanceResult(NamedTuple):
     duration_minutes: int
     duration_text: str  # Human readable, e.g., "15 mins"
     distance_text: str  # Human readable, e.g., "3.2 mi"
+    fare: float | None = None  # Transit fare in USD (only for transit mode)
 
 
 class GoogleMapsService:
@@ -197,9 +198,19 @@ class GoogleMapsService:
                     if element.get("status") == "OK":
                         distance = element.get("distance", {})
                         duration = element.get("duration", {})
+                        fare_data = element.get("fare", {})
 
                         distance_meters = distance.get("value", 0)
                         duration_seconds = duration.get("value", 0)
+
+                        # Extract fare if available (transit mode only)
+                        fare = None
+                        if fare_data:
+                            # Fare value is in the currency's smallest unit (e.g., cents)
+                            # Convert to dollars
+                            fare_value = fare_data.get("value")
+                            if fare_value is not None:
+                                fare = round(fare_value / 100, 2)
 
                         row_results.append(
                             DistanceResult(
@@ -211,6 +222,7 @@ class GoogleMapsService:
                                 duration_minutes=round(duration_seconds / 60),
                                 duration_text=duration.get("text", ""),
                                 distance_text=distance.get("text", ""),
+                                fare=fare,
                             )
                         )
                     else:
