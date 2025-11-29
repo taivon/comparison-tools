@@ -1,0 +1,24 @@
+[project]
+name = "comparison-tools"
+version = "1.0.0"
+description = "Smart comparison tools for apartments, homes, and hotels"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "django>=5.2",
+    "django-browser-reload>=1.18.0",
+    "django-environ>=0.11.2",
+    "django-tailwind>=4.0.1",
+    "gunicorn>=23.0.0",
+    "social-auth-app-django>=5.4.2",
+    "social-auth-core>=4.8.1",
+    "google-cloud-secret-manager>=2.20.2",
+    "google-auth>=2.34.0",
+    "psycopg2-binary>=2.9.11",
+    "stripe>=11.2.0",
+    "geopy>=2.4.1",
+    "googlemaps>=4.10.0",
+]
+
+[dependency-groups]
+dev = []

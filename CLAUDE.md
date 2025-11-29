@@ -11,16 +11,33 @@
 - Stripe integration for subscriptions
 - Tailwind CSS for styling
 
+## Package Management
+This project uses [UV](https://docs.astral.sh/uv/) for fast Python package management.
+
+```bash
+# Install dependencies
+uv sync
+
+# Add a new dependency
+uv add <package>
+
+# Remove a dependency
+uv remove <package>
+
+# Update all dependencies
+uv lock --upgrade
+```
+
 ## Key Commands
 ```bash
 # Run locally
-python manage.py runserver
+uv run python manage.py runserver
 
 # Run migrations
-python manage.py migrate
+uv run python manage.py migrate
 
 # Seed subscription products/plans
-python manage.py seed_products
+uv run python manage.py seed_products
 
 # Deploy to App Engine
 gcloud app deploy

@@ -12,20 +12,24 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
       with:
-        python-version-file: '.python-version'
+        enable-cache: true
+
+    - name: Set up Python
+      run: uv python install
+
     - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      run: uv sync
+
     - name: Run Tests
       env:
         DJANGO_SETTINGS_MODULE: config.settings
         SECRET_KEY: test-secret-key-for-ci
       run: |
-        python manage.py test
+        uv run python manage.py test
 
   deploy:
     needs: test
@@ -39,15 +43,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
       with:
-        python-version-file: '.python-version'
+        enable-cache: true
+
+    - name: Set up Python
+      run: uv python install
 
     - name: Install Python Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      run: uv sync
 
     - name: Collect Static Files
       env:
@@ -55,7 +60,7 @@ jobs:
         SECRET_KEY: 'django-insecure-temp-key-for-build-only'
       run: |
         mkdir -p static
-        python manage.py collectstatic --noinput --clear
+        uv run python manage.py collectstatic --noinput --clear
 
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
@@ -81,7 +86,7 @@ jobs:
         export SECRET_KEY=$(gcloud secrets versions access latest --secret=django-secret-key --project=comparison-tools-479102)
 
         # Run migrations against production database
-        python manage.py migrate --noinput
+        uv run python manage.py migrate --noinput
 
     - name: Deploy to App Engine
       run: |
