@@ -8,7 +8,7 @@
     <!-- SEO Meta Tags -->
     <title>{% block title %}Find Your Perfect Apartment | Apartment Comparison Tool{% endblock %}</title>
     <meta name="description" content="{% block meta_description %}Compare multiple apartments side-by-side by rent, price per square foot, and lease terms. Includes a built-in rent concession calculator to calculate net effective rent. Make smarter apartment hunting decisions with our free comparison tool.{% endblock %}">
-    <meta name="keywords" content="{% block meta_keywords %}apartment comparison, rent concession calculator, net effective rent, apartment finder, compare apartments, rental comparison tool, price per square foot, lease comparison{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}apartment comparison tool, rent concession calculator, net effective rent calculator, compare apartments, apartment finder, commute time calculator, driving distance to work, price per square foot, lease comparison, apartment ranking{% endblock %}">
     <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
     <!-- Open Graph / Facebook -->
@@ -37,7 +37,12 @@
     <link rel="manifest" href="{% static 'site.webmanifest' %}">
 
     {% block extra_head %}{% endblock %}
-    
+
+    <!-- Google Identity Services for One Tap -->
+    {% if google_client_id %}
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    {% endif %}
+
     <!-- Use Tailwind CDN with seats.aero inspired configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -72,6 +77,19 @@
   gtag('config', 'G-N6Q3GGLFH6');
 </script>
 <body class="bg-gray-50 dark:bg-neutral-900 font-sans" data-is-anonymous="{% if not user.is_authenticated %}true{% else %}false{% endif %}" data-has-apartments="{% if apartments %}true{% else %}false{% endif %}">
+    <!-- Google One Tap Configuration -->
+    {% if google_client_id and not user.is_authenticated %}
+    <div id="g_id_onload"
+         data-client_id="{{ google_client_id }}"
+         data-login_uri="{{ request.scheme }}://{{ request.get_host }}{% url 'social:complete' 'google-onetap' %}"
+         data-auto_prompt="true"
+         data-auto_select="true"
+         data-itp_support="true"
+         data-context="signin"
+         data-ux_mode="redirect">
+    </div>
+    {% endif %}
+
     <nav class="bg-white dark:bg-neutral-800 border-b border-gray-100 dark:border-neutral-700">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <div class="flex justify-between h-14 sm:h-16">
@@ -83,18 +101,6 @@
                             </div>
                             <span class="hidden sm:inline text-xl font-bold text-gray-900 dark:text-white">Comparison Tools</span>
                         </a>
-                    </div>
-                    <div class="hidden md:block ml-10">
-                        <div class="flex items-baseline space-x-8">
-                            {% if user.is_authenticated %}
-                                {% if apartment_count > 0 %}
-                                    <a href="{% url 'apartments:dashboard' %}" class="text-gray-900 dark:text-white hover:text-brand-purple px-3 py-2 text-sm font-medium">Dashboard</a>
-                                {% endif %}
-                            {% else %}
-                                <!-- Anonymous users: show/hide via JavaScript based on sessionStorage -->
-                                <a href="{% url 'apartments:dashboard' %}" id="dashboardLink" class="text-gray-900 dark:text-white hover:text-brand-purple px-3 py-2 text-sm font-medium hidden">Dashboard</a>
-                            {% endif %}
-                        </div>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-4">
@@ -181,29 +187,13 @@
                             </svg>
                         </button>
                     {% endif %}
-                    <!-- Mobile menu button (hamburger) -->
-                    <button type="button" id="mobile-menu-button" class="md:hidden p-1.5 sm:p-2 text-gray-800 dark:text-gray-200 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-gray-600 rounded-lg" aria-label="Toggle mobile menu">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </button>
                 </div>
             </div>
         </div>
-        <!-- Mobile menu (hidden by default) -->
-        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-neutral-700">
-            <div class="px-2 pt-2 pb-3 space-y-1">
-                {% if user.is_authenticated %}
-                    {% if apartment_count > 0 %}
-                        <a href="{% url 'apartments:dashboard' %}" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700">Dashboard</a>
-                    {% endif %}
-                {% else %}
-                    <!-- Anonymous users: show/hide via JavaScript based on sessionStorage -->
-                    <a href="{% url 'apartments:dashboard' %}" id="mobileDashboardLink" class="hidden block px-3 py-2 rounded-lg text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700">Dashboard</a>
-                {% endif %}
-            </div>
-        </div>
     </nav>
+
+    <!-- Breadcrumbs -->
+    {% block breadcrumbs %}{% endblock %}
 
     <main>
         {% if messages %}
@@ -657,27 +647,6 @@
             const prompt = document.getElementById('signupPrompt');
             if (prompt && sessionStorage.getItem('signupPromptDismissed')) {
                 prompt.style.display = 'none';
-            }
-
-            // Show/hide Dashboard link for anonymous users based on sessionStorage
-            const dashboardLink = document.getElementById('dashboardLink');
-            const mobileDashboardLink = document.getElementById('mobileDashboardLink');
-            if (dashboardLink || mobileDashboardLink) {
-                const apartments = sessionStorage.getItem('anonymous_apartments');
-                const apartmentCount = apartments ? JSON.parse(apartments).length : 0;
-                if (apartmentCount > 0) {
-                    if (dashboardLink) dashboardLink.classList.remove('hidden');
-                    if (mobileDashboardLink) mobileDashboardLink.classList.remove('hidden');
-                }
-            }
-
-            // Mobile menu toggle
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            if (mobileMenuButton && mobileMenu) {
-                mobileMenuButton.addEventListener('click', function() {
-                    mobileMenu.classList.toggle('hidden');
-                });
             }
         });
         
