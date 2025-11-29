@@ -28,6 +28,11 @@ theme/node_modules/
 # Django stuff
 /staticfiles/
 
+# Django collectstatic output (regenerated on deploy)
+static/admin/
+static/django-browser-reload/
+static/css/
+
 # GCP Service Account Keys (should never be committed)
 gcp-service-account-key.json
 *service-account*.json
