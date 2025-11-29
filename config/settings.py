@@ -542,6 +542,10 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ["first_name", "last_name", "picture"]
 SOCIAL_AUTH_CREATE_USERS = True
 SOCIAL_AUTH_ASSOCIATE_BY_EMAIL = True
 
+# Force HTTPS for OAuth redirect URIs in production
+if not DEBUG:
+    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+
 # Cache Configuration
 CACHES = {
     "default": {
