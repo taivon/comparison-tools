@@ -6,7 +6,6 @@ Supports multiple metrics with customizable weights.
 """
 
 from decimal import Decimal
-from typing import Dict, List, Optional, Tuple
 
 from .models import Apartment, ApartmentDistance, ApartmentScore, UserPreferences, user_has_premium
 
@@ -19,7 +18,7 @@ class ScoringService:
     FREE_TIER_FACTORS = ["price", "distance"]
     PRO_TIER_FACTORS = ["price", "net_effective_rent", "sqft", "distance", "bedrooms", "bathrooms"]
 
-    def __init__(self, user, apartments: List[Apartment], product_slug: str = "apartments"):
+    def __init__(self, user, apartments: list[Apartment], product_slug: str = "apartments"):
         """
         Initialize scoring service
 
@@ -47,7 +46,7 @@ class ScoringService:
         else:
             self.preferences = None
 
-    def get_available_factors(self) -> List[str]:
+    def get_available_factors(self) -> list[str]:
         """Get list of scoring factors available to user based on tier"""
         if self.is_premium:
             return self.PRO_TIER_FACTORS
@@ -78,7 +77,7 @@ class ScoringService:
 
         return max(0.0, min(1.0, normalized))  # Clamp to 0-1
 
-    def get_min_max_values(self) -> Dict[str, Tuple[Decimal, Decimal]]:
+    def get_min_max_values(self) -> dict[str, tuple[Decimal, Decimal]]:
         """
         Calculate min/max values for each metric across all apartments
 
@@ -130,7 +129,7 @@ class ScoringService:
 
         return metrics
 
-    def _get_average_distance(self, apartment: Apartment) -> Optional[Decimal]:
+    def _get_average_distance(self, apartment: Apartment) -> Decimal | None:
         """
         Get average distance from apartment to all favorite places
 
@@ -149,7 +148,7 @@ class ScoringService:
 
         return sum(distances) / len(distances)
 
-    def get_active_weights(self) -> Dict[str, int]:
+    def get_active_weights(self) -> dict[str, int]:
         """
         Get active scoring weights based on user preferences and tier
 
@@ -181,7 +180,7 @@ class ScoringService:
 
         return weights
 
-    def normalize_weights(self, weights: Dict[str, int]) -> Dict[str, float]:
+    def normalize_weights(self, weights: dict[str, int]) -> dict[str, float]:
         """
         Normalize weights to sum to 1.0
 
@@ -197,7 +196,7 @@ class ScoringService:
 
         return {factor: weight / total for factor, weight in weights.items()}
 
-    def calculate_score_for_apartment(self, apartment: Apartment) -> Optional[float]:
+    def calculate_score_for_apartment(self, apartment: Apartment) -> float | None:
         """
         Calculate final score (0-10) for a single apartment
 
@@ -262,7 +261,7 @@ class ScoringService:
         final_score = round(weighted_score * 10, 1)
         return final_score
 
-    def calculate_all_scores(self) -> Dict[int, float]:
+    def calculate_all_scores(self) -> dict[int, float]:
         """
         Calculate scores for all apartments
 
@@ -276,7 +275,7 @@ class ScoringService:
                 scores[apartment.id] = score
         return scores
 
-    def calculate_and_cache_scores(self) -> Dict[int, float]:
+    def calculate_and_cache_scores(self) -> dict[int, float]:
         """
         Calculate scores for all apartments and save them to the database
 
@@ -303,7 +302,7 @@ class ScoringService:
 
         return scores
 
-    def get_cached_scores(self) -> Dict[int, float]:
+    def get_cached_scores(self) -> dict[int, float]:
         """
         Retrieve cached scores from database
 
@@ -318,7 +317,7 @@ class ScoringService:
 
         return {score.apartment_id: float(score.score) for score in cached}
 
-    def get_or_calculate_scores(self, force_recalculate: bool = False) -> Dict[int, float]:
+    def get_or_calculate_scores(self, force_recalculate: bool = False) -> dict[int, float]:
         """
         Get cached scores or calculate if not available
 
