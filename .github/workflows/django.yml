@@ -128,7 +128,7 @@ jobs:
           echo "${GOOGLE_OAUTH2_SECRET}" | gcloud secrets create google-oauth2-secret --data-file=- --project=comparison-tools-479102
         fi
         
-        # Grant App Engine access to both secrets
+        # Grant App Engine access to OAuth secrets
         gcloud secrets add-iam-policy-binding google-oauth2-key \
           --member="serviceAccount:comparison-tools-479102@appspot.gserviceaccount.com" \
           --role="roles/secretmanager.secretAccessor" \
@@ -137,7 +137,28 @@ jobs:
           --member="serviceAccount:comparison-tools-479102@appspot.gserviceaccount.com" \
           --role="roles/secretmanager.secretAccessor" \
           --project=comparison-tools-479102
+
+        # Grant App Engine access to Supabase secrets
+        for secret in supabase-db-host supabase-db-name supabase-db-user supabase-db-password supabase-db-port django-secret-key; do
+          gcloud secrets add-iam-policy-binding $secret \
+            --member="serviceAccount:comparison-tools-479102@appspot.gserviceaccount.com" \
+            --role="roles/secretmanager.secretAccessor" \
+            --project=comparison-tools-479102 || true
+        done
     
+    - name: Run Production Migrations
+      run: |
+        # Fetch Supabase credentials from Secret Manager
+        export SUPABASE_DB_HOST=$(gcloud secrets versions access latest --secret=supabase-db-host --project=comparison-tools-479102)
+        export SUPABASE_DB_NAME=$(gcloud secrets versions access latest --secret=supabase-db-name --project=comparison-tools-479102)
+        export SUPABASE_DB_USER=$(gcloud secrets versions access latest --secret=supabase-db-user --project=comparison-tools-479102)
+        export SUPABASE_DB_PASSWORD=$(gcloud secrets versions access latest --secret=supabase-db-password --project=comparison-tools-479102)
+        export SUPABASE_DB_PORT=$(gcloud secrets versions access latest --secret=supabase-db-port --project=comparison-tools-479102)
+        export SECRET_KEY=$(gcloud secrets versions access latest --secret=django-secret-key --project=comparison-tools-479102)
+
+        # Run migrations against production database
+        python manage.py migrate --noinput
+
     - name: Deploy to App Engine
       run: |
         gcloud config set project comparison-tools-479102
