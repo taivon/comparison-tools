@@ -234,17 +234,28 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                 </div>
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     <div class="flex items-center gap-3">
-                        <!-- Favorite Places Link -->
+                        <!-- Favorite Places Link (Premium Only) -->
                         {% if user.is_authenticated %}
-                        <a href="{% url 'apartments:favorite_places' %}" class="p-2.5 sm:p-2 text-gray-700 hover:text-brand-purple hover:bg-gray-50 rounded-lg border border-gray-300 transition-colors touch-manipulation relative" title="Favorite Places ({{ favorite_place_count }}/{{ favorite_place_limit }})">
-                            <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            {% if favorite_place_count > 0 %}
-                            <span class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-brand-purple rounded-full">{{ favorite_place_count }}</span>
+                            {% if is_premium %}
+                            <a href="{% url 'apartments:favorite_places' %}" class="p-2.5 sm:p-2 text-gray-700 hover:text-brand-purple hover:bg-gray-50 rounded-lg border border-gray-300 transition-colors touch-manipulation relative" title="Favorite Places ({{ favorite_place_count }}/{{ favorite_place_limit }})">
+                                <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                {% if favorite_place_count > 0 %}
+                                <span class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-brand-purple rounded-full">{{ favorite_place_count }}</span>
+                                {% endif %}
+                            </a>
+                            {% else %}
+                            <a href="{% url 'signup' %}" class="inline-flex items-center px-3 py-2 text-xs font-medium text-white bg-brand-purple hover:bg-brand-purple-dark rounded-lg transition-colors" title="Upgrade to unlock distance calculations">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Locations
+                                <span class="ml-1.5 px-1.5 py-0.5 bg-white/20 rounded text-xxs font-semibold">PRO</span>
+                            </a>
                             {% endif %}
-                        </a>
                         {% endif %}
 
                         <!-- Preferences/Settings Icon -->
