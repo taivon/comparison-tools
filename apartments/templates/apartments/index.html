@@ -580,7 +580,7 @@ function openEditApartmentModal(apartmentData) {
     const modal = document.getElementById('editApartmentModal');
 
     // Populate form fields
-    document.getElementById('edit_apartment_id').value = apartmentData.pk || apartmentData.id || apartmentData.doc_id;
+    document.getElementById('edit_apartment_id').value = apartmentData.pk || apartmentData.id;
     document.getElementById('edit_name').value = apartmentData.name;
     document.getElementById('edit_price').value = apartmentData.price;
     document.getElementById('edit_square_footage').value = apartmentData.square_footage;
@@ -659,7 +659,7 @@ async function handleEditApartment(event) {
     } else {
         // Authenticated user - update on server
         try {
-            const response = await fetch(`/apartment/${apartmentId}/update/`, {
+            const response = await fetch(`/apartments/apartment/${apartmentId}/update/`, {
                 method: 'POST',
                 body: formData,
                 headers: {

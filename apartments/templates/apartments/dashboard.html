@@ -311,7 +311,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
                     <div class="flex items-center justify-between gap-3">
                         <button onclick="openEditApartmentModal({
-                            pk: '{{ apartment.pk|default:apartment.id|default:apartment.doc_id }}',
+                            pk: '{{ apartment.pk }}',
                             name: '{{ apartment.name|escapejs }}',
                             price: {{ apartment.price }},
                             square_footage: {{ apartment.square_footage }},
@@ -403,7 +403,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
             </thead>
             <tbody class="bg-white divide-y divide-gray-200" id="apartmentsTableBody">
                 {% for apartment in apartments %}
-                    <tr class="hover:bg-gray-50 divide-x divide-gray-200" data-apartment-id="{{ apartment.pk|default:apartment.doc_id }}" data-field="name">
+                    <tr class="hover:bg-gray-50 divide-x divide-gray-200" data-apartment-id="{{ apartment.pk }}" data-field="name">
                         <!-- Name -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
@@ -486,7 +486,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         <!-- Actions -->
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button onclick="openEditApartmentModal({
-                                pk: '{{ apartment.pk|default:apartment.id|default:apartment.doc_id }}',
+                                pk: '{{ apartment.pk }}',
                                 name: '{{ apartment.name|escapejs }}',
                                 price: {{ apartment.price }},
                                 square_footage: {{ apartment.square_footage }},
@@ -1400,7 +1400,7 @@ function openEditApartmentModal(apartmentData) {
     const modal = document.getElementById('editApartmentModal');
 
     // Populate form fields
-    document.getElementById('edit_apartment_id').value = apartmentData.pk || apartmentData.id || apartmentData.doc_id;
+    document.getElementById('edit_apartment_id').value = apartmentData.pk || apartmentData.id;
     document.getElementById('edit_name').value = apartmentData.name;
     document.getElementById('edit_price').value = apartmentData.price;
     document.getElementById('edit_square_footage').value = apartmentData.square_footage;
@@ -1479,7 +1479,7 @@ async function handleEditApartment(event) {
     } else {
         // Authenticated user - update on server
         try {
-            const response = await fetch(`/apartment/${apartmentId}/update/`, {
+            const response = await fetch(`/apartments/apartment/${apartmentId}/update/`, {
                 method: 'POST',
                 body: formData,
                 headers: {
