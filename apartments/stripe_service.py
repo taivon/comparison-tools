@@ -431,3 +431,55 @@ class StripeService:
             is_active=True,
             tier="pro",  # Only return paid plans
         ).order_by("billing_interval")
+
+    @staticmethod
+    def get_price_from_stripe(stripe_price_id: str, fallback_amount: float = None):
+        """
+        Fetch price from Stripe API with caching.
+
+        Args:
+            stripe_price_id: Stripe Price ID
+            fallback_amount: Fallback price if Stripe call fails
+
+        Returns:
+            dict with 'amount' (float), 'currency' (str), 'interval' (str)
+        """
+        from django.core.cache import cache
+
+        if not stripe_price_id:
+            logger.warning("No Stripe price ID provided, using fallback")
+            return {
+                "amount": fallback_amount or 0.0,
+                "currency": "usd",
+                "interval": None,
+            }
+
+        cache_key = f"stripe_price_{stripe_price_id}"
+        cached_price = cache.get(cache_key)
+
+        if cached_price:
+            logger.debug(f"Using cached price for {stripe_price_id}")
+            return cached_price
+
+        try:
+            price_obj = stripe.Price.retrieve(stripe_price_id)
+            price_data = {
+                "amount": price_obj.unit_amount / 100,  # Convert cents to dollars
+                "currency": price_obj.currency,
+                "interval": price_obj.recurring.interval if price_obj.recurring else None,
+            }
+            # Cache for 1 hour
+            cache.set(cache_key, price_data, 3600)
+            logger.info(f"Fetched price from Stripe for {stripe_price_id}: ${price_data['amount']}")
+            return price_data
+
+        except stripe.error.StripeError as e:
+            logger.error(f"Error fetching price from Stripe: {e}")
+            if fallback_amount is not None:
+                logger.warning(f"Using fallback price: ${fallback_amount}")
+                return {
+                    "amount": fallback_amount,
+                    "currency": "usd",
+                    "interval": None,
+                }
+            raise

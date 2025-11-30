@@ -611,8 +611,20 @@ def signup_view(request):
     monthly_plan = plans.filter(billing_interval="month").first()
     annual_plan = plans.filter(billing_interval="year").first()
 
-    monthly_price = float(monthly_plan.price_amount) if monthly_plan else 5.00
-    annual_price = float(annual_plan.price_amount) if annual_plan else 50.00
+    # Fetch prices from Stripe (with fallback to database values)
+    from .stripe_service import StripeService
+
+    monthly_price_data = StripeService.get_price_from_stripe(
+        monthly_plan.stripe_price_id if monthly_plan else None, fallback_amount=float(monthly_plan.price_amount) if monthly_plan else 5.00
+    )
+    annual_price_data = StripeService.get_price_from_stripe(
+        annual_plan.stripe_price_id if annual_plan else None, fallback_amount=float(annual_plan.price_amount) if annual_plan else 50.00
+    )
+
+    monthly_price = monthly_price_data["amount"]
+    annual_price = annual_price_data["amount"]
+    monthly_interval = monthly_price_data["interval"] or "month"
+    annual_interval = annual_price_data["interval"] or "year"
     annual_savings = (monthly_price * 12) - annual_price
 
     next_url = request.GET.get("next", "")
@@ -623,6 +635,8 @@ def signup_view(request):
         "has_apartments_to_save": apartment_count > 0,
         "monthly_price": monthly_price,
         "annual_price": annual_price,
+        "monthly_interval": monthly_interval,
+        "annual_interval": annual_interval,
         "annual_savings": annual_savings,
         "monthly_plan_id": monthly_plan.id if monthly_plan else None,
         "annual_plan_id": annual_plan.id if annual_plan else None,
