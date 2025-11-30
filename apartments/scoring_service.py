@@ -40,7 +40,7 @@ class ScoringService:
                     "price_weight": 50,
                     "sqft_weight": 50,
                     "distance_weight": 50,
-                    "discount_calculation": "daily",
+                    "discount_calculation": "weekly",
                 },
             )
         else:

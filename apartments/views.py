@@ -82,7 +82,7 @@ def hotels_coming_soon(request):
     )
 
 
-def calculate_net_effective_price(apt_data, discount_calculation="daily"):
+def calculate_net_effective_price(apt_data, discount_calculation="weekly"):
     """Calculate net effective price for session apartments"""
     price = Decimal(str(apt_data.get("price", 0)))
     lease_length_months = apt_data.get("lease_length_months", 12)
@@ -146,7 +146,7 @@ def dashboard(request):
         favorite_places = list(FavoritePlace.objects.filter(user=request.user))
         preferences, _ = UserPreferences.objects.get_or_create(
             user=request.user,
-            defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "daily"},
+            defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "weekly"},
         )
     else:
         apartments = []
@@ -158,7 +158,7 @@ def dashboard(request):
                     self.price_weight = data.get("price_weight", 50)
                     self.sqft_weight = data.get("sqft_weight", 50)
                     self.distance_weight = data.get("distance_weight", 50)
-                    self.discount_calculation = data.get("discount_calculation", "daily")
+                    self.discount_calculation = data.get("discount_calculation", "weekly")
 
             preferences = SessionPreferences(session_prefs)
         else:
@@ -203,7 +203,7 @@ def dashboard(request):
         form = UserPreferencesForm(initial=initial_data)
 
     # Calculate net effective price for each apartment
-    discount_calc_method = preferences.discount_calculation if preferences else "daily"
+    discount_calc_method = preferences.discount_calculation if preferences else "weekly"
     for apartment in apartments:
         # For Django model apartments, use the property
         if hasattr(apartment, "net_effective_price"):
@@ -513,7 +513,7 @@ def delete_apartment(request, pk):
 def update_preferences(request):
     preferences, _ = UserPreferences.objects.get_or_create(
         user=request.user,
-        defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "daily"},
+        defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "weekly"},
     )
 
     if request.method == "POST":

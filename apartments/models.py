@@ -219,7 +219,7 @@ class Apartment(models.Model):
         total_discount = Decimal("0")
         user_preferences, _ = UserPreferences.objects.get_or_create(
             user=self.user,
-            defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "daily"},
+            defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "weekly"},
         )
 
         if user_preferences.discount_calculation == "daily":
@@ -260,7 +260,7 @@ class UserPreferences(models.Model):
     bathrooms_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
 
     discount_calculation = models.CharField(
-        max_length=20, choices=[("monthly", "Monthly"), ("weekly", "Weekly"), ("daily", "Daily")], default="daily"
+        max_length=20, choices=[("monthly", "Monthly"), ("weekly", "Weekly"), ("daily", "Daily")], default="weekly"
     )
 
     def __str__(self):
