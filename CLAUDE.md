@@ -51,3 +51,28 @@ gcloud app deploy
 - `SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET` - Google OAuth client secret
 - `SECRET_KEY` - Django secret key
 - `GOOGLE_MAPS_API_KEY` - Google Maps API key (for address autocomplete and driving distances)
+
+## UI Patterns
+
+### Tooltips in Tables
+Tooltips inside table cells get clipped by `overflow-x-auto` on the table container. To fix this:
+
+1. Use a CSS class for the tooltip (e.g., `.score-breakdown-tooltip`, `.net-effective-tooltip`)
+2. Add the tooltip to `setupTooltipPositioning()` in dashboard.html JavaScript
+3. This function uses `position: fixed` to escape the overflow container and calculates position using `getBoundingClientRect()`
+
+Example tooltip structure:
+```html
+<div class="group relative">
+    <div class="cursor-help">Trigger content</div>
+    <div class="my-tooltip hidden group-hover:block absolute z-50 w-64 text-xs rounded-lg shadow-lg p-3">
+        Tooltip content
+        <div class="tooltip-arrow absolute left-4 w-3 h-3 transform rotate-45"></div>
+    </div>
+</div>
+```
+
+Then in `setupTooltipPositioning()`:
+```javascript
+const tooltip = group.querySelector('.net-effective-tooltip') || group.querySelector('.score-breakdown-tooltip') || group.querySelector('.my-tooltip');
+```
