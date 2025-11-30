@@ -11,6 +11,12 @@ def subscription_status(request):
     """Add subscription status to all template contexts"""
     # Determine product slug from the URL path
     path = request.path
+
+    # Store current path in session for OAuth redirect (One Tap support)
+    # Skip auth-related paths to avoid redirect loops
+    auth_paths = ["/login/", "/logout/", "/signup/", "/auth/"]
+    if not request.user.is_authenticated and not any(path.startswith(p) for p in auth_paths):
+        request.session["oauth_next"] = request.get_full_path()
     if path.startswith("/apartments"):
         product_slug = "apartments"
     elif path.startswith("/homes"):

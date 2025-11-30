@@ -506,7 +506,7 @@ if DEBUG and (not SOCIAL_AUTH_GOOGLE_OAUTH2_KEY or not SOCIAL_AUTH_GOOGLE_OAUTH2
     logger.warning("See ENVIRONMENT_SECURITY.md for setup instructions")
 
 # Social Auth URLs
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"  # Redirect to home after social auth
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/auth/complete/"  # Redirect to callback to handle next param
 SOCIAL_AUTH_LOGOUT_REDIRECT_URL = "/login/"
 SOCIAL_AUTH_LOGIN_ERROR_URL = "/login/"
 LOGIN_URL = "/login/"

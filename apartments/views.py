@@ -686,6 +686,9 @@ def login_view(request):
         form = LoginForm()
 
     next_url = request.GET.get("next", "")
+    # Store next URL in session for OAuth flow
+    if next_url:
+        request.session["oauth_next"] = next_url
     return render(
         request,
         "apartments/login.html",

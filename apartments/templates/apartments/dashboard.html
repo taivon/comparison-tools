@@ -312,7 +312,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     </div>
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <a href="{% url 'login' %}" class="text-sm font-medium text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 min-h-[44px] flex items-center px-3 touch-manipulation">
+                    <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" class="text-sm font-medium text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 min-h-[44px] flex items-center px-3 touch-manipulation">
                         Sign In
                     </a>
                     <a href="{% url 'signup' %}" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors min-h-[44px] touch-manipulation flex-1 sm:flex-initial">
