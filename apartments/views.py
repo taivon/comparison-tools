@@ -370,6 +370,9 @@ def create_apartment(request):
                 if apartment.latitude and apartment.longitude:
                     calculate_and_cache_distances(apartment)
 
+                # Recalculate scores for all apartments
+                recalculate_user_scores(request.user, PRODUCT_SLUG)
+
                 if geocode_warning:
                     messages.warning(request, f"Apartment added, but couldn't locate the address. {geocode_warning}")
                 else:
@@ -447,6 +450,9 @@ def update_apartment(request, pk):
             if address_changed and apartment.latitude and apartment.longitude:
                 calculate_and_cache_distances(apartment)
 
+            # Recalculate scores for all apartments since data changed
+            recalculate_user_scores(request.user, PRODUCT_SLUG)
+
             if geocode_warning:
                 messages.warning(request, f"Apartment updated, but couldn't locate the address. {geocode_warning}")
             else:
@@ -483,6 +489,10 @@ def delete_apartment(request, pk):
 
         apartment = get_object_or_404(Apartment, pk=pk, user=request.user)
         apartment.delete()
+
+        # Recalculate scores for remaining apartments
+        recalculate_user_scores(request.user, PRODUCT_SLUG)
+
         messages.success(request, "Apartment deleted successfully!")
 
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
