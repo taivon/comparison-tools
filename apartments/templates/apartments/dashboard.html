@@ -696,6 +696,44 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         </div>
                         {% endif %}
                     </div>
+
+                    <!-- Distance to Favorite Places -->
+                    {% if favorite_places %}
+                    <div class="border-t border-gray-100 dark:border-neutral-700 pt-3 space-y-1.5 text-sm">
+                        {% if apartment.distance_data %}
+                            {% for label, info in apartment.distance_data.items %}
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-500 truncate mr-2">{{ label }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white flex-shrink-0">
+                                    {% if info.distance != None %}
+                                        {{ info.distance|floatformat:1 }} mi
+                                        {% if info.travel_time %}
+                                            <span class="text-gray-500 font-normal">({{ info.travel_time }} min)</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        {% elif apartment.average_distance != None %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Avg Distance</span>
+                                <span class="font-medium text-gray-900 dark:text-white">
+                                    {{ apartment.average_distance|floatformat:1 }} mi
+                                    {% if apartment.average_travel_time %}
+                                        <span class="text-gray-500 font-normal">({{ apartment.average_travel_time }} min)</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        {% else %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Distance</span>
+                                <span class="text-gray-400">Not available</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Card Footer: Edit/Remove -->
