@@ -175,7 +175,9 @@ def dashboard(request):
                 "net_rent_weight": form.cleaned_data.get("net_rent_weight", 0),
                 "bedrooms_weight": form.cleaned_data.get("bedrooms_weight", 0),
                 "bathrooms_weight": form.cleaned_data.get("bathrooms_weight", 0),
+                "discount_weight": form.cleaned_data.get("discount_weight", 0),
                 "discount_calculation": form.cleaned_data["discount_calculation"],
+                "factor_order": form.cleaned_data.get("factor_order", "price,sqft,distance,netRent,bedrooms,bathrooms,discount"),
             }
 
             if request.user.is_authenticated:
@@ -198,7 +200,9 @@ def dashboard(request):
                 "net_rent_weight": getattr(preferences, "net_rent_weight", 0),
                 "bedrooms_weight": getattr(preferences, "bedrooms_weight", 0),
                 "bathrooms_weight": getattr(preferences, "bathrooms_weight", 0),
+                "discount_weight": getattr(preferences, "discount_weight", 0),
                 "discount_calculation": preferences.discount_calculation,
+                "factor_order": getattr(preferences, "factor_order", "price,sqft,distance,netRent,bedrooms,bathrooms,discount"),
             }
         form = UserPreferencesForm(initial=initial_data)
 

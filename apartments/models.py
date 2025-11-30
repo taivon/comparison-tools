@@ -258,9 +258,18 @@ class UserPreferences(models.Model):
     net_rent_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     bedrooms_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     bathrooms_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    discount_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
 
     discount_calculation = models.CharField(
         max_length=20, choices=[("monthly", "Monthly"), ("weekly", "Weekly"), ("daily", "Daily")], default="weekly"
+    )
+
+    # Store the explicit order of scoring factors (comma-separated factor keys)
+    # Default order: price,sqft,distance,netRent,bedrooms,bathrooms,discount
+    factor_order = models.CharField(
+        max_length=200,
+        default="price,sqft,distance,netRent,bedrooms,bathrooms,discount",
+        blank=True,
     )
 
     def __str__(self):

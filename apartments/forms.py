@@ -273,12 +273,23 @@ class UserPreferencesForm(forms.Form):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         widget=forms.HiddenInput(),
     )
+    discount_weight = forms.IntegerField(
+        initial=0,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.HiddenInput(),
+    )
     discount_calculation = forms.ChoiceField(
         choices=DISCOUNT_CHOICES,
         initial="daily",
         widget=forms.RadioSelect(
             attrs={"class": "mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}
         ),
+    )
+    factor_order = forms.CharField(
+        initial="price,sqft,distance,netRent,bedrooms,bathrooms,discount",
+        required=False,
+        widget=forms.HiddenInput(),
     )
 
 

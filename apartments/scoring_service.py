@@ -16,7 +16,7 @@ class ScoringService:
     # Free tier: only price + distance (2 factors)
     # Pro tier: all factors
     FREE_TIER_FACTORS = ["price", "distance"]
-    PRO_TIER_FACTORS = ["price", "net_effective_rent", "sqft", "distance", "bedrooms", "bathrooms"]
+    PRO_TIER_FACTORS = ["price", "net_effective_rent", "sqft", "distance", "bedrooms", "bathrooms", "discount"]
 
     def __init__(self, user, apartments: list[Apartment], product_slug: str = "apartments"):
         """
@@ -125,6 +125,10 @@ class ScoringService:
         else:
             metrics["distance"] = (Decimal("0"), Decimal("0"))
 
+        # Discount amount (total savings over lease)
+        discount_values = [self._get_discount_amount(apt) for apt in self.apartments]
+        metrics["discount"] = (min(discount_values), max(discount_values))
+
         return metrics
 
     def _get_average_distance(self, apartment: Apartment) -> Decimal | None:
@@ -145,6 +149,42 @@ class ScoringService:
             return None
 
         return sum(distances) / len(distances)
+
+    def _get_discount_amount(self, apartment: Apartment) -> Decimal:
+        """
+        Calculate total discount amount (savings) for an apartment
+
+        Args:
+            apartment: Apartment instance
+
+        Returns:
+            Total discount amount in dollars
+        """
+        total_discount = Decimal("0")
+        discount_calc = self.preferences.discount_calculation if self.preferences else "weekly"
+
+        if discount_calc == "daily":
+            daily_rate = apartment.price * Decimal("12") / Decimal("365")
+            if apartment.months_free > 0:
+                days_free = Decimal(str(apartment.months_free)) * Decimal("365") / Decimal("12")
+                total_discount += daily_rate * days_free
+            if apartment.weeks_free > 0:
+                total_discount += daily_rate * Decimal("7") * Decimal(str(apartment.weeks_free))
+        elif discount_calc == "weekly":
+            weekly_rate = apartment.price * Decimal("12") / Decimal("52")
+            if apartment.months_free > 0:
+                weeks_free = Decimal(str(apartment.months_free)) * Decimal("52") / Decimal("12")
+                total_discount += weekly_rate * weeks_free
+            if apartment.weeks_free > 0:
+                total_discount += weekly_rate * Decimal(str(apartment.weeks_free))
+        else:  # monthly
+            if apartment.months_free > 0:
+                total_discount += apartment.price * Decimal(str(apartment.months_free))
+            if apartment.weeks_free > 0:
+                total_discount += apartment.price * Decimal(str(apartment.weeks_free)) / Decimal("4")
+
+        total_discount += apartment.flat_discount
+        return total_discount
 
     def get_active_weights(self) -> dict[str, int]:
         """
@@ -168,6 +208,7 @@ class ScoringService:
             "distance": self.preferences.distance_weight,
             "bedrooms": getattr(self.preferences, "bedrooms_weight", 0),
             "bathrooms": getattr(self.preferences, "bathrooms_weight", 0),
+            "discount": getattr(self.preferences, "discount_weight", 0),
         }
 
         for factor in available_factors:
@@ -240,6 +281,7 @@ class ScoringService:
             "bedrooms": "Bedrooms",
             "bathrooms": "Bathrooms",
             "distance": "Location",
+            "discount": "Discount",
         }
 
         # Calculate weighted score with breakdown
@@ -273,6 +315,9 @@ class ScoringService:
                 if value is None:
                     continue
                 invert = True
+            elif factor == "discount":
+                value = self._get_discount_amount(apartment)
+                invert = False  # Higher discount is better
             else:
                 continue
 
