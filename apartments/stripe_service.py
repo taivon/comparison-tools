@@ -483,3 +483,106 @@ class StripeService:
                     "interval": None,
                 }
             raise
+
+    @staticmethod
+    def sync_plans_from_stripe(product_slug: str = "apartments"):
+        """
+        Sync plans from Stripe - auto-create Product and Plan records.
+
+        This eliminates manual setup by pulling everything from Stripe.
+        Creates/updates Product and Plan records in the database.
+
+        Args:
+            product_slug: Product slug (default: "apartments")
+
+        Returns:
+            dict with 'monthly' and 'annual' Plan objects
+        """
+        from django.core.cache import cache
+
+        from .models import Plan, Product
+
+        cache_key = f"synced_plans_{product_slug}"
+        cached = cache.get(cache_key)
+        if cached:
+            logger.debug(f"Using cached plans for {product_slug}")
+            return cached
+
+        try:
+            # Get or create Product
+            product, created = Product.objects.get_or_create(
+                slug=product_slug,
+                defaults={
+                    "name": product_slug.title(),
+                    "description": f"{product_slug.title()} comparison tool",
+                    "is_active": True,
+                    "free_tier_limit": 2,
+                },
+            )
+            if created:
+                logger.info(f"Created Product: {product.name}")
+
+            # Fetch all active recurring prices from Stripe
+            prices = stripe.Price.list(active=True, type="recurring", limit=100)
+
+            monthly_plan = None
+            annual_plan = None
+
+            for price in prices.data:
+                if not price.recurring:
+                    continue
+
+                # Extract price details
+                amount = price.unit_amount / 100
+                interval = price.recurring.interval
+                price_id = price.id
+
+                # Determine tier and plan name
+                tier = "pro"  # Assuming all paid plans are "pro"
+                plan_name = f"Pro {interval.title()}"
+
+                # Get or create Plan
+                plan, plan_created = Plan.objects.get_or_create(
+                    stripe_price_id=price_id,
+                    defaults={
+                        "product": product,
+                        "name": plan_name,
+                        "tier": tier,
+                        "price_amount": amount,
+                        "billing_interval": interval,
+                        "is_active": True,
+                    },
+                )
+
+                # Update price if changed
+                if not plan_created and plan.price_amount != amount:
+                    plan.price_amount = amount
+                    plan.save()
+                    logger.info(f"Updated price for {plan.name}: ${amount}")
+
+                if plan_created:
+                    logger.info(f"Created Plan: {plan.name} (${amount}/{interval})")
+
+                # Store references
+                if interval == "month":
+                    monthly_plan = plan
+                elif interval == "year":
+                    annual_plan = plan
+
+            result = {"monthly": monthly_plan, "annual": annual_plan}
+
+            # Cache for 1 hour
+            cache.set(cache_key, result, 3600)
+
+            return result
+
+        except stripe.error.StripeError as e:
+            logger.error(f"Error syncing plans from Stripe: {e}")
+            # Fallback to database
+            monthly_plan = Plan.objects.filter(
+                product__slug=product_slug, is_active=True, tier="pro", billing_interval="month"
+            ).first()
+            annual_plan = Plan.objects.filter(
+                product__slug=product_slug, is_active=True, tier="pro", billing_interval="year"
+            ).first()
+            return {"monthly": monthly_plan, "annual": annual_plan}

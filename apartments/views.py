@@ -605,26 +605,34 @@ def signup_view(request):
 
     apartment_count = 0
 
-    # Fetch plans from database
-    plans = Plan.objects.filter(product__slug=PRODUCT_SLUG, is_active=True, tier="pro").order_by("billing_interval")
-
-    monthly_plan = plans.filter(billing_interval="month").first()
-    annual_plan = plans.filter(billing_interval="year").first()
-
-    # Fetch prices from Stripe (with fallback to database values)
+    # Auto-sync plans from Stripe (creates/updates Product and Plan records)
     from .stripe_service import StripeService
 
-    monthly_price_data = StripeService.get_price_from_stripe(
-        monthly_plan.stripe_price_id if monthly_plan else None, fallback_amount=float(monthly_plan.price_amount) if monthly_plan else 5.00
-    )
-    annual_price_data = StripeService.get_price_from_stripe(
-        annual_plan.stripe_price_id if annual_plan else None, fallback_amount=float(annual_plan.price_amount) if annual_plan else 50.00
-    )
+    synced_plans = StripeService.sync_plans_from_stripe(PRODUCT_SLUG)
+    monthly_plan = synced_plans.get("monthly")
+    annual_plan = synced_plans.get("annual")
 
-    monthly_price = monthly_price_data["amount"]
-    annual_price = annual_price_data["amount"]
-    monthly_interval = monthly_price_data["interval"] or "month"
-    annual_interval = annual_price_data["interval"] or "year"
+    # Fetch live prices from Stripe
+    if monthly_plan:
+        monthly_price_data = StripeService.get_price_from_stripe(
+            monthly_plan.stripe_price_id, fallback_amount=float(monthly_plan.price_amount)
+        )
+        monthly_price = monthly_price_data["amount"]
+        monthly_interval = monthly_price_data["interval"] or "month"
+    else:
+        monthly_price = 5.00
+        monthly_interval = "month"
+
+    if annual_plan:
+        annual_price_data = StripeService.get_price_from_stripe(
+            annual_plan.stripe_price_id, fallback_amount=float(annual_plan.price_amount)
+        )
+        annual_price = annual_price_data["amount"]
+        annual_interval = annual_price_data["interval"] or "year"
+    else:
+        annual_price = 50.00
+        annual_interval = "year"
+
     annual_savings = (monthly_price * 12) - annual_price
 
     next_url = request.GET.get("next", "")
