@@ -225,10 +225,6 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                 {% endif %}
                                 </span>
                             </span>
-                        {% else %}
-                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                Premium
-                            </span>
                         {% endif %}
                     </p>
                 </div>
@@ -343,18 +339,18 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-900 dark:text-white">
                             {% if apartment_count >= apartment_limit %}
-                                You've reached the free plan limit ({{ apartment_limit }} apartments). Upgrade to Premium for unlimited comparisons!
+                                You've reached the free plan limit ({{ apartment_limit }} apartments). Upgrade to Pro for unlimited comparisons!
                             {% elif apartment_count >= 1 %}
-                                You're using {{ apartment_count }}/{{ apartment_limit }} apartments on the free plan. Upgrade to Premium for unlimited comparisons starting at $9.99/month!
+                                You're using {{ apartment_count }}/{{ apartment_limit }} apartments on the free plan. Upgrade to Pro for unlimited comparisons starting at $9.99/month!
                             {% else %}
-                                Upgrade to Premium for unlimited apartment comparisons starting at $9.99/month!
+                                Upgrade to Pro for unlimited apartment comparisons starting at $9.99/month!
                             {% endif %}
                         </p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <a href="{% url 'signup' %}" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-brand-purple hover:bg-brand-purple-dark transition-colors min-h-[44px] touch-manipulation flex-1 sm:flex-initial">
-                        Upgrade to Premium
+                        Upgrade to Pro
                     </a>
                     <button onclick="dismissUpgradePrompt()" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -1249,7 +1245,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             <svg class="w-5 h-5 text-brand-purple mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
-                            <h4 class="text-sm font-semibold text-gray-900">Premium Scoring Factors</h4>
+                            <h4 class="text-sm font-semibold text-gray-900">Pro Scoring Factors</h4>
                         </div>
                         <p class="text-xs text-gray-600 mb-4">Adjust the weight of each factor. Higher values mean that factor matters more in your apartment score.</p>
 
@@ -2608,7 +2604,7 @@ function createScoreTunerModal() {
                 </svg>
                 <div class="flex-1">
                     <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">Get 2 Additional Ranking Factors</h4>
-                    <p class="text-xs text-purple-700 dark:text-purple-300 mb-2">Upgrade to Premium to rank up to 4 factors total, including:</p>
+                    <p class="text-xs text-purple-700 dark:text-purple-300 mb-2">Upgrade to Pro to rank up to 4 factors total, including:</p>
                     <ul class="text-xs text-purple-700 dark:text-purple-300 list-disc list-inside space-y-0.5">
                         <li>Base Rent</li>
                         <li>Distance to Favorite Places</li>
@@ -2616,7 +2612,7 @@ function createScoreTunerModal() {
                         <li>Bathrooms</li>
                     </ul>
                     <a href="/signup" class="inline-flex items-center mt-2 px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors">
-                        Upgrade to Premium
+                        Upgrade to Pro
                     </a>
                 </div>
             </div>

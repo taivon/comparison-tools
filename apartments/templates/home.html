@@ -132,6 +132,11 @@
                         <div class="relative group">
                             <button type="button" class="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-brand-purple focus:outline-none border border-gray-200 dark:border-gray-600 rounded-lg">
                                 <span class="hidden sm:inline">{{ user.first_name|default:user.username }}</span>
+                                {% if user_has_premium %}
+                                    <span class="hidden sm:inline-flex ml-1.5 px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 rounded-full">Pro</span>
+                                {% else %}
+                                    <span class="hidden sm:inline-flex ml-1.5 px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-full">Free</span>
+                                {% endif %}
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
