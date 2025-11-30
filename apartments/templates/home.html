@@ -35,6 +35,12 @@
     <!-- Keywords -->
     <meta name="keywords" content="apartment comparison tool, rent concession calculator, net effective rent calculator, apartment hunting, compare apartments, rental comparison, commute time calculator, driving distance to work, price per square foot, apartment finder, best apartment comparison tool">
 
+    <!-- Google AdSense (for non-premium users) -->
+    {% if not user.is_authenticated or not user_has_premium %}
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1524636644342951"
+     crossorigin="anonymous"></script>
+    {% endif %}
+
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
     {
