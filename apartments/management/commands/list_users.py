@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
+from apartments.models import user_has_premium
+
 
 class Command(BaseCommand):
     help = "List all users in the system"
@@ -12,7 +14,7 @@ class Command(BaseCommand):
         self.stdout.write("-" * 80)
 
         for user in users:
-            premium_status = "Premium" if user.is_staff else "Free"
+            premium_status = "Premium" if user_has_premium(user, "apartments") else "Free"
             self.stdout.write(
                 f"ID: {user.id:3d} | "
                 f"Username: {user.username:20s} | "

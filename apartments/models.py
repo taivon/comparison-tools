@@ -132,8 +132,8 @@ def user_has_premium(user, product_slug: str) -> bool:
     if not user.is_authenticated:
         return False
 
-    # Staff always has premium access
-    if user.is_staff:
+    # Staff and superusers always have premium access
+    if user.is_staff or user.is_superuser:
         return True
 
     subscription = get_user_subscription(user, product_slug)
