@@ -387,11 +387,36 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             <div class="font-bold text-gray-900 dark:text-white">{{ apartment.name }}</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-2xl font-bold {% if apartment.score >= 9 %}text-green-700{% elif apartment.score >= 7 %}text-green-600{% elif apartment.score >= 5 %}text-yellow-600{% else %}text-red-600{% endif %}">
-                            {{ apartment.score|floatformat:1 }}
+                    <div class="text-right relative group/heroscore">
+                        <div class="flex items-center justify-end cursor-help">
+                            <div class="text-2xl font-bold {% if apartment.score >= 9 %}text-green-700{% elif apartment.score >= 7 %}text-green-600{% elif apartment.score >= 5 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                {{ apartment.score|floatformat:1 }}
+                            </div>
+                            <svg class="h-4 w-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
                         </div>
                         <div class="text-xs text-gray-500">/10</div>
+                        <!-- Score Breakdown Tooltip -->
+                        <div class="absolute right-0 top-full mt-2 w-64 p-3 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover/heroscore:opacity-100 group-hover/heroscore:visible transition-all z-50 text-left">
+                            <p class="font-semibold mb-2 text-sm">Score Breakdown</p>
+                            {% if apartment.score_breakdown %}
+                                <div class="space-y-1.5">
+                                    {% for factor in apartment.score_breakdown.factors %}
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-300">{{ factor.name }} <span class="text-gray-500">({{ factor.weight_pct }}%)</span></span>
+                                        <span class="font-medium">+{{ factor.contribution }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="border-t border-gray-700 mt-2 pt-2 flex justify-between items-center font-semibold">
+                                    <span>Total</span>
+                                    <span>{{ apartment.score|floatformat:1 }}/10</span>
+                                </div>
+                            {% else %}
+                                <p class="text-gray-400">Score breakdown not available</p>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 <div class="text-sm text-gray-600 dark:text-gray-300 mt-2">
@@ -476,8 +501,24 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                             <svg class="h-3 w-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
-                                            <div class="absolute left-1/2 -translate-x-1/2 bottom-5 w-56 p-2 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50">
-                                                <p>Scores are relative (0-10). 10 = best match for your preferences. Adding/removing apartments recalculates scores.</p>
+                                            <div class="absolute right-0 bottom-5 w-64 p-3 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50">
+                                                <p class="font-semibold mb-2 text-sm">Score Breakdown</p>
+                                                {% if apartment.score_breakdown %}
+                                                    <div class="space-y-1.5">
+                                                        {% for factor in apartment.score_breakdown.factors %}
+                                                        <div class="flex justify-between items-center">
+                                                            <span class="text-gray-300">{{ factor.name }} <span class="text-gray-500">({{ factor.weight_pct }}%)</span></span>
+                                                            <span class="font-medium">+{{ factor.contribution }}</span>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div class="border-t border-gray-700 mt-2 pt-2 flex justify-between items-center font-semibold">
+                                                        <span>Total</span>
+                                                        <span>{{ apartment.score|floatformat:1 }}/10</span>
+                                                    </div>
+                                                {% else %}
+                                                    <p class="text-gray-400">Score breakdown not available</p>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
@@ -763,16 +804,38 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         {% if user.is_authenticated %}
                         <td class="px-6 py-4 whitespace-nowrap bg-yellow-50 dark:bg-yellow-900/10">
                             {% if apartment.score %}
-                            <div class="relative score-cell" data-score="{{ apartment.score|floatformat:1 }}"
-                                 data-price-score="{{ apartment.price_score|default:'N/A' }}"
-                                 data-sqft-score="{{ apartment.sqft_score|default:'N/A' }}"
-                                 data-distance-score="{{ apartment.distance_score|default:'N/A' }}">
-                                <span class="text-2xl font-bold
-                                    {% if apartment.score >= 9 %}text-green-700{% elif apartment.score >= 7 %}text-green-600{% elif apartment.score >= 5 %}text-yellow-600{% else %}text-red-600{% endif %}"
-                                    data-field="score">
-                                    {{ apartment.score|floatformat:1 }}
-                                </span>
-                                <span class="text-sm text-gray-500 dark:text-gray-400 ml-1">/10</span>
+                            <div class="relative group/score" data-score="{{ apartment.score|floatformat:1 }}">
+                                <div class="flex items-center cursor-help">
+                                    <span class="text-2xl font-bold
+                                        {% if apartment.score >= 9 %}text-green-700{% elif apartment.score >= 7 %}text-green-600{% elif apartment.score >= 5 %}text-yellow-600{% else %}text-red-600{% endif %}"
+                                        data-field="score">
+                                        {{ apartment.score|floatformat:1 }}
+                                    </span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400 ml-1">/10</span>
+                                    <svg class="h-4 w-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <!-- Score Breakdown Tooltip -->
+                                <div class="absolute left-0 top-full mt-2 w-64 p-3 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover/score:opacity-100 group-hover/score:visible transition-all z-50">
+                                    <p class="font-semibold mb-2 text-sm">Score Breakdown</p>
+                                    {% if apartment.score_breakdown %}
+                                        <div class="space-y-1.5">
+                                            {% for factor in apartment.score_breakdown.factors %}
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-300">{{ factor.name }} <span class="text-gray-500">({{ factor.weight_pct }}%)</span></span>
+                                                <span class="font-medium">+{{ factor.contribution }}</span>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="border-t border-gray-700 mt-2 pt-2 flex justify-between items-center font-semibold">
+                                            <span>Total</span>
+                                            <span>{{ apartment.score|floatformat:1 }}/10</span>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-gray-400">Score breakdown not available</p>
+                                    {% endif %}
+                                </div>
                             </div>
                             {% else %}
                             <div class="text-sm text-gray-400">-</div>

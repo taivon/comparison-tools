@@ -204,6 +204,21 @@ class ScoringService:
         Returns:
             Score from 0-10, or None if cannot be calculated
         """
+        breakdown = self.calculate_score_breakdown(apartment)
+        if breakdown is None:
+            return None
+        return breakdown["total_score"]
+
+    def calculate_score_breakdown(self, apartment: Apartment) -> dict | None:
+        """
+        Calculate score breakdown for an apartment showing contribution from each factor
+
+        Args:
+            apartment: Apartment instance to score
+
+        Returns:
+            Dictionary with score breakdown, or None if cannot be calculated
+        """
         # Get active weights and normalize
         raw_weights = self.get_active_weights()
         if not raw_weights:
@@ -217,8 +232,19 @@ class ScoringService:
         # Check if any apartments have discounts
         has_discounts = any(apt.net_effective_price != apt.price for apt in self.apartments)
 
-        # Calculate weighted score
+        # Factor labels for display
+        factor_labels = {
+            "price": "Rent",
+            "net_effective_rent": "Net Effective Rent",
+            "sqft": "Square Footage",
+            "bedrooms": "Bedrooms",
+            "bathrooms": "Bathrooms",
+            "distance": "Location",
+        }
+
+        # Calculate weighted score with breakdown
         weighted_score = 0.0
+        factors = []
 
         for factor, weight in normalized_weights.items():
             if factor not in min_max_values:
@@ -228,36 +254,66 @@ class ScoringService:
 
             # Get the value for this apartment
             if factor == "price":
-                # Use net effective rent if any apartments have discounts
                 value = apartment.net_effective_price if has_discounts else apartment.price
-                invert = True  # Lower price is better
+                invert = True
             elif factor == "net_effective_rent":
                 value = apartment.net_effective_price
-                invert = True  # Lower rent is better
+                invert = True
             elif factor == "sqft":
                 value = Decimal(apartment.square_footage)
-                invert = False  # Higher sqft is better
+                invert = False
             elif factor == "bedrooms":
                 value = apartment.bedrooms
-                invert = False  # More bedrooms is better
+                invert = False
             elif factor == "bathrooms":
                 value = apartment.bathrooms
-                invert = False  # More bathrooms is better
+                invert = False
             elif factor == "distance":
                 value = self._get_average_distance(apartment)
                 if value is None:
-                    continue  # Skip if no distance data
-                invert = True  # Closer is better
+                    continue
+                invert = True
             else:
                 continue
 
-            # Normalize and add to weighted score
+            # Normalize value
             normalized = self.normalize_value(value, min_val, max_val, invert=invert)
-            weighted_score += normalized * weight
+            contribution = normalized * weight
+            weighted_score += contribution
 
-        # Map to 0-10 scale and round to 1 decimal place
+            # Store breakdown info
+            factors.append(
+                {
+                    "name": factor_labels.get(factor, factor),
+                    "weight_pct": round(weight * 100),
+                    "normalized_score": round(normalized * 10, 1),
+                    "contribution": round(contribution * 10, 1),
+                }
+            )
+
+        # Sort by weight (highest first)
+        factors.sort(key=lambda x: x["weight_pct"], reverse=True)
+
         final_score = round(weighted_score * 10, 1)
-        return final_score
+
+        return {
+            "total_score": final_score,
+            "factors": factors,
+        }
+
+    def get_all_score_breakdowns(self) -> dict[int, dict]:
+        """
+        Calculate score breakdowns for all apartments
+
+        Returns:
+            Dictionary mapping apartment IDs to their score breakdowns
+        """
+        breakdowns = {}
+        for apartment in self.apartments:
+            breakdown = self.calculate_score_breakdown(apartment)
+            if breakdown is not None:
+                breakdowns[apartment.id] = breakdown
+        return breakdowns
 
     def calculate_all_scores(self) -> dict[int, float]:
         """

@@ -220,13 +220,16 @@ def dashboard(request):
 
     # Calculate apartment scores
     apartment_scores = {}
+    score_breakdowns = {}
     if apartments and request.user.is_authenticated:
         scoring_service = ScoringService(request.user, apartments, PRODUCT_SLUG)
         apartment_scores = scoring_service.get_or_calculate_scores()
+        score_breakdowns = scoring_service.get_all_score_breakdowns()
 
-        # Attach scores to apartments for template use
+        # Attach scores and breakdowns to apartments for template use
         for apartment in apartments:
             apartment.score = apartment_scores.get(apartment.id)
+            apartment.score_breakdown = score_breakdowns.get(apartment.id)
 
     # Sort apartments by score (highest first) if scores available, otherwise use old sorting
     if apartment_scores:
