@@ -254,14 +254,6 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             {% endif %}
                         {% endif %}
 
-                        <!-- Preferences/Settings Icon -->
-                        <button onclick="openPreferencesModal()" class="p-2.5 sm:p-2 text-gray-700 hover:text-brand-purple hover:bg-gray-50 rounded-lg border border-gray-300 transition-colors touch-manipulation" title="Calculation Settings">
-                            <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                        </button>
-
                     </div>
 
                     {% if can_add_apartment %}
@@ -1192,79 +1184,17 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
     </div>
 </div>
 
-<!-- Preferences Modal -->
-<div id="preferencesModal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-0 px-0 pb-0 text-center sm:block sm:p-0 sm:pt-4 sm:px-4 sm:pb-20">
-        <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" aria-hidden="true" onclick="closePreferencesModal()"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-none sm:rounded-xl text-left overflow-hidden shadow-xl transform transition-all w-full h-full sm:h-auto sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-            <form id="preferencesForm" method="post" action="{% url 'apartments:dashboard' %}">
-                {% csrf_token %}
-                <div class="bg-white px-6 pt-6 pb-4">
-                    <div class="mb-6">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 bg-brand-purple/10 rounded-lg flex items-center justify-center mr-3">
-                                    <svg class="w-4 h-4 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">Calculation Settings</h3>
-                                    <p class="text-sm text-gray-500">Configure how discounts are calculated</p>
-                                </div>
-                            </div>
-                            <button type="button" onclick="closePreferencesModal()" class="text-gray-400 hover:text-gray-600">
-                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Discount Calculation Method -->
-                    <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <h4 class="text-sm font-semibold text-gray-900 mb-3">Discount Calculation Method</h4>
-                        <p class="text-xs text-gray-600 mb-3">Choose how to calculate the value of free months/weeks when comparing apartments:</p>
-                        <div class="space-y-3">
-                            <label class="flex items-start">
-                                <input type="radio" name="discount_calculation" value="daily" {% if preferences.discount_calculation == 'daily' or not preferences.discount_calculation %}checked{% endif %}
-                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 mt-0.5">
-                                <span class="ml-3 text-sm text-gray-700">
-                                    <span class="font-medium">Daily Rate</span> - Divides annual rent by 365 days<br>
-                                    <span class="text-xs text-gray-500">Example: $24,000/year ÷ 365 = $65.75/day</span>
-                                </span>
-                            </label>
-                            <label class="flex items-start">
-                                <input type="radio" name="discount_calculation" value="weekly" {% if preferences.discount_calculation == 'weekly' %}checked{% endif %}
-                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 mt-0.5">
-                                <span class="ml-3 text-sm text-gray-700">
-                                    <span class="font-medium">Weekly Rate</span> - Divides annual rent by 52 weeks<br>
-                                    <span class="text-xs text-gray-500">Example: $24,000/year ÷ 52 = $461.54/week</span>
-                                </span>
-                            </label>
-                        </div>
-                        <div class="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                            <strong>Note:</strong> Changing this will recalculate the Net Effective Rent for all apartments with discounts
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse border-t border-gray-200">
-                    <button type="submit" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-6 py-3 bg-brand-purple text-sm font-medium text-white hover:bg-brand-purple-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:ml-3 sm:w-auto">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        Save Settings
-                    </button>
-                    <button type="button" onclick="closePreferencesModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:mt-0 sm:w-auto">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Hidden Preferences Form (used by Score Weights modal) -->
+<form id="preferencesForm" method="post" action="{% url 'apartments:dashboard' %}" class="hidden">
+    {% csrf_token %}
+    <input type="hidden" name="price_weight" value="{{ preferences.price_weight|default:50 }}">
+    <input type="hidden" name="sqft_weight" value="{{ preferences.sqft_weight|default:50 }}">
+    <input type="hidden" name="distance_weight" value="{{ preferences.distance_weight|default:50 }}">
+    <input type="hidden" name="net_rent_weight" value="{{ preferences.net_rent_weight|default:0 }}">
+    <input type="hidden" name="bedrooms_weight" value="{{ preferences.bedrooms_weight|default:0 }}">
+    <input type="hidden" name="bathrooms_weight" value="{{ preferences.bathrooms_weight|default:0 }}">
+    <input type="hidden" name="discount_calculation" value="{{ preferences.discount_calculation|default:'daily' }}">
+</form>
 
 <!-- Edit Apartment Modal -->
 <div id="editApartmentModal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -2068,35 +1998,6 @@ function setupTooltipPositioning() {
     });
 }
 
-// Preferences modal functions
-function openPreferencesModal() {
-    const modal = document.getElementById('preferencesModal');
-
-    // Load current preferences
-    const discountCalc = '{{ preferences.discount_calculation|default:"daily" }}';
-
-    // Set radio button for discount calculation method
-    const radios = document.querySelectorAll('input[name="discount_calculation"]');
-    radios.forEach(radio => {
-        radio.checked = (radio.value === discountCalc);
-    });
-
-    modal.classList.remove('hidden');
-}
-
-function closePreferencesModal() {
-    document.getElementById('preferencesModal').classList.add('hidden');
-}
-
-function updateWeightValue(name, value) {
-    // Update the display value
-    document.getElementById(name + '_value').textContent = value;
-    // Update the hidden input field
-    const hiddenInput = document.getElementById(name + '_input');
-    if (hiddenInput) {
-        hiddenInput.value = value;
-    }
-}
 
 function dismissSignupPrompt() {
     const prompt = document.getElementById('signupPrompt');
@@ -2437,6 +2338,7 @@ function openScoreTuner() {
 }
 
 function createScoreTunerModal() {
+    const discountCalcMethod = '{{ preferences.discount_calculation|default:"daily" }}';
     const modal = document.createElement('div');
     modal.id = 'scoreTunerModal';
     modal.className = 'hidden fixed inset-0 z-50 overflow-y-auto';
@@ -2528,6 +2430,28 @@ function createScoreTunerModal() {
                     </div>
 
                     ${slidersContent}
+
+                    <!-- Discount Calculation Method -->
+                    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-neutral-700">
+                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Discount Calculation</h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">How to calculate the value of free months/weeks:</p>
+                        <div class="space-y-2">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-700 cursor-pointer">
+                                <input type="radio" name="discount_calc_tuner" value="daily" ${discountCalcMethod === 'daily' ? 'checked' : ''}
+                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 dark:border-neutral-600">
+                                <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                                    <span class="font-medium">Daily Rate</span> - Annual rent ÷ 365 days
+                                </span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-700 cursor-pointer">
+                                <input type="radio" name="discount_calc_tuner" value="weekly" ${discountCalcMethod === 'weekly' ? 'checked' : ''}
+                                       class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 dark:border-neutral-600">
+                                <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                                    <span class="font-medium">Weekly Rate</span> - Annual rent ÷ 52 weeks
+                                </span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="bg-gray-50 dark:bg-neutral-900 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-neutral-700">
                     <button onclick="saveScoreWeights()" type="button" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-brand-purple text-base font-medium text-white hover:bg-brand-purple-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:ml-3 sm:w-auto sm:text-sm">
@@ -2982,6 +2906,19 @@ function saveScoreWeights() {
         if (bedroomsInput) bedroomsInput.value = factorWeights.bedrooms;
         if (bathroomsInput) bathroomsInput.value = factorWeights.bathrooms;
         if (distanceInput) distanceInput.value = factorWeights.distance;
+    }
+
+    // Get discount calculation method from Score Tuner modal
+    const discountCalcRadio = document.querySelector('input[name="discount_calc_tuner"]:checked');
+    if (discountCalcRadio) {
+        let discountInput = form.querySelector('input[name="discount_calculation"]');
+        if (!discountInput) {
+            discountInput = document.createElement('input');
+            discountInput.type = 'hidden';
+            discountInput.name = 'discount_calculation';
+            form.appendChild(discountInput);
+        }
+        discountInput.value = discountCalcRadio.value;
     }
 
     // Submit the form (it will trigger score recalculation automatically)
