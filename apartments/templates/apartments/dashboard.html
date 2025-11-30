@@ -1200,14 +1200,6 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
         <div class="inline-block align-bottom bg-white rounded-none sm:rounded-xl text-left overflow-hidden shadow-xl transform transition-all w-full h-full sm:h-auto sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
             <form id="preferencesForm" method="post" action="{% url 'apartments:dashboard' %}">
                 {% csrf_token %}
-                <!-- Hidden fields for weight values -->
-                <input type="hidden" name="price_weight" id="price_weight_input" value="{{ preferences.price_weight|default:50 }}">
-                <input type="hidden" name="sqft_weight" id="sqft_weight_input" value="{{ preferences.sqft_weight|default:50 }}">
-                <input type="hidden" name="distance_weight" id="distance_weight_input" value="{{ preferences.distance_weight|default:50 }}">
-                <input type="hidden" name="net_rent_weight" id="net_rent_weight_input" value="{{ preferences.net_rent_weight|default:0 }}">
-                <input type="hidden" name="bedrooms_weight" id="bedrooms_weight_input" value="{{ preferences.bedrooms_weight|default:0 }}">
-                <input type="hidden" name="bathrooms_weight" id="bathrooms_weight_input" value="{{ preferences.bathrooms_weight|default:0 }}">
-
                 <div class="bg-white px-6 pt-6 pb-4">
                     <div class="mb-6">
                         <div class="flex items-center justify-between">
@@ -1219,8 +1211,8 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">Scoring Preferences</h3>
-                                    <p class="text-sm text-gray-500">Adjust importance of each factor</p>
+                                    <h3 class="text-lg font-semibold text-gray-900">Calculation Settings</h3>
+                                    <p class="text-sm text-gray-500">Configure how discounts are calculated</p>
                                 </div>
                             </div>
                             <button type="button" onclick="closePreferencesModal()" class="text-gray-400 hover:text-gray-600">
@@ -1230,105 +1222,6 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             </button>
                         </div>
                     </div>
-
-                    <!-- Scoring Factor Sliders -->
-                    {% if is_premium %}
-                    <div class="mb-6">
-                        <div class="flex items-center mb-4">
-                            <svg class="w-5 h-5 text-brand-purple mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            <h4 class="text-sm font-semibold text-gray-900">Pro Scoring Factors</h4>
-                        </div>
-                        <p class="text-xs text-gray-600 mb-4">Adjust the weight of each factor. Higher values mean that factor matters more in your apartment score.</p>
-
-                        <div class="space-y-5">
-                            <!-- Price Weight -->
-                            <div>
-                                <label for="price_weight" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Base Rent: <span id="price_weight_value" class="text-brand-purple font-semibold">{{ preferences.price_weight|default:50 }}</span>
-                                </label>
-                                <input type="range" id="price_weight" min="0" max="100" value="{{ preferences.price_weight|default:50 }}"
-                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                                       oninput="updateWeightValue('price_weight', this.value)">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>Less Important</span>
-                                    <span>More Important</span>
-                                </div>
-                            </div>
-
-                            <!-- Net Rent Weight -->
-                            <div>
-                                <label for="net_rent_weight" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Net Effective Rent: <span id="net_rent_weight_value" class="text-brand-purple font-semibold">{{ preferences.net_rent_weight|default:0 }}</span>
-                                </label>
-                                <input type="range" id="net_rent_weight" min="0" max="100" value="{{ preferences.net_rent_weight|default:0 }}"
-                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                                       oninput="updateWeightValue('net_rent_weight', this.value)">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>Less Important</span>
-                                    <span>More Important</span>
-                                </div>
-                            </div>
-
-                            <!-- Square Footage Weight -->
-                            <div>
-                                <label for="sqft_weight" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Square Footage: <span id="sqft_weight_value" class="text-brand-purple font-semibold">{{ preferences.sqft_weight|default:50 }}</span>
-                                </label>
-                                <input type="range" id="sqft_weight" min="0" max="100" value="{{ preferences.sqft_weight|default:50 }}"
-                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                                       oninput="updateWeightValue('sqft_weight', this.value)">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>Less Important</span>
-                                    <span>More Important</span>
-                                </div>
-                            </div>
-
-                            <!-- Bedrooms Weight -->
-                            <div>
-                                <label for="bedrooms_weight" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Bedrooms: <span id="bedrooms_weight_value" class="text-brand-purple font-semibold">{{ preferences.bedrooms_weight|default:0 }}</span>
-                                </label>
-                                <input type="range" id="bedrooms_weight" min="0" max="100" value="{{ preferences.bedrooms_weight|default:0 }}"
-                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                                       oninput="updateWeightValue('bedrooms_weight', this.value)">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>Less Important</span>
-                                    <span>More Important</span>
-                                </div>
-                            </div>
-
-                            <!-- Bathrooms Weight -->
-                            <div>
-                                <label for="bathrooms_weight" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Bathrooms: <span id="bathrooms_weight_value" class="text-brand-purple font-semibold">{{ preferences.bathrooms_weight|default:0 }}</span>
-                                </label>
-                                <input type="range" id="bathrooms_weight" min="0" max="100" value="{{ preferences.bathrooms_weight|default:0 }}"
-                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                                       oninput="updateWeightValue('bathrooms_weight', this.value)">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>Less Important</span>
-                                    <span>More Important</span>
-                                </div>
-                            </div>
-
-                            <!-- Distance Weight -->
-                            <div>
-                                <label for="distance_weight" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Distance to Favorite Places: <span id="distance_weight_value" class="text-brand-purple font-semibold">{{ preferences.distance_weight|default:50 }}</span>
-                                </label>
-                                <input type="range" id="distance_weight" min="0" max="100" value="{{ preferences.distance_weight|default:50 }}"
-                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-purple"
-                                       oninput="updateWeightValue('distance_weight', this.value)">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>Less Important</span>
-                                    <span>More Important</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
 
                     <!-- Discount Calculation Method -->
                     <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
