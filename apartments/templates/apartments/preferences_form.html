@@ -89,14 +89,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const list = document.getElementById('attribute-list');
     let draggedItem = null;
 
-    // Add drag and drop event listeners
+    // Add drag and drop event listeners (desktop)
     list.addEventListener('dragstart', function(e) {
-        draggedItem = e.target;
-        e.target.style.opacity = '0.5';
+        draggedItem = e.target.closest('[draggable="true"]');
+        if (draggedItem) draggedItem.style.opacity = '0.5';
     });
 
     list.addEventListener('dragend', function(e) {
-        e.target.style.opacity = '1';
+        const item = e.target.closest('[draggable="true"]');
+        if (item) item.style.opacity = '1';
     });
 
     list.addEventListener('dragover', function(e) {
@@ -109,13 +110,57 @@ document.addEventListener('DOMContentLoaded', function() {
             const dropTarget = e.target.closest('[draggable="true"]');
             const dropTargetRect = dropTarget.getBoundingClientRect();
             const dropTargetMiddle = dropTargetRect.top + dropTargetRect.height / 2;
-            
+
             if (e.clientY < dropTargetMiddle) {
                 list.insertBefore(draggedItem, dropTarget);
             } else {
                 list.insertBefore(draggedItem, dropTarget.nextSibling);
             }
         }
+        updateWeights();
+    });
+
+    // Touch event support for mobile
+    let touchedItem = null;
+
+    list.addEventListener('touchstart', function(e) {
+        touchedItem = e.target.closest('[draggable="true"]');
+        if (!touchedItem) return;
+
+        touchedItem.style.opacity = '0.5';
+        touchedItem.style.zIndex = '1000';
+    }, { passive: true });
+
+    list.addEventListener('touchmove', function(e) {
+        if (!touchedItem) return;
+        e.preventDefault();
+
+        const touchY = e.touches[0].clientY;
+        const items = Array.from(list.querySelectorAll('[draggable="true"]'));
+
+        // Find the item we're hovering over
+        for (const item of items) {
+            if (item === touchedItem) continue;
+
+            const rect = item.getBoundingClientRect();
+            const middle = rect.top + rect.height / 2;
+
+            if (touchY < middle && touchY > rect.top - 20) {
+                list.insertBefore(touchedItem, item);
+                break;
+            } else if (touchY > middle && touchY < rect.bottom + 20) {
+                list.insertBefore(touchedItem, item.nextSibling);
+                break;
+            }
+        }
+    }, { passive: false });
+
+    list.addEventListener('touchend', function(e) {
+        if (!touchedItem) return;
+
+        touchedItem.style.opacity = '1';
+        touchedItem.style.zIndex = '';
+        touchedItem = null;
         updateWeights();
     });
 
