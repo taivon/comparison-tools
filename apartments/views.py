@@ -277,19 +277,31 @@ def dashboard(request):
     # Get distance data for apartments
     apartments_with_distances = []
     if favorite_places and apartments:
-        # Check for and fix any missing distance calculations
+        # Check for and fix any missing distance calculations (single query)
+        from django.db.models import Count
+
         from .models import ApartmentDistance
 
         geocoded_places = [p for p in favorite_places if p.latitude and p.longitude]
         expected_count = len(geocoded_places)
 
         if expected_count > 0:
-            for apt in apartments:
-                if apt.latitude and apt.longitude:
-                    actual_count = ApartmentDistance.objects.filter(apartment=apt).count()
-                    if actual_count < expected_count:
-                        logger.info(f"Recalculating missing distances for apartment {apt.id}")
-                        calculate_and_cache_distances(apt)
+            # Get distance counts for all apartments in one query
+            apt_ids_with_coords = [apt.id for apt in apartments if apt.latitude and apt.longitude]
+            if apt_ids_with_coords:
+                distance_counts = dict(
+                    ApartmentDistance.objects.filter(apartment_id__in=apt_ids_with_coords)
+                    .values("apartment_id")
+                    .annotate(count=Count("id"))
+                    .values_list("apartment_id", "count")
+                )
+                # Only recalculate for apartments with missing distances
+                for apt in apartments:
+                    if apt.id in apt_ids_with_coords:
+                        actual_count = distance_counts.get(apt.id, 0)
+                        if actual_count < expected_count:
+                            logger.info(f"Recalculating missing distances for apartment {apt.id}")
+                            calculate_and_cache_distances(apt)
 
         apartments_with_distances = get_apartments_with_distances(apartments, favorite_places)
         # Add distance data to apartment objects for template access
