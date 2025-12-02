@@ -361,10 +361,10 @@ def dashboard(request):
             billing_interval="month",
             is_active=True,
         )
-        .order_by("price")
+        .order_by("price_amount")
         .first()
     )
-    monthly_price = monthly_plan.price if monthly_plan else None
+    monthly_price = monthly_plan.price_amount if monthly_plan else None
 
     context = {
         "apartments": apartments,
