@@ -1515,7 +1515,11 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
     <input type="hidden" name="bedrooms_weight" value="{{ preferences.bedrooms_weight|default:0 }}">
     <input type="hidden" name="bathrooms_weight" value="{{ preferences.bathrooms_weight|default:0 }}">
     <input type="hidden" name="discount_weight" value="{{ preferences.discount_weight|default:0 }}">
-    <input type="hidden" name="factor_order" value="{{ preferences.factor_order|default:'price,sqft,distance,netRent,bedrooms,bathrooms,discount' }}">
+    <input type="hidden" name="parking_weight" value="{{ preferences.parking_weight|default:0 }}">
+    <input type="hidden" name="utilities_weight" value="{{ preferences.utilities_weight|default:0 }}">
+    <input type="hidden" name="view_weight" value="{{ preferences.view_weight|default:0 }}">
+    <input type="hidden" name="balcony_weight" value="{{ preferences.balcony_weight|default:0 }}">
+    <input type="hidden" name="factor_order" value="{{ preferences.factor_order|default:'price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony' }}">
     <input type="hidden" name="discount_calculation" value="{{ preferences.discount_calculation|default:'weekly' }}">
 </form>
 
@@ -2820,13 +2824,12 @@ function createScoreTunerModal() {
                     <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
                 </svg>
                 <div class="flex-1">
-                    <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">Get 2 Additional Ranking Factors</h4>
-                    <p class="text-xs text-purple-700 dark:text-purple-300 mb-2">Upgrade to Pro to rank up to 4 factors total, including:</p>
+                    <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">Unlock All Ranking Factors</h4>
+                    <p class="text-xs text-purple-700 dark:text-purple-300 mb-2">Upgrade to Pro to rank up to 4 factors from 11 options:</p>
                     <ul class="text-xs text-purple-700 dark:text-purple-300 list-disc list-inside space-y-0.5">
-                        <li>Base Rent</li>
-                        <li>Distance to Favorite Places</li>
-                        <li>Bedrooms</li>
-                        <li>Bathrooms</li>
+                        <li>Distance, Parking Cost, Utilities</li>
+                        <li>Windows / Lighting / Scenery</li>
+                        <li>Balcony, Bedrooms, Bathrooms</li>
                     </ul>
                     <a href="/signup" class="inline-flex items-center mt-2 px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors">
                         Upgrade to Pro
@@ -2920,11 +2923,15 @@ function initializePriorityList() {
         'bedrooms': { key: 'bedrooms', label: 'Bedrooms', weight: userPreferences.bedroomsWeight },
         'bathrooms': { key: 'bathrooms', label: 'Bathrooms', weight: userPreferences.bathroomsWeight },
         'distance': { key: 'distance', label: 'Distance to Favorite Places', weight: userPreferences.distanceWeight },
-        'discount': { key: 'discount', label: 'Discount Amount', weight: userPreferences.discountWeight }
+        'discount': { key: 'discount', label: 'Discount Amount', weight: userPreferences.discountWeight },
+        'parking': { key: 'parking', label: 'Parking Cost', weight: userPreferences.parkingWeight },
+        'utilities': { key: 'utilities', label: 'Utilities', weight: userPreferences.utilitiesWeight },
+        'view': { key: 'view', label: 'Windows / Lighting / Scenery', weight: userPreferences.viewWeight },
+        'balcony': { key: 'balcony', label: 'Balcony / Patio', weight: userPreferences.balconyWeight }
     };
 
     // Get stored order or use default
-    const storedOrder = userPreferences.factorOrder || 'price,sqft,distance,netRent,bedrooms,bathrooms,discount';
+    const storedOrder = userPreferences.factorOrder || 'price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony';
     const orderKeys = storedOrder.split(',').filter(k => k && factorMap[k]);
 
     // Build ordered factors list using stored order
@@ -3485,7 +3492,11 @@ function saveScoreWeights() {
             bedrooms: 0,
             bathrooms: 0,
             distance: 0,
-            discount: 0
+            discount: 0,
+            parking: 0,
+            utilities: 0,
+            view: 0,
+            balcony: 0
         };
 
         // Assign weights to priority items
@@ -3520,6 +3531,10 @@ function saveScoreWeights() {
         const bathroomsInput = form.querySelector('input[name="bathrooms_weight"]');
         const distanceInput = form.querySelector('input[name="distance_weight"]');
         const discountInput = form.querySelector('input[name="discount_weight"]');
+        const parkingInput = form.querySelector('input[name="parking_weight"]');
+        const utilitiesInput = form.querySelector('input[name="utilities_weight"]');
+        const viewInput = form.querySelector('input[name="view_weight"]');
+        const balconyInput = form.querySelector('input[name="balcony_weight"]');
         const factorOrderInput = form.querySelector('input[name="factor_order"]');
 
         if (priceInput) priceInput.value = factorWeights.price;
@@ -3529,6 +3544,10 @@ function saveScoreWeights() {
         if (bathroomsInput) bathroomsInput.value = factorWeights.bathrooms;
         if (distanceInput) distanceInput.value = factorWeights.distance;
         if (discountInput) discountInput.value = factorWeights.discount;
+        if (parkingInput) parkingInput.value = factorWeights.parking;
+        if (utilitiesInput) utilitiesInput.value = factorWeights.utilities;
+        if (viewInput) viewInput.value = factorWeights.view;
+        if (balconyInput) balconyInput.value = factorWeights.balcony;
         if (factorOrderInput) factorOrderInput.value = factorOrderString;
     } else {
         // Free: Get priority order from drag-and-drop list
@@ -3543,7 +3562,11 @@ function saveScoreWeights() {
             bedrooms: 0,
             bathrooms: 0,
             distance: 0,
-            discount: 0
+            discount: 0,
+            parking: 0,
+            utilities: 0,
+            view: 0,
+            balcony: 0
         };
 
         // Assign weights based on order
@@ -3556,7 +3579,7 @@ function saveScoreWeights() {
             });
         }
         // For free users, build factor order with their 2 factors first, then others
-        const allKeys = ['price', 'sqft', 'distance', 'netRent', 'bedrooms', 'bathrooms', 'discount'];
+        const allKeys = ['price', 'sqft', 'distance', 'netRent', 'bedrooms', 'bathrooms', 'discount', 'parking', 'utilities', 'view', 'balcony'];
         const otherKeys = allKeys.filter(k => !freeFactorOrderKeys.includes(k));
         const freeFactorOrderString = [...freeFactorOrderKeys, ...otherKeys].join(',');
 
@@ -3568,6 +3591,10 @@ function saveScoreWeights() {
         const bathroomsInput = form.querySelector('input[name="bathrooms_weight"]');
         const distanceInput = form.querySelector('input[name="distance_weight"]');
         const discountInput = form.querySelector('input[name="discount_weight"]');
+        const parkingInput = form.querySelector('input[name="parking_weight"]');
+        const utilitiesInput = form.querySelector('input[name="utilities_weight"]');
+        const viewInput = form.querySelector('input[name="view_weight"]');
+        const balconyInput = form.querySelector('input[name="balcony_weight"]');
         const factorOrderInput = form.querySelector('input[name="factor_order"]');
 
         if (priceInput) priceInput.value = factorWeights.price;
@@ -3577,6 +3604,10 @@ function saveScoreWeights() {
         if (bathroomsInput) bathroomsInput.value = factorWeights.bathrooms;
         if (distanceInput) distanceInput.value = factorWeights.distance;
         if (discountInput) discountInput.value = factorWeights.discount;
+        if (parkingInput) parkingInput.value = factorWeights.parking;
+        if (utilitiesInput) utilitiesInput.value = factorWeights.utilities;
+        if (viewInput) viewInput.value = factorWeights.view;
+        if (balconyInput) balconyInput.value = factorWeights.balcony;
         if (factorOrderInput) factorOrderInput.value = freeFactorOrderString;
     }
 
