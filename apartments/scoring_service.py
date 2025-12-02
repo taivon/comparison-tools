@@ -44,6 +44,7 @@ class ScoringService:
         self.apartments = apartments
         self.product_slug = product_slug
         self.is_premium = user_has_premium(user, product_slug) if user.is_authenticated else False
+        self._distance_cache = None  # Lazy-loaded cache for average distances
 
         # Get user preferences
         if user.is_authenticated:
@@ -167,6 +168,23 @@ class ScoringService:
 
         return metrics
 
+    def _load_distance_cache(self) -> None:
+        """
+        Batch load all apartment distances into cache to avoid N+1 queries.
+        """
+        from django.db.models import Avg
+
+        apartment_ids = [apt.id for apt in self.apartments]
+
+        # Single query to get average distances for all apartments
+        avg_distances = (
+            ApartmentDistance.objects.filter(apartment_id__in=apartment_ids, distance_miles__isnull=False)
+            .values("apartment_id")
+            .annotate(avg_distance=Avg("distance_miles"))
+        )
+
+        self._distance_cache = {row["apartment_id"]: row["avg_distance"] for row in avg_distances}
+
     def _get_average_distance(self, apartment: Apartment) -> Decimal | None:
         """
         Get average distance from apartment to all favorite places
@@ -177,14 +195,11 @@ class ScoringService:
         Returns:
             Average distance in miles, or None if no distances available
         """
-        distances = ApartmentDistance.objects.filter(apartment=apartment, distance_miles__isnull=False).values_list(
-            "distance_miles", flat=True
-        )
+        # Lazy load distance cache on first access
+        if self._distance_cache is None:
+            self._load_distance_cache()
 
-        if not distances:
-            return None
-
-        return sum(distances) / len(distances)
+        return self._distance_cache.get(apartment.id)
 
     def _get_discount_amount(self, apartment: Apartment) -> Decimal:
         """

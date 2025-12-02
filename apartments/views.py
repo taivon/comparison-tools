@@ -145,7 +145,10 @@ def dashboard(request):
     favorite_places = []
 
     if request.user.is_authenticated:
-        apartments = list(Apartment.objects.filter(user=request.user).order_by("-created_at"))
+        # Use select_related to prefetch user and preferences in one query (avoid N+1)
+        apartments = list(
+            Apartment.objects.filter(user=request.user).select_related("user__preferences").order_by("-created_at")
+        )
         favorite_places = list(FavoritePlace.objects.filter(user=request.user))
         preferences, _ = UserPreferences.objects.get_or_create(
             user=request.user,

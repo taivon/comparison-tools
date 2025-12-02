@@ -306,10 +306,21 @@ def get_apartments_with_distances(apartments, favorite_places) -> list[dict[str,
             - average_distance: Average distance (or None)
             - average_travel_time: Average travel time (or None)
     """
+    from collections import defaultdict
+
     from .models import ApartmentDistance
 
     result = []
     place_labels = [p.label for p in favorite_places]
+
+    # Batch fetch all distances for all apartments in a single query
+    apartment_ids = [apt.id for apt in apartments]
+    all_distances = ApartmentDistance.objects.filter(apartment_id__in=apartment_ids).select_related("favorite_place")
+
+    # Group distances by apartment_id
+    distances_by_apartment = defaultdict(list)
+    for d in all_distances:
+        distances_by_apartment[d.apartment_id].append(d)
 
     for apartment in apartments:
         # Initialize distances dict with None for all places
@@ -317,8 +328,8 @@ def get_apartments_with_distances(apartments, favorite_places) -> list[dict[str,
             label: {"distance": None, "travel_time": None, "transit_fare": None} for label in place_labels
         }
 
-        # Get cached distances
-        cached_distances = ApartmentDistance.objects.filter(apartment=apartment).select_related("favorite_place")
+        # Get cached distances from pre-fetched data
+        cached_distances = distances_by_apartment.get(apartment.id, [])
 
         total_distance = 0.0
         total_time = 0

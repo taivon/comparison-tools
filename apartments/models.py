@@ -270,10 +270,19 @@ class Apartment(models.Model):
     @property
     def net_effective_price(self):
         total_discount = Decimal("0")
-        user_preferences, _ = UserPreferences.objects.get_or_create(
-            user=self.user,
-            defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50, "discount_calculation": "weekly"},
-        )
+        # Use Django's cached relation first to avoid N+1 queries
+        try:
+            user_preferences = self.user.preferences
+        except UserPreferences.DoesNotExist:
+            user_preferences, _ = UserPreferences.objects.get_or_create(
+                user=self.user,
+                defaults={
+                    "price_weight": 50,
+                    "sqft_weight": 50,
+                    "distance_weight": 50,
+                    "discount_calculation": "weekly",
+                },
+            )
 
         if user_preferences.discount_calculation == "daily":
             daily_rate = self.price * Decimal("12") / Decimal("365")
