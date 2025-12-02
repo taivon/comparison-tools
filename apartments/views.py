@@ -28,6 +28,7 @@ from .models import (
     UserProfile,
     can_add_favorite_place,
     get_favorite_place_limit,
+    get_user_item_limit,
     user_has_premium,
 )
 from .scoring_service import ScoringService, recalculate_user_scores
@@ -124,11 +125,11 @@ def index(request):
     if request.user.is_authenticated:
         apartments = Apartment.objects.filter(user=request.user)
         apartment_count = apartments.count()
-        has_premium = user_has_premium(request.user, PRODUCT_SLUG)
-        can_add_apartment = has_premium or apartment_count < 2
+        item_limit = get_user_item_limit(request.user, PRODUCT_SLUG)
+        can_add_apartment = apartment_count < item_limit
     else:
         apartment_count = 0
-        can_add_apartment = True  # JavaScript will enforce the 2-apartment limit
+        can_add_apartment = True  # JavaScript will enforce the limit
 
     context = {
         "can_add_apartment": can_add_apartment,
@@ -275,10 +276,8 @@ def dashboard(request):
         )
 
     has_premium = user_has_premium(request.user, PRODUCT_SLUG) if request.user.is_authenticated else False
-    if request.user.is_authenticated:
-        can_add_apartment = has_premium or len(apartments) < 2
-    else:
-        can_add_apartment = len(apartments) < 2
+    item_limit = get_user_item_limit(request.user, PRODUCT_SLUG) if request.user.is_authenticated else 2
+    can_add_apartment = len(apartments) < item_limit
 
     has_discounts = any(
         (
@@ -360,7 +359,7 @@ def dashboard(request):
         "is_premium": has_premium,
         "can_add_apartment": can_add_apartment,
         "apartment_count": len(apartments),
-        "apartment_limit": 2 if not has_premium else None,
+        "apartment_limit": item_limit,
         "is_anonymous": not request.user.is_authenticated,
         "has_discounts": has_discounts,
         "has_parking": has_parking,
@@ -388,14 +387,21 @@ def create_apartment(request):
             if not request.user.is_authenticated:
                 return JsonResponse({"success": False, "error": "Authentication required"}, status=401)
 
-            # Check free tier limit
-            has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+            # Check tier limit
             current_count = Apartment.objects.filter(user=request.user).count()
-            if not has_premium and current_count >= 2:
-                messages.error(
-                    request,
-                    "Free tier limit reached. Upgrade to premium to add more apartments.",
-                )
+            item_limit = get_user_item_limit(request.user, PRODUCT_SLUG)
+            if current_count >= item_limit:
+                has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+                if has_premium:
+                    messages.error(
+                        request,
+                        f"You've reached the limit of {item_limit} apartments. Please remove one to add another.",
+                    )
+                else:
+                    messages.error(
+                        request,
+                        "Free tier limit reached. Upgrade to Pro to add more apartments.",
+                    )
                 return redirect("apartments:index")
 
             try:

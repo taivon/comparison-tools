@@ -18,6 +18,7 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     free_tier_limit = models.IntegerField(default=2)  # Items allowed on free tier
+    pro_tier_limit = models.IntegerField(default=20)  # Items allowed on pro tier
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -150,6 +151,22 @@ def get_product_free_tier_limit(product_slug: str) -> int:
         return product.free_tier_limit
     except Product.DoesNotExist:
         return 2  # Default
+
+
+def get_product_pro_tier_limit(product_slug: str) -> int:
+    """Get the pro tier limit for a product."""
+    try:
+        product = Product.objects.get(slug=product_slug)
+        return product.pro_tier_limit
+    except Product.DoesNotExist:
+        return 20  # Default
+
+
+def get_user_item_limit(user, product_slug: str) -> int:
+    """Get the item limit for a user based on their subscription status."""
+    if user_has_premium(user, product_slug):
+        return get_product_pro_tier_limit(product_slug)
+    return get_product_free_tier_limit(product_slug)
 
 
 # =============================================================================
