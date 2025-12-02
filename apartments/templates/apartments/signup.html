@@ -114,7 +114,7 @@
 
         {% if stripe_enabled %}
         <!-- Premium Plans -->
-        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div class="grid md:grid-cols-2 {% if lifetime_price %}lg:grid-cols-3{% endif %} gap-8 max-w-6xl mx-auto">
             <!-- Monthly Plan -->
             <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 hover:border-brand-purple transition-all">
                 <div class="mb-6">
@@ -239,6 +239,65 @@
                     </a>
                 {% endif %}
             </div>
+
+            {% if lifetime_price %}
+            <!-- Lifetime Plan -->
+            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 relative hover:border-brand-purple transition-all md:col-span-2 lg:col-span-1">
+                <!-- Lifetime Badge -->
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span class="bg-gray-800 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                        Pay Once, Own Forever
+                    </span>
+                </div>
+
+                <div class="mb-6 mt-4">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Lifetime</h3>
+                    <div class="flex items-baseline mb-4">
+                        <span class="text-5xl font-bold text-gray-900">${{ lifetime_price|floatformat:2 }}</span>
+                        <span class="text-gray-500 ml-2">one-time</span>
+                    </div>
+                    <p class="text-gray-600">Permanent access, no recurring fees</p>
+                </div>
+
+                <ul class="space-y-3 mb-8">
+                    <li class="flex items-start">
+                        <svg class="w-5 h-5 text-brand-green mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700"><strong>Everything</strong> in Annual plan</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="w-5 h-5 text-brand-green mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700"><strong>Never pay again</strong></span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="w-5 h-5 text-brand-green mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">All future updates included</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="w-5 h-5 text-brand-green mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-gray-700">Support the development</span>
+                    </li>
+                </ul>
+
+                {% if user.is_authenticated %}
+                    <button onclick="createCheckoutSession('lifetime')" class="block w-full bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
+                        Buy Lifetime Access
+                    </button>
+                {% else %}
+                    <a href="{% url 'social:begin' 'google-oauth2' %}{% if next %}?next={{ next|urlencode }}{% endif %}"
+                       class="block w-full bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors">
+                        Sign Up for Lifetime
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
         {% endif %}
     </div>

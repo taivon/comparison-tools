@@ -95,32 +95,41 @@ class StripeService:
 
             logger.info(f"Creating checkout session for plan: {plan.name}, price_id: {plan.stripe_price_id}")
 
-            # Create checkout session
-            session = stripe.checkout.Session.create(
-                customer=customer.id,
-                payment_method_types=["card"],
-                line_items=[
+            # Determine if this is a one-time payment (lifetime) or subscription
+            is_lifetime = plan.billing_interval == "lifetime"
+
+            # Base checkout session params
+            session_params = {
+                "customer": customer.id,
+                "payment_method_types": ["card"],
+                "line_items": [
                     {
                         "price": plan.stripe_price_id,
                         "quantity": 1,
                     }
                 ],
-                mode="subscription",
-                success_url=success_url,
-                cancel_url=cancel_url,
-                metadata={
+                "mode": "payment" if is_lifetime else "subscription",
+                "success_url": success_url,
+                "cancel_url": cancel_url,
+                "metadata": {
                     "user_id": str(user.id),
                     "plan_id": str(plan.id),
                     "product_slug": plan.product.slug,
                 },
-                subscription_data={
+            }
+
+            # Add subscription_data only for recurring plans
+            if not is_lifetime:
+                session_params["subscription_data"] = {
                     "metadata": {
                         "user_id": str(user.id),
                         "plan_id": str(plan.id),
                         "product_slug": plan.product.slug,
                     }
-                },
-            )
+                }
+
+            # Create checkout session
+            session = stripe.checkout.Session.create(**session_params)
 
             logger.info(f"Created checkout session {session.id} for user {user.id}, plan {plan.name}")
             return session
@@ -523,12 +532,16 @@ class StripeService:
                 logger.info(f"Created Product: {product.name}")
 
             # Fetch all active recurring prices from Stripe
-            prices = stripe.Price.list(active=True, type="recurring", limit=100)
+            recurring_prices = stripe.Price.list(active=True, type="recurring", limit=100)
+            # Fetch one-time prices for lifetime plans
+            one_time_prices = stripe.Price.list(active=True, type="one_time", limit=100)
 
             monthly_plan = None
             annual_plan = None
+            lifetime_plan = None
 
-            for price in prices.data:
+            # Process recurring prices
+            for price in recurring_prices.data:
                 if not price.recurring:
                     continue
 
@@ -569,7 +582,36 @@ class StripeService:
                 elif interval == "year":
                     annual_plan = plan
 
-            result = {"monthly": monthly_plan, "annual": annual_plan}
+            # Process one-time prices (lifetime plans)
+            for price in one_time_prices.data:
+                amount = price.unit_amount / 100
+                price_id = price.id
+
+                # Get or create lifetime Plan
+                plan, plan_created = Plan.objects.get_or_create(
+                    stripe_price_id=price_id,
+                    defaults={
+                        "product": product,
+                        "name": "Pro Lifetime",
+                        "tier": "pro",
+                        "price_amount": amount,
+                        "billing_interval": "lifetime",
+                        "is_active": True,
+                    },
+                )
+
+                # Update price if changed
+                if not plan_created and plan.price_amount != amount:
+                    plan.price_amount = amount
+                    plan.save()
+                    logger.info(f"Updated price for {plan.name}: ${amount}")
+
+                if plan_created:
+                    logger.info(f"Created Plan: {plan.name} (${amount} one-time)")
+
+                lifetime_plan = plan
+
+            result = {"monthly": monthly_plan, "annual": annual_plan, "lifetime": lifetime_plan}
 
             # Cache for 1 hour
             cache.set(cache_key, result, 3600)
@@ -585,4 +627,7 @@ class StripeService:
             annual_plan = Plan.objects.filter(
                 product__slug=product_slug, is_active=True, tier="pro", billing_interval="year"
             ).first()
-            return {"monthly": monthly_plan, "annual": annual_plan}
+            lifetime_plan = Plan.objects.filter(
+                product__slug=product_slug, is_active=True, tier="pro", billing_interval="lifetime"
+            ).first()
+            return {"monthly": monthly_plan, "annual": annual_plan, "lifetime": lifetime_plan}

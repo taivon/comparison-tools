@@ -29,7 +29,7 @@ class Product(models.Model):
 
 
 class Plan(models.Model):
-    """Subscription plan for a product (Free, Pro Monthly, Pro Annual)"""
+    """Subscription plan for a product (Free, Pro Monthly, Pro Annual, Pro Lifetime)"""
 
     TIER_CHOICES = [
         ("free", "Free"),
@@ -39,6 +39,7 @@ class Plan(models.Model):
         ("", "None"),
         ("month", "Monthly"),
         ("year", "Annual"),
+        ("lifetime", "Lifetime"),
     ]
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="plans")
@@ -87,6 +88,10 @@ class Subscription(models.Model):
         """Check if this subscription grants premium access"""
         if self.plan.tier != "pro":
             return False
+
+        # Lifetime plans are always active once purchased
+        if self.plan.billing_interval == "lifetime":
+            return self.status == "active"
 
         if self.status == "active":
             return True

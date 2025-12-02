@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -710,6 +711,7 @@ def signup_view(request):
     synced_plans = StripeService.sync_plans_from_stripe(PRODUCT_SLUG)
     monthly_plan = synced_plans.get("monthly")
     annual_plan = synced_plans.get("annual")
+    lifetime_plan = synced_plans.get("lifetime")
 
     # Fetch live prices from Stripe
     if monthly_plan:
@@ -732,6 +734,14 @@ def signup_view(request):
         annual_price = 50.00
         annual_interval = "year"
 
+    if lifetime_plan:
+        lifetime_price_data = StripeService.get_price_from_stripe(
+            lifetime_plan.stripe_price_id, fallback_amount=float(lifetime_plan.price_amount)
+        )
+        lifetime_price = lifetime_price_data["amount"]
+    else:
+        lifetime_price = None
+
     annual_savings = (monthly_price * 12) - annual_price
 
     next_url = request.GET.get("next", "")
@@ -742,11 +752,13 @@ def signup_view(request):
         "has_apartments_to_save": apartment_count > 0,
         "monthly_price": monthly_price,
         "annual_price": annual_price,
+        "lifetime_price": lifetime_price,
         "monthly_interval": monthly_interval,
         "annual_interval": annual_interval,
         "annual_savings": annual_savings,
         "monthly_plan_id": monthly_plan.id if monthly_plan else None,
         "annual_plan_id": annual_plan.id if annual_plan else None,
+        "lifetime_plan_id": lifetime_plan.id if lifetime_plan else None,
         "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
         "stripe_enabled": settings.STRIPE_ENABLED,
         "next": next_url,
@@ -884,13 +896,17 @@ def create_checkout_session(request):
     try:
         data = json.loads(request.body)
         plan_id = data.get("plan_id")
-        plan_type = data.get("plan_type")  # 'monthly' or 'annual'
+        plan_type = data.get("plan_type")  # 'monthly', 'annual', or 'lifetime'
 
         # If plan_type is provided, look up the plan by type
         if plan_type and not plan_id:
             try:
                 product = Product.objects.get(slug=PRODUCT_SLUG)
-                billing_interval = "month" if plan_type == "monthly" else "year"
+                # Map plan_type to billing_interval
+                interval_map = {"monthly": "month", "annual": "year", "lifetime": "lifetime"}
+                billing_interval = interval_map.get(plan_type)
+                if not billing_interval:
+                    return JsonResponse({"error": f"Invalid plan type: {plan_type}"}, status=400)
                 plan = Plan.objects.get(product=product, tier="pro", billing_interval=billing_interval, is_active=True)
                 plan_id = plan.id
             except (Product.DoesNotExist, Plan.DoesNotExist):
@@ -997,9 +1013,37 @@ def stripe_webhook(request):
             subscription_id = session.get("subscription")
 
             if subscription_id:
+                # Recurring subscription
                 subscription = stripe_lib.Subscription.retrieve(subscription_id)
                 stripe_service.sync_subscription_status(subscription)
                 logger.info(f"Checkout completed: {subscription_id}")
+            else:
+                # One-time payment (lifetime plan)
+                metadata = session.get("metadata", {})
+                user_id = metadata.get("user_id")
+                plan_id = metadata.get("plan_id")
+
+                if user_id and plan_id:
+                    from .models import Plan, Subscription
+
+                    try:
+                        user = User.objects.get(id=user_id)
+                        plan = Plan.objects.get(id=plan_id)
+
+                        # Create subscription record for lifetime plan
+                        Subscription.objects.update_or_create(
+                            user=user,
+                            plan=plan,
+                            defaults={
+                                "status": "active",
+                                "stripe_subscription_id": session.get("payment_intent", ""),
+                                "current_period_end": None,  # Lifetime has no end
+                                "cancel_at_period_end": False,
+                            },
+                        )
+                        logger.info(f"Lifetime plan activated for user {user_id}, plan {plan_id}")
+                    except (User.DoesNotExist, Plan.DoesNotExist) as e:
+                        logger.error(f"Error activating lifetime plan: {e}")
 
         elif event_type == "customer.subscription.updated":
             subscription = event["data"]["object"]

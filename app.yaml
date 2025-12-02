@@ -21,5 +21,6 @@ handlers:
 
 env_variables:
     APPENGINE_URL: https://apartments.comparison.tools
+    STRIPE_ENABLED: "true"
     # OAuth key as plain text environment variable
     # OAuth secret retrieved from Google Secret Manager at runtime

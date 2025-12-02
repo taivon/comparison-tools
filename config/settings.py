@@ -248,8 +248,6 @@ def get_stripe_credentials():
             "publishable_key": os.getenv("STRIPE_PUBLISHABLE_KEY", ""),
             "secret_key": os.getenv("STRIPE_SECRET_KEY", ""),
             "webhook_secret": os.getenv("STRIPE_WEBHOOK_SECRET", ""),
-            "monthly_price_id": os.getenv("STRIPE_MONTHLY_PRICE_ID", ""),
-            "annual_price_id": os.getenv("STRIPE_ANNUAL_PRICE_ID", ""),
         }
     else:
         # Fetch from Google Secret Manager in production (live keys)
@@ -269,8 +267,6 @@ def get_stripe_credentials():
             publishable_key = get_secret("stripe-publishable-key")
             secret_key = get_secret("stripe-secret-key")
             webhook_secret = get_secret("stripe-webhook-secret")
-            monthly_price_id = get_secret("stripe-monthly-price-id")
-            annual_price_id = get_secret("stripe-annual-price-id")
 
             # Validate that credentials are not empty
             if not secret_key or not publishable_key:
@@ -280,8 +276,6 @@ def get_stripe_credentials():
                 "publishable_key": publishable_key,
                 "secret_key": secret_key,
                 "webhook_secret": webhook_secret,
-                "monthly_price_id": monthly_price_id,
-                "annual_price_id": annual_price_id,
             }
 
         except Exception as e:
@@ -294,8 +288,6 @@ def get_stripe_credentials():
                 "publishable_key": os.getenv("STRIPE_PUBLISHABLE_KEY", ""),
                 "secret_key": os.getenv("STRIPE_SECRET_KEY", ""),
                 "webhook_secret": os.getenv("STRIPE_WEBHOOK_SECRET", ""),
-                "monthly_price_id": os.getenv("STRIPE_MONTHLY_PRICE_ID", ""),
-                "annual_price_id": os.getenv("STRIPE_ANNUAL_PRICE_ID", ""),
             }
 
 
@@ -304,12 +296,6 @@ stripe_creds = get_stripe_credentials()
 STRIPE_PUBLISHABLE_KEY = stripe_creds["publishable_key"]
 STRIPE_SECRET_KEY = stripe_creds["secret_key"]
 STRIPE_WEBHOOK_SECRET = stripe_creds["webhook_secret"]
-STRIPE_MONTHLY_PRICE_ID = stripe_creds["monthly_price_id"]
-STRIPE_ANNUAL_PRICE_ID = stripe_creds["annual_price_id"]
-
-# Display prices (always from environment variables for simplicity)
-STRIPE_MONTHLY_PRICE_AMOUNT = float(os.environ.get("STRIPE_MONTHLY_PRICE_AMOUNT", "5"))
-STRIPE_ANNUAL_PRICE_AMOUNT = float(os.environ.get("STRIPE_ANNUAL_PRICE_AMOUNT", "50"))
 
 # Feature flag to enable/disable Stripe checkout (defaults to False for safety)
 STRIPE_ENABLED = os.environ.get("STRIPE_ENABLED", "False").lower() == "true"
