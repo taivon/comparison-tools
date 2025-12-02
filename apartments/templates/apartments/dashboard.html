@@ -480,7 +480,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     <option value="discount">Discount</option>
                     {% endif %}
                     {% if favorite_places %}
-                    <option value="avg_distance">Avg Distance</option>
+                    <option value="avg_distance">Avg Time</option>
                     {% endif %}
                 </select>
             </div>
@@ -507,7 +507,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                  data-score="{{ apartment.score|default:0 }}"
                  data-price-per-sqft="{{ apartment.price_per_sqft }}"
                  data-discount-amount="0"
-                 data-avg-distance="{{ apartment.average_distance|default:'999' }}"
+                 data-avg-distance="{{ apartment.average_travel_time|default:'999' }}"
                  id="mobile-card-{{ apartment.pk|default:forloop.counter }}">
                 <!-- Card Header: Score + Name + Badges -->
                 <div class="px-4 py-3 border-b border-gray-100 dark:border-neutral-700">
@@ -705,25 +705,30 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-500 truncate mr-2">{{ label }}</span>
                                 <span class="font-medium text-gray-900 dark:text-white flex-shrink-0">
-                                    {% if info.distance != None %}
+                                    {% if info.travel_time != None %}
+                                        {{ info.travel_time }} min
+                                        <span class="text-gray-500 font-normal">({{ info.distance|floatformat:1 }} mi)</span>
+                                    {% elif info.distance != None %}
                                         {{ info.distance|floatformat:1 }} mi
-                                        {% if info.travel_time %}
-                                            <span class="text-gray-500 font-normal">({{ info.travel_time }} min)</span>
-                                        {% endif %}
                                     {% else %}
                                         <span class="text-gray-400">N/A</span>
                                     {% endif %}
                                 </span>
                             </div>
                             {% endfor %}
+                        {% elif apartment.average_travel_time != None %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Avg Time</span>
+                                <span class="font-medium text-gray-900 dark:text-white">
+                                    {{ apartment.average_travel_time }} min
+                                    <span class="text-gray-500 font-normal">({{ apartment.average_distance|floatformat:1 }} mi)</span>
+                                </span>
+                            </div>
                         {% elif apartment.average_distance != None %}
                             <div class="flex justify-between">
                                 <span class="text-gray-500">Avg Distance</span>
                                 <span class="font-medium text-gray-900 dark:text-white">
                                     {{ apartment.average_distance|floatformat:1 }} mi
-                                    {% if apartment.average_travel_time %}
-                                        <span class="text-gray-500 font-normal">({{ apartment.average_travel_time }} min)</span>
-                                    {% endif %}
                                 </span>
                             </div>
                         {% else %}
@@ -853,7 +858,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         {% if is_premium and favorite_place_count > 1 %}
                         <th scope="col" class="px-6 py-3 text-left">
                             <button onclick="sortTable('avg_distance')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                                Avg Distance
+                                Avg Time
                                 <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                                 </svg>
@@ -1072,13 +1077,13 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         <!-- Distance columns -->
                         {% if favorite_places %}
                             {% if is_premium and favorite_place_count > 1 %}
-                            <td class="px-6 py-4 whitespace-nowrap" data-field="avg_distance" data-avg-distance="{{ apartment.average_distance|default:'999' }}">
+                            <td class="px-6 py-4 whitespace-nowrap" data-field="avg_distance" data-avg-distance="{{ apartment.average_travel_time|default:'999' }}">
                                 <div class="text-sm font-semibold text-brand-purple">
-                                    {% if apartment.average_distance != None %}
+                                    {% if apartment.average_travel_time != None %}
+                                        {{ apartment.average_travel_time }} min
+                                        <div class="text-xs text-brand-purple/70">{{ apartment.average_distance|floatformat:1 }} mi</div>
+                                    {% elif apartment.average_distance != None %}
                                         {{ apartment.average_distance|floatformat:1 }} mi
-                                        {% if apartment.average_travel_time %}
-                                            <div class="text-xs text-brand-purple/70">~{{ apartment.average_travel_time }} min</div>
-                                        {% endif %}
                                     {% else %}
                                         <span class="text-gray-400">N/A</span>
                                     {% endif %}
@@ -1086,20 +1091,20 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             </td>
                             {% endif %}
                             {% for place in favorite_places %}
-                            <td class="px-6 py-4 whitespace-nowrap" data-distance-{{ place.label|slugify }}="{% with distance_info=apartment.distance_data|default_if_none:"" %}{% if distance_info and place.label in distance_info %}{% for label, info in distance_info.items %}{% if label == place.label %}{% if info.distance != None %}{{ info.distance }}{% else %}999{% endif %}{% endif %}{% endfor %}{% else %}999{% endif %}{% endwith %}">
-                                <div class="text-sm text-gray-900">
+                            <td class="px-6 py-4 whitespace-nowrap" data-distance-{{ place.label|slugify }}="{% with distance_info=apartment.distance_data|default_if_none:"" %}{% if distance_info and place.label in distance_info %}{% for label, info in distance_info.items %}{% if label == place.label %}{% if info.travel_time != None %}{{ info.travel_time }}{% elif info.distance != None %}999{% else %}9999{% endif %}{% endif %}{% endfor %}{% else %}9999{% endif %}{% endwith %}">
+                                <div class="text-sm text-gray-900 dark:text-white">
                                     {% with distance_info=apartment.distance_data|default_if_none:"" %}
                                         {% if distance_info and place.label in distance_info and distance_info|length > 0 %}
                                             {% for label, info in distance_info.items %}
                                                 {% if label == place.label %}
-                                                    {% if info.distance != None %}
-                                                        {{ info.distance|floatformat:1 }} mi
-                                                        {% if info.travel_time %}
-                                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ info.travel_time }} min</div>
-                                                        {% endif %}
+                                                    {% if info.travel_time != None %}
+                                                        {{ info.travel_time }} min
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ info.distance|floatformat:1 }} mi</div>
                                                         {% if info.transit_fare %}
                                                             <div class="text-xs text-green-600 dark:text-green-400">${{ info.transit_fare|floatformat:2 }} fare</div>
                                                         {% endif %}
+                                                    {% elif info.distance != None %}
+                                                        {{ info.distance|floatformat:1 }} mi
                                                     {% else %}
                                                         <span class="text-gray-400">N/A</span>
                                                     {% endif %}
