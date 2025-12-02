@@ -228,8 +228,20 @@ class Apartment(models.Model):
 
     @property
     def price_per_sqft(self):
+        """Price per square foot based on user's preferred price basis."""
         if self.square_footage > 0:
-            return round(self.price / Decimal(str(self.square_footage)), 2)
+            user_preferences, _ = UserPreferences.objects.get_or_create(
+                user=self.user,
+                defaults={"price_weight": 50, "sqft_weight": 50, "distance_weight": 50},
+            )
+            basis = getattr(user_preferences, "price_per_sqft_basis", "net_effective")
+            if basis == "base":
+                price = self.price
+            elif basis == "total_cost":
+                price = self.total_cost
+            else:  # net_effective (default)
+                price = self.net_effective_price
+            return round(price / Decimal(str(self.square_footage)), 2)
         else:
             return Decimal("0")
 
@@ -294,6 +306,13 @@ class UserPreferences(models.Model):
 
     discount_calculation = models.CharField(
         max_length=20, choices=[("monthly", "Monthly"), ("weekly", "Weekly"), ("daily", "Daily")], default="weekly"
+    )
+
+    # Which price to use for $/sqft calculation
+    price_per_sqft_basis = models.CharField(
+        max_length=20,
+        choices=[("base", "Monthly Rent"), ("net_effective", "Net Effective"), ("total_cost", "Total Cost")],
+        default="net_effective",
     )
 
     # Store the explicit order of scoring factors (comma-separated factor keys)

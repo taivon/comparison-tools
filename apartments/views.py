@@ -183,6 +183,7 @@ def dashboard(request):
                 "view_weight": form.cleaned_data.get("view_weight", 0),
                 "balcony_weight": form.cleaned_data.get("balcony_weight", 0),
                 "discount_calculation": form.cleaned_data["discount_calculation"],
+                "price_per_sqft_basis": form.cleaned_data.get("price_per_sqft_basis", "net_effective"),
                 "factor_order": form.cleaned_data.get(
                     "factor_order",
                     "price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
@@ -294,6 +295,12 @@ def dashboard(request):
     has_balcony = any(getattr(apt, "has_balcony", False) for apt in apartments)
     # Show total cost column if any apartment has parking or utilities
     has_additional_costs = has_parking or has_utilities
+    # Show beds/baths column only if there's variation among apartments
+    if len(apartments) > 1:
+        bed_bath_combos = {(apt.bedrooms, apt.bathrooms) for apt in apartments}
+        has_beds_baths_variation = len(bed_bath_combos) > 1
+    else:
+        has_beds_baths_variation = False
 
     # Get distance data for apartments
     apartments_with_distances = []
@@ -360,6 +367,7 @@ def dashboard(request):
         "has_view_ratings": has_view_ratings,
         "has_balcony": has_balcony,
         "has_additional_costs": has_additional_costs,
+        "has_beds_baths_variation": has_beds_baths_variation,
         "favorite_places": favorite_places,
         "favorite_place_count": favorite_place_count,
         "favorite_place_limit": favorite_place_limit,
@@ -600,6 +608,7 @@ def update_preferences(request):
             preferences.sqft_weight = form.cleaned_data["sqft_weight"]
             preferences.distance_weight = form.cleaned_data["distance_weight"]
             preferences.discount_calculation = form.cleaned_data["discount_calculation"]
+            preferences.price_per_sqft_basis = form.cleaned_data.get("price_per_sqft_basis", "net_effective")
             preferences.save()
             messages.success(request, "Preferences updated successfully!")
             return redirect("apartments:index")
@@ -609,6 +618,7 @@ def update_preferences(request):
             "sqft_weight": preferences.sqft_weight,
             "distance_weight": preferences.distance_weight,
             "discount_calculation": preferences.discount_calculation,
+            "price_per_sqft_basis": getattr(preferences, "price_per_sqft_basis", "net_effective"),
         }
         form = UserPreferencesForm(initial=initial_data)
 

@@ -368,6 +368,18 @@ class UserPreferencesForm(forms.Form):
             attrs={"class": "mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}
         ),
     )
+    PRICE_PER_SQFT_CHOICES = [
+        ("base", "Monthly Rent"),
+        ("net_effective", "Net Effective"),
+        ("total_cost", "Total Cost"),
+    ]
+    price_per_sqft_basis = forms.ChoiceField(
+        choices=PRICE_PER_SQFT_CHOICES,
+        initial="net_effective",
+        widget=forms.RadioSelect(
+            attrs={"class": "mt-0.5 h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300"}
+        ),
+    )
     factor_order = forms.CharField(
         initial="price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
         required=False,
