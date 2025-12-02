@@ -277,6 +277,20 @@ def dashboard(request):
     # Get distance data for apartments
     apartments_with_distances = []
     if favorite_places and apartments:
+        # Check for and fix any missing distance calculations
+        from .models import ApartmentDistance
+
+        geocoded_places = [p for p in favorite_places if p.latitude and p.longitude]
+        expected_count = len(geocoded_places)
+
+        if expected_count > 0:
+            for apt in apartments:
+                if apt.latitude and apt.longitude:
+                    actual_count = ApartmentDistance.objects.filter(apartment=apt).count()
+                    if actual_count < expected_count:
+                        logger.info(f"Recalculating missing distances for apartment {apt.id}")
+                        calculate_and_cache_distances(apt)
+
         apartments_with_distances = get_apartments_with_distances(apartments, favorite_places)
         # Add distance data to apartment objects for template access
         for apt_data in apartments_with_distances:
