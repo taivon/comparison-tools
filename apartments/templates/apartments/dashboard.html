@@ -3123,25 +3123,28 @@ function createScoreTunerModal() {
 
                             <!-- Discount Calculation Method -->
                             <div class="p-4 bg-gray-50 dark:bg-neutral-900 rounded-lg border border-gray-200 dark:border-neutral-700">
-                                <h5 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Discount Calculation</h5>
-                                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">How to calculate free months/weeks:</p>
-                                <div class="space-y-2">
+                                <h5 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Discount Calculation Method</h5>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Choose how to calculate the value of free months/weeks when comparing apartments:</p>
+                                <div class="space-y-3">
                                     <label class="flex items-start cursor-pointer">
                                         <input type="radio" name="discount_calc_tuner" value="daily" ${discountCalcMethod === 'daily' ? 'checked' : ''}
                                                class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 dark:border-neutral-600 mt-0.5">
-                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                                            <span class="font-medium">Daily</span>
-                                            <span class="text-xs text-gray-500 dark:text-gray-400 block">Annual ÷ 365 days</span>
+                                        <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                                            <span class="font-medium">Daily Rate</span> - Divides annual rent by 365 days<br>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Example: $24,000/year ÷ 365 = $65.75/day</span>
                                         </span>
                                     </label>
                                     <label class="flex items-start cursor-pointer">
                                         <input type="radio" name="discount_calc_tuner" value="weekly" ${discountCalcMethod === 'weekly' ? 'checked' : ''}
                                                class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 dark:border-neutral-600 mt-0.5">
-                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                                            <span class="font-medium">Weekly</span>
-                                            <span class="text-xs text-gray-500 dark:text-gray-400 block">Annual ÷ 52 weeks</span>
+                                        <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                                            <span class="font-medium">Weekly Rate</span> - Divides annual rent by 52 weeks<br>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Example: $24,000/year ÷ 52 = $461.54/week</span>
                                         </span>
                                     </label>
+                                </div>
+                                <div class="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-800 dark:text-blue-300">
+                                    <strong>Note:</strong> Changing this will recalculate the Net Effective Rent for all apartments with discounts
                                 </div>
                             </div>
 
