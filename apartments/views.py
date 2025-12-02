@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -389,6 +390,9 @@ def create_apartment(request):
                 else:
                     messages.success(request, "Apartment added successfully!")
                 return redirect("apartments:dashboard")
+            except IntegrityError:
+                logger.warning(f"Duplicate apartment name attempted: {form.cleaned_data['name']}")
+                form.add_error("name", "You already have an apartment with this name. Please choose a different name.")
             except Exception as e:
                 logger.error(f"Error saving apartment: {str(e)}")
                 messages.error(request, "An error occurred while saving the apartment.")
@@ -455,20 +459,24 @@ def update_apartment(request, pk):
                     apartment.latitude = None
                     apartment.longitude = None
 
-            apartment.save()
+            try:
+                apartment.save()
 
-            # Recalculate distances if address changed
-            if address_changed and apartment.latitude and apartment.longitude:
-                calculate_and_cache_distances(apartment)
+                # Recalculate distances if address changed
+                if address_changed and apartment.latitude and apartment.longitude:
+                    calculate_and_cache_distances(apartment)
 
-            # Recalculate scores for all apartments since data changed
-            recalculate_user_scores(request.user, PRODUCT_SLUG)
+                # Recalculate scores for all apartments since data changed
+                recalculate_user_scores(request.user, PRODUCT_SLUG)
 
-            if geocode_warning:
-                messages.warning(request, f"Apartment updated, but couldn't locate the address. {geocode_warning}")
-            else:
-                messages.success(request, "Apartment updated successfully!")
-            return redirect("apartments:dashboard")
+                if geocode_warning:
+                    messages.warning(request, f"Apartment updated, but couldn't locate the address. {geocode_warning}")
+                else:
+                    messages.success(request, "Apartment updated successfully!")
+                return redirect("apartments:dashboard")
+            except IntegrityError:
+                logger.warning(f"Duplicate apartment name attempted on update: {form.cleaned_data['name']}")
+                form.add_error("name", "You already have an apartment with this name. Please choose a different name.")
     else:
         initial_data = {
             "name": apartment.name,

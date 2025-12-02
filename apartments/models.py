@@ -203,6 +203,9 @@ class Apartment(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["user", "name"], name="unique_apartment_name_per_user"),
+        ]
 
     def __str__(self):
         return self.name
