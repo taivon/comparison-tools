@@ -22,6 +22,9 @@ urlpatterns = [
     path("api/address-autocomplete/", views.address_autocomplete, name="address_autocomplete"),
     path("api/place-details/", views.place_details, name="place_details"),
     path("api/google-maps-status/", views.google_maps_status, name="google_maps_status"),
+    path(
+        "api/apartment/<int:pk>/distances/", views.calculate_apartment_distances, name="calculate_apartment_distances"
+    ),
     # Static pages
     path("privacy/", views.privacy_policy, name="privacy"),
     path("terms/", views.terms_of_service, name="terms"),

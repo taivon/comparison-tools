@@ -276,8 +276,9 @@ def dashboard(request):
 
     # Get distance data for apartments
     apartments_with_distances = []
+    apartments_needing_distances = []
     if favorite_places and apartments:
-        # Check for and fix any missing distance calculations (single query)
+        # Check for apartments with missing distance calculations (single query)
         from django.db.models import Count
 
         from .models import ApartmentDistance
@@ -295,13 +296,12 @@ def dashboard(request):
                     .annotate(count=Count("id"))
                     .values_list("apartment_id", "count")
                 )
-                # Only recalculate for apartments with missing distances
+                # Identify apartments that need distance calculation (done async via JS)
                 for apt in apartments:
                     if apt.id in apt_ids_with_coords:
                         actual_count = distance_counts.get(apt.id, 0)
                         if actual_count < expected_count:
-                            logger.info(f"Recalculating missing distances for apartment {apt.id}")
-                            calculate_and_cache_distances(apt)
+                            apartments_needing_distances.append(apt.id)
 
         apartments_with_distances = get_apartments_with_distances(apartments, favorite_places)
         # Add distance data to apartment objects for template access
@@ -338,6 +338,7 @@ def dashboard(request):
         "favorite_place_count": favorite_place_count,
         "favorite_place_limit": favorite_place_limit,
         "can_add_favorite_place": can_add_favorite_place_flag,
+        "apartments_needing_distances": apartments_needing_distances,
     }
     return render(request, "apartments/dashboard.html", context)
 
@@ -1316,3 +1317,36 @@ def google_maps_status(request):
             "api_key_configured": bool(settings.GOOGLE_MAPS_API_KEY),
         }
     )
+
+
+@login_required
+@require_http_methods(["POST"])
+def calculate_apartment_distances(request, pk):
+    """
+    Calculate distances for a single apartment asynchronously.
+    Returns the distance data as JSON for updating the UI.
+    """
+    apartment = get_object_or_404(Apartment, pk=pk, user=request.user)
+
+    if not apartment.latitude or not apartment.longitude:
+        return JsonResponse({"error": "Apartment has no coordinates"}, status=400)
+
+    # Calculate distances
+    calculate_and_cache_distances(apartment)
+
+    # Get the updated distance data
+    favorite_places = FavoritePlace.objects.filter(user=request.user)
+    apartments_with_distances = get_apartments_with_distances([apartment], favorite_places)
+
+    if apartments_with_distances:
+        apt_data = apartments_with_distances[0]
+        return JsonResponse(
+            {
+                "apartment_id": apartment.id,
+                "distances": apt_data["distances"],
+                "average_distance": apt_data["average_distance"],
+                "average_travel_time": apt_data["average_travel_time"],
+            }
+        )
+
+    return JsonResponse({"error": "Failed to calculate distances"}, status=500)

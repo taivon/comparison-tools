@@ -700,12 +700,23 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
 
                     <!-- Distance to Favorite Places -->
                     {% if favorite_places %}
-                    <div class="border-t border-gray-100 dark:border-neutral-700 pt-3 space-y-1.5 text-sm">
-                        {% if apartment.distance_data %}
+                    <div class="border-t border-gray-100 dark:border-neutral-700 pt-3 space-y-1.5 text-sm" data-distance-container data-apartment-id="{{ apartment.pk }}">
+                        {% if apartment.pk in apartments_needing_distances %}
+                            <!-- Loading state - distances being calculated -->
+                            <div class="flex justify-between items-center" data-distance-loading>
+                                <span class="text-gray-500">Calculating distances...</span>
+                                <span class="text-brand-purple">
+                                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </span>
+                            </div>
+                        {% elif apartment.distance_data %}
                             {% for label, info in apartment.distance_data|sort_by_time %}
-                            <div class="flex justify-between items-center">
+                            <div class="flex justify-between items-center" data-distance-row data-place-label="{{ label }}">
                                 <span class="text-gray-500 truncate mr-2">{{ label }}</span>
-                                <span class="font-medium text-gray-900 dark:text-white flex-shrink-0">
+                                <span class="font-medium text-gray-900 dark:text-white flex-shrink-0" data-distance-value>
                                     {% if info.travel_time != None %}
                                         {{ info.travel_time }} min
                                         <span class="text-gray-500 font-normal">({{ info.distance|floatformat:1 }} mi)</span>
@@ -718,9 +729,9 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             </div>
                             {% endfor %}
                             {% if favorite_place_count > 1 and apartment.average_travel_time != None %}
-                            <div class="flex justify-between items-center pt-1 border-t border-gray-100 dark:border-neutral-700 mt-1">
+                            <div class="flex justify-between items-center pt-1 border-t border-gray-100 dark:border-neutral-700 mt-1" data-average-row>
                                 <span class="text-gray-500 font-medium">Average</span>
-                                <span class="font-semibold text-brand-purple flex-shrink-0">
+                                <span class="font-semibold text-brand-purple flex-shrink-0" data-average-value>
                                     {{ apartment.average_travel_time }} min
                                     <span class="text-brand-purple/70 font-normal">({{ apartment.average_distance|floatformat:1 }} mi)</span>
                                 </span>
@@ -1072,9 +1083,14 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         <!-- Distance columns -->
                         {% if favorite_places %}
                             {% if is_premium and favorite_place_count > 1 %}
-                            <td class="px-6 py-4 whitespace-nowrap" data-field="avg_distance" data-avg-distance="{{ apartment.average_travel_time|default:'999' }}">
-                                <div class="text-sm font-semibold text-brand-purple">
-                                    {% if apartment.average_travel_time != None %}
+                            <td class="px-6 py-4 whitespace-nowrap" data-field="avg_distance" data-avg-distance="{{ apartment.average_travel_time|default:'999' }}" data-apartment-id="{{ apartment.pk }}">
+                                <div class="text-sm font-semibold text-brand-purple" data-table-avg-value>
+                                    {% if apartment.pk in apartments_needing_distances %}
+                                        <svg class="animate-spin h-4 w-4 text-brand-purple" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    {% elif apartment.average_travel_time != None %}
                                         {{ apartment.average_travel_time }} min
                                         <div class="text-xs text-brand-purple/70">{{ apartment.average_distance|floatformat:1 }} mi</div>
                                     {% elif apartment.average_distance != None %}
@@ -1086,8 +1102,14 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             </td>
                             {% endif %}
                             {% for place in favorite_places %}
-                            <td class="px-6 py-4 whitespace-nowrap" data-distance-{{ place.label|slugify }}="{% with distance_info=apartment.distance_data|default_if_none:"" %}{% if distance_info and place.label in distance_info %}{% for label, info in distance_info.items %}{% if label == place.label %}{% if info.travel_time != None %}{{ info.travel_time }}{% elif info.distance != None %}999{% else %}9999{% endif %}{% endif %}{% endfor %}{% else %}9999{% endif %}{% endwith %}">
-                                <div class="text-sm text-gray-900 dark:text-white">
+                            <td class="px-6 py-4 whitespace-nowrap" data-distance-{{ place.label|slugify }}="{% with distance_info=apartment.distance_data|default_if_none:"" %}{% if distance_info and place.label in distance_info %}{% for label, info in distance_info.items %}{% if label == place.label %}{% if info.travel_time != None %}{{ info.travel_time }}{% elif info.distance != None %}999{% else %}9999{% endif %}{% endif %}{% endfor %}{% else %}9999{% endif %}{% endwith %}" data-apartment-id="{{ apartment.pk }}" data-place-label="{{ place.label }}">
+                                <div class="text-sm text-gray-900 dark:text-white" data-table-distance-value>
+                                    {% if apartment.pk in apartments_needing_distances %}
+                                        <svg class="animate-spin h-4 w-4 text-brand-purple" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    {% else %}
                                     {% with distance_info=apartment.distance_data|default_if_none:"" %}
                                         {% if distance_info and place.label in distance_info and distance_info|length > 0 %}
                                             {% for label, info in distance_info.items %}
@@ -1109,6 +1131,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                             <span class="text-gray-400">N/A</span>
                                         {% endif %}
                                     {% endwith %}
+                                    {% endif %}
                                 </div>
                             </td>
                             {% endfor %}
@@ -3334,6 +3357,125 @@ function saveScoreWeights() {
 
     // Submit the form (it will trigger score recalculation automatically)
     form.submit();
+}
+
+// Async distance fetching
+const apartmentsNeedingDistances = {{ apartments_needing_distances|safe }};
+
+async function fetchDistancesForApartment(apartmentId) {
+    try {
+        const response = await fetch(`/apartments/api/apartment/${apartmentId}/distances/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            console.error(`Failed to fetch distances for apartment ${apartmentId}`);
+            return;
+        }
+
+        const data = await response.json();
+        updateDistanceUI(apartmentId, data);
+    } catch (error) {
+        console.error(`Error fetching distances for apartment ${apartmentId}:`, error);
+    }
+}
+
+function updateDistanceUI(apartmentId, data) {
+    // Update mobile card
+    const mobileContainer = document.querySelector(`[data-distance-container][data-apartment-id="${apartmentId}"]`);
+    if (mobileContainer) {
+        const loadingEl = mobileContainer.querySelector('[data-distance-loading]');
+        if (loadingEl) {
+            // Build new content
+            let html = '';
+            const distances = data.distances;
+
+            // Sort by travel time
+            const sortedEntries = Object.entries(distances).sort((a, b) => {
+                const aTime = a[1].travel_time ?? 9999;
+                const bTime = b[1].travel_time ?? 9999;
+                return aTime - bTime;
+            });
+
+            for (const [label, info] of sortedEntries) {
+                html += `<div class="flex justify-between items-center" data-distance-row data-place-label="${label}">
+                    <span class="text-gray-500 truncate mr-2">${label}</span>
+                    <span class="font-medium text-gray-900 dark:text-white flex-shrink-0" data-distance-value>`;
+
+                if (info.travel_time != null) {
+                    html += `${info.travel_time} min <span class="text-gray-500 font-normal">(${info.distance.toFixed(1)} mi)</span>`;
+                } else if (info.distance != null) {
+                    html += `${info.distance.toFixed(1)} mi`;
+                } else {
+                    html += `<span class="text-gray-400">N/A</span>`;
+                }
+                html += `</span></div>`;
+            }
+
+            // Add average if multiple places
+            if (sortedEntries.length > 1 && data.average_travel_time != null) {
+                html += `<div class="flex justify-between items-center pt-1 border-t border-gray-100 dark:border-neutral-700 mt-1" data-average-row>
+                    <span class="text-gray-500 font-medium">Average</span>
+                    <span class="font-semibold text-brand-purple flex-shrink-0" data-average-value>
+                        ${data.average_travel_time} min
+                        <span class="text-brand-purple/70 font-normal">(${data.average_distance.toFixed(1)} mi)</span>
+                    </span>
+                </div>`;
+            }
+
+            mobileContainer.innerHTML = html;
+        }
+    }
+
+    // Update desktop table cells
+    const tableCells = document.querySelectorAll(`td[data-apartment-id="${apartmentId}"]`);
+    tableCells.forEach(cell => {
+        const placeLabel = cell.getAttribute('data-place-label');
+        const valueEl = cell.querySelector('[data-table-distance-value], [data-table-avg-value]');
+
+        if (placeLabel && valueEl) {
+            // Individual place cell
+            const info = data.distances[placeLabel];
+            if (info) {
+                let html = '';
+                if (info.travel_time != null) {
+                    html = `${info.travel_time} min<div class="text-xs text-gray-500 dark:text-gray-400">${info.distance.toFixed(1)} mi</div>`;
+                    if (info.transit_fare) {
+                        html += `<div class="text-xs text-green-600 dark:text-green-400">$${info.transit_fare.toFixed(2)} fare</div>`;
+                    }
+                    // Update sorting attribute
+                    cell.setAttribute(`data-distance-${placeLabel.toLowerCase().replace(/[^a-z0-9]/g, '')}`, info.travel_time);
+                } else if (info.distance != null) {
+                    html = `${info.distance.toFixed(1)} mi`;
+                } else {
+                    html = `<span class="text-gray-400">N/A</span>`;
+                }
+                valueEl.innerHTML = html;
+            }
+        } else if (valueEl && cell.hasAttribute('data-avg-distance')) {
+            // Average cell
+            if (data.average_travel_time != null) {
+                valueEl.innerHTML = `${data.average_travel_time} min<div class="text-xs text-brand-purple/70">${data.average_distance.toFixed(1)} mi</div>`;
+                cell.setAttribute('data-avg-distance', data.average_travel_time);
+            } else if (data.average_distance != null) {
+                valueEl.innerHTML = `${data.average_distance.toFixed(1)} mi`;
+            }
+        }
+    });
+}
+
+// Fetch distances for all apartments that need them
+if (apartmentsNeedingDistances.length > 0) {
+    // Fetch sequentially to avoid overwhelming the API
+    (async function() {
+        for (const apartmentId of apartmentsNeedingDistances) {
+            await fetchDistancesForApartment(apartmentId);
+        }
+    })();
 }
 </script>
 
