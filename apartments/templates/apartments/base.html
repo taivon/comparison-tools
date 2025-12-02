@@ -254,10 +254,12 @@
                 <p class="text-gray-400 text-sm">
                     &copy; 2025 Apartment Comparison Tool. Making apartment hunting smarter.
                 </p>
-                <div class="mt-4 flex justify-center space-x-6">
+                <div class="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2">
                     <a href="{% url 'privacy' %}" class="text-gray-400 hover:text-gray-500 text-sm">Privacy Policy</a>
                     <a href="{% url 'terms' %}" class="text-gray-400 hover:text-gray-500 text-sm">Terms of Service</a>
-                    <a href="#" class="text-gray-400 hover:text-gray-500 text-sm">Contact</a>
+                    <a href="{% url 'feedback:feedback_create' %}" class="text-gray-400 hover:text-gray-500 text-sm">Feedback</a>
+                    <a href="{% url 'feedback:feature_list' %}" class="text-gray-400 hover:text-gray-500 text-sm">Feature Ideas</a>
+                    <a href="mailto:support@comparison.tools" class="text-gray-400 hover:text-gray-500 text-sm">Contact</a>
                 </div>
             </div>
         </div>
