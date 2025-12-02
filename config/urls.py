@@ -33,7 +33,15 @@ urlpatterns = [
     # Main homepage showcasing all comparison tools
     path("", apartment_views.main_homepage, name="home"),
     # Comparison tool apps
-    path("apartments/", include("apartments.urls")),
+    path(
+        "apartments/",
+        include(
+            [
+                path("", include("apartments.urls")),
+                path("", include("feedback.urls", namespace="feedback")),
+            ]
+        ),
+    ),
     path("homes/", apartment_views.homes_coming_soon, name="homes"),
     path("hotels/", apartment_views.hotels_coming_soon, name="hotels"),
     # Authentication (kept at root level for consistency)

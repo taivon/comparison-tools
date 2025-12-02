@@ -107,6 +107,7 @@ INSTALLED_APPS = [
     "django.contrib.sitemaps",  # For SEO sitemap generation
     "social_django",  # For Google OAuth
     "apartments",
+    "feedback",  # Feedback and feature voting
 ]
 
 # Only add development apps in DEBUG mode
