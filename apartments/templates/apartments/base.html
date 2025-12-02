@@ -162,6 +162,11 @@
                                             </a>
                                         {% endif %}
                                     {% endif %}
+                                    {% if user.is_staff %}
+                                    <a href="{% url 'admin:index' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700">
+                                        Admin Console
+                                    </a>
+                                    {% endif %}
                                     <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-b-lg">
                                         Sign Out
                                     </a>
