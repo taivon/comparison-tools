@@ -293,6 +293,20 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             </button>
                         {% endif %}
 
+                        <!-- Feedback Button -->
+                        <a href="{% url 'feedback:feedback_create' %}" class="p-2.5 sm:p-2 text-gray-700 dark:text-gray-300 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 rounded-lg border border-gray-300 dark:border-neutral-600 transition-colors touch-manipulation" title="Send Feedback">
+                            <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                            </svg>
+                        </a>
+
+                        <!-- Feature Ideas Button -->
+                        <a href="{% url 'feedback:feature_list' %}" class="p-2.5 sm:p-2 text-gray-700 dark:text-gray-300 hover:text-brand-purple hover:bg-gray-50 dark:hover:bg-neutral-700 rounded-lg border border-gray-300 dark:border-neutral-600 transition-colors touch-manipulation" title="Feature Ideas & Roadmap">
+                            <svg class="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </a>
+
                     </div>
 
                     {% if can_add_apartment %}
