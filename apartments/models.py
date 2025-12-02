@@ -283,6 +283,7 @@ class UserPreferences(models.Model):
 
     # Additional scoring weights (Pro features)
     net_rent_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    total_cost_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     bedrooms_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     bathrooms_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     discount_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
@@ -296,10 +297,10 @@ class UserPreferences(models.Model):
     )
 
     # Store the explicit order of scoring factors (comma-separated factor keys)
-    # Default order: price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony
+    # Default order: price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony
     factor_order = models.CharField(
         max_length=300,
-        default="price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
+        default="price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
         blank=True,
     )
 

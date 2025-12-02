@@ -19,6 +19,7 @@ class ScoringService:
     PRO_TIER_FACTORS = [
         "price",
         "net_effective_rent",
+        "total_cost",
         "sqft",
         "distance",
         "bedrooms",
@@ -112,6 +113,10 @@ class ScoringService:
         # Net effective rent (for Pro tier as separate factor)
         net_prices = [apt.net_effective_price for apt in self.apartments]
         metrics["net_effective_rent"] = (min(net_prices), max(net_prices))
+
+        # Total cost (net effective rent + parking + utilities)
+        total_costs = [apt.total_cost for apt in self.apartments]
+        metrics["total_cost"] = (min(total_costs), max(total_costs))
 
         # Square footage
         sqfts = [Decimal(apt.square_footage) for apt in self.apartments]
@@ -235,6 +240,7 @@ class ScoringService:
         weight_mapping = {
             "price": self.preferences.price_weight,
             "net_effective_rent": getattr(self.preferences, "net_rent_weight", 0),
+            "total_cost": getattr(self.preferences, "total_cost_weight", 0),
             "sqft": self.preferences.sqft_weight,
             "distance": self.preferences.distance_weight,
             "bedrooms": getattr(self.preferences, "bedrooms_weight", 0),
@@ -312,6 +318,7 @@ class ScoringService:
         factor_labels = {
             "price": "Rent",
             "net_effective_rent": "Net Effective Rent",
+            "total_cost": "Total Cost",
             "sqft": "Square Footage",
             "bedrooms": "Bedrooms",
             "bathrooms": "Bathrooms",
@@ -340,6 +347,9 @@ class ScoringService:
             elif factor == "net_effective_rent":
                 value = apartment.net_effective_price
                 invert = True
+            elif factor == "total_cost":
+                value = apartment.total_cost
+                invert = True  # Lower total cost is better
             elif factor == "sqft":
                 value = Decimal(apartment.square_footage)
                 invert = False

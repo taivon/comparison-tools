@@ -313,6 +313,12 @@ class UserPreferencesForm(forms.Form):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         widget=forms.HiddenInput(),
     )
+    total_cost_weight = forms.IntegerField(
+        initial=0,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.HiddenInput(),
+    )
     bedrooms_weight = forms.IntegerField(
         initial=0,
         required=False,
@@ -363,7 +369,7 @@ class UserPreferencesForm(forms.Form):
         ),
     )
     factor_order = forms.CharField(
-        initial="price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
+        initial="price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
         required=False,
         widget=forms.HiddenInput(),
     )

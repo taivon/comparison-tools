@@ -1512,6 +1512,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
     <input type="hidden" name="sqft_weight" value="{{ preferences.sqft_weight|default:50 }}">
     <input type="hidden" name="distance_weight" value="{{ preferences.distance_weight|default:50 }}">
     <input type="hidden" name="net_rent_weight" value="{{ preferences.net_rent_weight|default:0 }}">
+    <input type="hidden" name="total_cost_weight" value="{{ preferences.total_cost_weight|default:0 }}">
     <input type="hidden" name="bedrooms_weight" value="{{ preferences.bedrooms_weight|default:0 }}">
     <input type="hidden" name="bathrooms_weight" value="{{ preferences.bathrooms_weight|default:0 }}">
     <input type="hidden" name="discount_weight" value="{{ preferences.discount_weight|default:0 }}">
@@ -1519,7 +1520,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
     <input type="hidden" name="utilities_weight" value="{{ preferences.utilities_weight|default:0 }}">
     <input type="hidden" name="view_weight" value="{{ preferences.view_weight|default:0 }}">
     <input type="hidden" name="balcony_weight" value="{{ preferences.balcony_weight|default:0 }}">
-    <input type="hidden" name="factor_order" value="{{ preferences.factor_order|default:'price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony' }}">
+    <input type="hidden" name="factor_order" value="{{ preferences.factor_order|default:'price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony' }}">
     <input type="hidden" name="discount_calculation" value="{{ preferences.discount_calculation|default:'weekly' }}">
 </form>
 
@@ -1785,6 +1786,7 @@ const userPreferences = {
     sqftWeight: {{ preferences.sqft_weight|default:50 }},
     distanceWeight: {{ preferences.distance_weight|default:50 }},
     netRentWeight: {{ preferences.net_rent_weight|default:0 }},
+    totalCostWeight: {{ preferences.total_cost_weight|default:0 }},
     bedroomsWeight: {{ preferences.bedrooms_weight|default:0 }},
     bathroomsWeight: {{ preferences.bathrooms_weight|default:0 }},
     discountWeight: {{ preferences.discount_weight|default:0 }},
@@ -1792,7 +1794,7 @@ const userPreferences = {
     utilitiesWeight: {{ preferences.utilities_weight|default:0 }},
     viewWeight: {{ preferences.view_weight|default:0 }},
     balconyWeight: {{ preferences.balcony_weight|default:0 }},
-    factorOrder: "{{ preferences.factor_order|default:'price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony' }}"
+    factorOrder: "{{ preferences.factor_order|default:'price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony' }}"
 };
 
 // SessionStorage management for anonymous users
@@ -2825,11 +2827,11 @@ function createScoreTunerModal() {
                 </svg>
                 <div class="flex-1">
                     <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">Unlock All Ranking Factors</h4>
-                    <p class="text-xs text-purple-700 dark:text-purple-300 mb-2">Upgrade to Pro to rank up to 4 factors from 11 options:</p>
+                    <p class="text-xs text-purple-700 dark:text-purple-300 mb-2">Upgrade to Pro to rank up to 4 factors from 12 options:</p>
                     <ul class="text-xs text-purple-700 dark:text-purple-300 list-disc list-inside space-y-0.5">
-                        <li>Distance, Parking Cost, Utilities</li>
+                        <li>Total Cost, Parking, Utilities</li>
                         <li>Windows / Lighting / Scenery</li>
-                        <li>Balcony, Bedrooms, Bathrooms</li>
+                        <li>Balcony, Bedrooms, Bathrooms, Distance</li>
                     </ul>
                     <a href="/signup" class="inline-flex items-center mt-2 px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors">
                         Upgrade to Pro
@@ -2919,6 +2921,7 @@ function initializePriorityList() {
     const factorMap = {
         'price': { key: 'price', label: 'Base Rent', weight: userPreferences.priceWeight },
         'netRent': { key: 'netRent', label: 'Net Effective Rent', weight: userPreferences.netRentWeight },
+        'totalCost': { key: 'totalCost', label: 'Total Cost', weight: userPreferences.totalCostWeight },
         'sqft': { key: 'sqft', label: 'Square Footage', weight: userPreferences.sqftWeight },
         'bedrooms': { key: 'bedrooms', label: 'Bedrooms', weight: userPreferences.bedroomsWeight },
         'bathrooms': { key: 'bathrooms', label: 'Bathrooms', weight: userPreferences.bathroomsWeight },
@@ -2931,7 +2934,7 @@ function initializePriorityList() {
     };
 
     // Get stored order or use default
-    const storedOrder = userPreferences.factorOrder || 'price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony';
+    const storedOrder = userPreferences.factorOrder || 'price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony';
     const orderKeys = storedOrder.split(',').filter(k => k && factorMap[k]);
 
     // Build ordered factors list using stored order
@@ -3488,6 +3491,7 @@ function saveScoreWeights() {
         const factorWeights = {
             price: 0,
             netRent: 0,
+            totalCost: 0,
             sqft: 0,
             bedrooms: 0,
             bathrooms: 0,
@@ -3526,6 +3530,7 @@ function saveScoreWeights() {
         // Update form inputs
         const priceInput = form.querySelector('input[name="price_weight"]');
         const netRentInput = form.querySelector('input[name="net_rent_weight"]');
+        const totalCostInput = form.querySelector('input[name="total_cost_weight"]');
         const sqftInput = form.querySelector('input[name="sqft_weight"]');
         const bedroomsInput = form.querySelector('input[name="bedrooms_weight"]');
         const bathroomsInput = form.querySelector('input[name="bathrooms_weight"]');
@@ -3539,6 +3544,7 @@ function saveScoreWeights() {
 
         if (priceInput) priceInput.value = factorWeights.price;
         if (netRentInput) netRentInput.value = factorWeights.netRent;
+        if (totalCostInput) totalCostInput.value = factorWeights.totalCost;
         if (sqftInput) sqftInput.value = factorWeights.sqft;
         if (bedroomsInput) bedroomsInput.value = factorWeights.bedrooms;
         if (bathroomsInput) bathroomsInput.value = factorWeights.bathrooms;
@@ -3558,6 +3564,7 @@ function saveScoreWeights() {
         const factorWeights = {
             price: 0,
             netRent: 0,
+            totalCost: 0,
             sqft: 0,
             bedrooms: 0,
             bathrooms: 0,
@@ -3579,13 +3586,14 @@ function saveScoreWeights() {
             });
         }
         // For free users, build factor order with their 2 factors first, then others
-        const allKeys = ['price', 'sqft', 'distance', 'netRent', 'bedrooms', 'bathrooms', 'discount', 'parking', 'utilities', 'view', 'balcony'];
+        const allKeys = ['price', 'sqft', 'distance', 'netRent', 'totalCost', 'bedrooms', 'bathrooms', 'discount', 'parking', 'utilities', 'view', 'balcony'];
         const otherKeys = allKeys.filter(k => !freeFactorOrderKeys.includes(k));
         const freeFactorOrderString = [...freeFactorOrderKeys, ...otherKeys].join(',');
 
         // Update form inputs (free users only use netRent and sqft)
         const priceInput = form.querySelector('input[name="price_weight"]');
         const netRentInput = form.querySelector('input[name="net_rent_weight"]');
+        const totalCostInput = form.querySelector('input[name="total_cost_weight"]');
         const sqftInput = form.querySelector('input[name="sqft_weight"]');
         const bedroomsInput = form.querySelector('input[name="bedrooms_weight"]');
         const bathroomsInput = form.querySelector('input[name="bathrooms_weight"]');
@@ -3599,6 +3607,7 @@ function saveScoreWeights() {
 
         if (priceInput) priceInput.value = factorWeights.price;
         if (netRentInput) netRentInput.value = factorWeights.netRent;
+        if (totalCostInput) totalCostInput.value = factorWeights.totalCost;
         if (sqftInput) sqftInput.value = factorWeights.sqft;
         if (bedroomsInput) bedroomsInput.value = factorWeights.bedrooms;
         if (bathroomsInput) bathroomsInput.value = factorWeights.bathrooms;

@@ -174,6 +174,7 @@ def dashboard(request):
                 "sqft_weight": form.cleaned_data["sqft_weight"],
                 "distance_weight": form.cleaned_data["distance_weight"],
                 "net_rent_weight": form.cleaned_data.get("net_rent_weight", 0),
+                "total_cost_weight": form.cleaned_data.get("total_cost_weight", 0),
                 "bedrooms_weight": form.cleaned_data.get("bedrooms_weight", 0),
                 "bathrooms_weight": form.cleaned_data.get("bathrooms_weight", 0),
                 "discount_weight": form.cleaned_data.get("discount_weight", 0),
@@ -184,7 +185,7 @@ def dashboard(request):
                 "discount_calculation": form.cleaned_data["discount_calculation"],
                 "factor_order": form.cleaned_data.get(
                     "factor_order",
-                    "price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
+                    "price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
                 ),
             }
 
@@ -206,6 +207,7 @@ def dashboard(request):
                 "sqft_weight": preferences.sqft_weight,
                 "distance_weight": preferences.distance_weight,
                 "net_rent_weight": getattr(preferences, "net_rent_weight", 0),
+                "total_cost_weight": getattr(preferences, "total_cost_weight", 0),
                 "bedrooms_weight": getattr(preferences, "bedrooms_weight", 0),
                 "bathrooms_weight": getattr(preferences, "bathrooms_weight", 0),
                 "discount_weight": getattr(preferences, "discount_weight", 0),
@@ -217,7 +219,7 @@ def dashboard(request):
                 "factor_order": getattr(
                     preferences,
                     "factor_order",
-                    "price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
+                    "price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
                 ),
             }
         form = UserPreferencesForm(initial=initial_data)
