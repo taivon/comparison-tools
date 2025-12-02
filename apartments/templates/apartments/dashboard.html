@@ -91,6 +91,36 @@ tbody tr:hover .sticky-col-right {
 .dark .net-effective-tooltip .text-gray-500 {
     color: rgb(156 163 175); /* gray-400 */
 }
+/* Total cost tooltip styles - Light mode (dark tooltip) */
+.total-cost-tooltip {
+    background-color: rgb(17 24 39); /* gray-900 */
+    color: white;
+}
+.total-cost-tooltip .tooltip-arrow {
+    background-color: rgb(17 24 39); /* gray-900 */
+}
+/* Total cost tooltip - Dark mode (light tooltip) */
+.dark .total-cost-tooltip {
+    background-color: white;
+    color: rgb(17 24 39);
+    border: 1px solid rgb(229 231 235); /* gray-200 */
+}
+.dark .total-cost-tooltip .tooltip-arrow {
+    background-color: white;
+    border: 1px solid rgb(229 231 235);
+}
+.dark .total-cost-tooltip .font-semibold.mb-2 {
+    color: rgb(55 65 81); /* gray-700 */
+}
+.dark .total-cost-tooltip .text-gray-400 {
+    color: rgb(107 114 128); /* gray-500 */
+}
+.dark .total-cost-tooltip .text-gray-300 {
+    color: rgb(55 65 81); /* gray-700 */
+}
+.dark .total-cost-tooltip .border-gray-700 {
+    border-color: rgb(229 231 235); /* gray-200 */
+}
 /* Score breakdown tooltip styles - Light mode (dark tooltip) */
 .score-breakdown-tooltip {
     background-color: rgb(17 24 39); /* gray-900 */
@@ -794,9 +824,42 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     <div class="border-t border-gray-100 dark:border-neutral-700 pt-3">
                         <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                             {% if has_additional_costs %}
-                            <div class="flex justify-between">
+                            <div class="flex justify-between items-center col-span-2">
                                 <span class="text-gray-500">Total Cost</span>
-                                <span class="font-medium text-gray-900 dark:text-white">${{ apartment.total_cost|floatformat:0 }}/mo</span>
+                                <div class="group relative inline-flex items-center">
+                                    <span class="font-medium text-gray-900 dark:text-white cursor-help">${{ apartment.total_cost|floatformat:0 }}/mo</span>
+                                    <svg class="w-3.5 h-3.5 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div class="total-cost-tooltip hidden group-hover:block absolute z-50 w-56 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-3 right-0 top-6">
+                                        <div class="font-semibold mb-2 text-gray-300">Total Monthly Cost</div>
+                                        <p class="text-gray-400 mb-2">All monthly housing expenses combined.</p>
+                                        <div class="space-y-1.5">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">{% if apartment.months_free or apartment.weeks_free or apartment.flat_discount %}Net Effective{% else %}Monthly Rent{% endif %}:</span>
+                                                <span>${{ apartment.net_effective_price|floatformat:2 }}</span>
+                                            </div>
+                                            {% if apartment.parking_cost > 0 %}
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Parking:</span>
+                                                <span>+${{ apartment.parking_cost|floatformat:2 }}</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if apartment.utilities > 0 %}
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Utilities:</span>
+                                                <span>+${{ apartment.utilities|floatformat:2 }}</span>
+                                            </div>
+                                            {% endif %}
+                                            <div class="border-t border-gray-700 my-1.5"></div>
+                                            <div class="flex justify-between font-semibold">
+                                                <span>Total:</span>
+                                                <span>${{ apartment.total_cost|floatformat:2 }}/mo</span>
+                                            </div>
+                                        </div>
+                                        <div class="tooltip-arrow absolute right-4 -top-1.5 w-3 h-3 bg-gray-900 transform rotate-45"></div>
+                                    </div>
+                                </div>
                             </div>
                             {% endif %}
                             {% if has_parking %}
@@ -1014,30 +1077,12 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     {% endif %}
                     <th scope="col" class="px-6 py-3 text-left">
                         <button onclick="sortTable('price')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                            Monthly Rent
+                            Pricing
                             <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                             </svg>
                         </button>
                     </th>
-                    <th scope="col" id="netEffectiveHeader" class="px-6 py-3 text-left {% if not has_discounts and not is_anonymous %}hidden{% endif %}">
-                        <button onclick="sortTable('net_price')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                            Net Effective
-                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                            </svg>
-                        </button>
-                    </th>
-                    {% if has_additional_costs %}
-                    <th scope="col" id="totalCostHeader" class="px-6 py-3 text-left">
-                        <button onclick="sortTable('total_cost')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                            Total Cost
-                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                            </svg>
-                        </button>
-                    </th>
-                    {% endif %}
                     {% if has_parking %}
                     <th scope="col" id="parkingHeader" class="px-6 py-3 text-left">
                         <button onclick="sortTable('parking')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
@@ -1200,89 +1245,104 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             {% endif %}
                         </td>
                         {% endif %}
-                        <!-- Monthly Rent -->
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900" data-field="price">
-                                ${{ apartment.price|floatformat:2 }}
-                            </div>
-                        </td>
-                        <!-- Net Effective -->
-                        {% if has_discounts %}
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="group relative">
-                                <div class="text-sm font-semibold text-green-600 cursor-help flex items-center">
-                                    ${{ apartment.net_effective_price|floatformat:2 }}
-                                    {% if apartment.months_free or apartment.weeks_free or apartment.flat_discount %}
-                                    <svg class="w-3.5 h-3.5 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Pricing (Monthly Rent, Net Effective, Total Cost) -->
+                        <td class="px-6 py-4" data-total-cost="{{ apartment.total_cost }}">
+                            <div class="space-y-1">
+                                <!-- Monthly Rent -->
+                                <div class="text-lg font-bold text-gray-900 dark:text-white" data-field="price">
+                                    ${{ apartment.price|floatformat:0 }}<span class="text-xs font-normal text-gray-500">/mo</span>
+                                </div>
+
+                                <!-- Net Effective (if has discounts) -->
+                                {% if apartment.months_free or apartment.weeks_free or apartment.flat_discount %}
+                                <div class="group relative inline-flex items-center">
+                                    <span class="text-xs text-gray-500">Net:</span>
+                                    <span class="text-sm font-semibold text-green-600 ml-1 cursor-help">${{ apartment.net_effective_price|floatformat:0 }}</span>
+                                    <svg class="w-3 h-3 ml-0.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    {% endif %}
+                                    <div class="net-effective-tooltip hidden group-hover:block absolute z-50 w-64 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-3 left-0 top-6">
+                                        <div class="font-semibold mb-2 text-gray-300">Net Effective Rent</div>
+                                        <p class="text-gray-400 mb-2">Monthly rent after spreading discounts across the lease term.</p>
+                                        <div class="space-y-1.5">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Monthly Rent:</span>
+                                                <span>${{ apartment.price|floatformat:2 }}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Lease Term:</span>
+                                                <span>{{ apartment.lease_length_months|default:12 }} months</span>
+                                            </div>
+                                            <div class="border-t border-gray-700 my-1.5"></div>
+                                            {% if apartment.months_free %}
+                                            <div class="flex justify-between text-green-400">
+                                                <span>{{ apartment.months_free }} mo free:</span>
+                                                <span>-$<span class="months-free-value" data-price="{{ apartment.price }}" data-months="{{ apartment.months_free }}">...</span></span>
+                                            </div>
+                                            {% endif %}
+                                            {% if apartment.weeks_free %}
+                                            <div class="flex justify-between text-green-400">
+                                                <span>{{ apartment.weeks_free }} wk free:</span>
+                                                <span>-$<span class="weeks-free-value" data-price="{{ apartment.price }}" data-weeks="{{ apartment.weeks_free }}">...</span></span>
+                                            </div>
+                                            {% endif %}
+                                            {% if apartment.flat_discount %}
+                                            <div class="flex justify-between text-green-400">
+                                                <span>Cash discount:</span>
+                                                <span>-${{ apartment.flat_discount|floatformat:2 }}</span>
+                                            </div>
+                                            {% endif %}
+                                            <div class="border-t border-gray-700 my-1.5"></div>
+                                            <div class="flex justify-between font-semibold">
+                                                <span>Net Effective:</span>
+                                                <span class="text-green-400">${{ apartment.net_effective_price|floatformat:2 }}/mo</span>
+                                            </div>
+                                        </div>
+                                        <div class="tooltip-arrow absolute left-4 -top-1.5 w-3 h-3 bg-gray-900 transform rotate-45"></div>
+                                    </div>
                                 </div>
-                                {% if apartment.months_free or apartment.weeks_free or apartment.flat_discount %}
-                                <div class="net-effective-tooltip hidden group-hover:block absolute z-50 w-64 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-3">
-                                    <div class="font-semibold mb-2 text-gray-300">Net Effective Breakdown</div>
-                                    <div class="space-y-1.5">
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-400">Monthly Rent:</span>
-                                            <span>${{ apartment.price|floatformat:2 }}</span>
+                                {% endif %}
+
+                                <!-- Total Cost (if has parking or utilities) -->
+                                {% if has_additional_costs %}
+                                <div class="group relative inline-flex items-center">
+                                    <span class="text-xs text-gray-500">Total:</span>
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1 cursor-help">${{ apartment.total_cost|floatformat:0 }}</span>
+                                    <svg class="w-3 h-3 ml-0.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div class="total-cost-tooltip hidden group-hover:block absolute z-50 w-56 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-3 left-0 top-6">
+                                        <div class="font-semibold mb-2 text-gray-300">Total Monthly Cost</div>
+                                        <p class="text-gray-400 mb-2">All monthly housing expenses combined.</p>
+                                        <div class="space-y-1.5">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">{% if apartment.months_free or apartment.weeks_free or apartment.flat_discount %}Net Effective{% else %}Monthly Rent{% endif %}:</span>
+                                                <span>${{ apartment.net_effective_price|floatformat:2 }}</span>
+                                            </div>
+                                            {% if apartment.parking_cost > 0 %}
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Parking:</span>
+                                                <span>+${{ apartment.parking_cost|floatformat:2 }}</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if apartment.utilities > 0 %}
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Utilities:</span>
+                                                <span>+${{ apartment.utilities|floatformat:2 }}</span>
+                                            </div>
+                                            {% endif %}
+                                            <div class="border-t border-gray-700 my-1.5"></div>
+                                            <div class="flex justify-between font-semibold">
+                                                <span>Total:</span>
+                                                <span>${{ apartment.total_cost|floatformat:2 }}/mo</span>
+                                            </div>
                                         </div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-400">Lease Term:</span>
-                                            <span>{{ apartment.lease_length_months|default:12 }} months</span>
-                                        </div>
-                                        <div class="border-t border-gray-700 my-1.5"></div>
-                                        {% if apartment.months_free %}
-                                        <div class="flex justify-between text-green-400">
-                                            <span>{{ apartment.months_free }} month{{ apartment.months_free|pluralize }} free:</span>
-                                            <span>-$<span class="months-free-value" data-price="{{ apartment.price }}" data-months="{{ apartment.months_free }}">...</span></span>
-                                        </div>
-                                        {% endif %}
-                                        {% if apartment.weeks_free %}
-                                        <div class="flex justify-between text-green-400">
-                                            <span>{{ apartment.weeks_free }} week{{ apartment.weeks_free|pluralize }} free:</span>
-                                            <span>-$<span class="weeks-free-value" data-price="{{ apartment.price }}" data-weeks="{{ apartment.weeks_free }}">...</span></span>
-                                        </div>
-                                        {% endif %}
-                                        {% if apartment.flat_discount %}
-                                        <div class="flex justify-between text-green-400">
-                                            <span>Cash discount:</span>
-                                            <span>-${{ apartment.flat_discount|floatformat:2 }}</span>
-                                        </div>
-                                        {% endif %}
-                                        <div class="border-t border-gray-700 my-1.5"></div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-400">Total Savings:</span>
-                                            <span class="text-green-400 font-semibold total-savings" data-lease="{{ apartment.lease_length_months|default:12 }}">...</span>
-                                        </div>
-                                        <div class="flex justify-between font-semibold">
-                                            <span>Net Effective:</span>
-                                            <span class="text-green-400">${{ apartment.net_effective_price|floatformat:2 }}/mo</span>
-                                        </div>
+                                        <div class="tooltip-arrow absolute left-4 -top-1.5 w-3 h-3 bg-gray-900 transform rotate-45"></div>
                                     </div>
-                                    <div class="mt-2 pt-2 border-t border-gray-700 text-gray-500 text-[10px]">
-                                        Using {{ preferences.discount_calculation|default:"weekly" }} rate calculation
-                                    </div>
-                                    <div class="tooltip-arrow absolute left-4 w-3 h-3 bg-gray-900 transform rotate-45"></div>
                                 </div>
                                 {% endif %}
                             </div>
                         </td>
-                        {% endif %}
-                        <!-- Total Cost -->
-                        {% if has_additional_costs %}
-                        <td class="px-6 py-4 whitespace-nowrap" data-total-cost="{{ apartment.total_cost }}">
-                            <div class="text-sm font-medium text-gray-900">
-                                ${{ apartment.total_cost|floatformat:2 }}
-                            </div>
-                            {% if apartment.parking_cost > 0 or apartment.utilities > 0 %}
-                            <div class="text-xs text-gray-500">
-                                {% if apartment.parking_cost > 0 %}+${{ apartment.parking_cost|floatformat:0 }} parking{% endif %}
-                                {% if apartment.parking_cost > 0 and apartment.utilities > 0 %}, {% endif %}
-                                {% if apartment.utilities > 0 %}+${{ apartment.utilities|floatformat:0 }} util{% endif %}
-                            </div>
-                            {% endif %}
-                        </td>
-                        {% endif %}
                         <!-- Parking -->
                         {% if has_parking %}
                         <td class="px-6 py-4 whitespace-nowrap" data-parking="{{ apartment.parking_cost|default:0 }}">
@@ -2535,7 +2595,7 @@ function calculateTooltipValues() {
 function setupTooltipPositioning() {
     // Find all tooltip trigger groups
     document.querySelectorAll('.group.relative').forEach(group => {
-        const tooltip = group.querySelector('.net-effective-tooltip') || group.querySelector('.score-breakdown-tooltip');
+        const tooltip = group.querySelector('.net-effective-tooltip') || group.querySelector('.score-breakdown-tooltip') || group.querySelector('.total-cost-tooltip');
         if (!tooltip) return;
 
         const arrow = tooltip.querySelector('.tooltip-arrow');
