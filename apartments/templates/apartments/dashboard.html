@@ -1,4 +1,5 @@
 {% extends 'apartments/base.html' %}
+{% load distance_filters %}
 
 {% block title %}Dashboard - Your Apartments{% endblock %}
 
@@ -701,7 +702,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     {% if favorite_places %}
                     <div class="border-t border-gray-100 dark:border-neutral-700 pt-3 space-y-1.5 text-sm">
                         {% if apartment.distance_data %}
-                            {% for label, info in apartment.distance_data.items %}
+                            {% for label, info in apartment.distance_data|sort_by_time %}
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-500 truncate mr-2">{{ label }}</span>
                                 <span class="font-medium text-gray-900 dark:text-white flex-shrink-0">
@@ -716,21 +717,15 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                 </span>
                             </div>
                             {% endfor %}
-                        {% elif apartment.average_travel_time != None %}
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Avg Time</span>
-                                <span class="font-medium text-gray-900 dark:text-white">
+                            {% if favorite_place_count > 1 and apartment.average_travel_time != None %}
+                            <div class="flex justify-between items-center pt-1 border-t border-gray-100 dark:border-neutral-700 mt-1">
+                                <span class="text-gray-500 font-medium">Average</span>
+                                <span class="font-semibold text-brand-purple flex-shrink-0">
                                     {{ apartment.average_travel_time }} min
-                                    <span class="text-gray-500 font-normal">({{ apartment.average_distance|floatformat:1 }} mi)</span>
+                                    <span class="text-brand-purple/70 font-normal">({{ apartment.average_distance|floatformat:1 }} mi)</span>
                                 </span>
                             </div>
-                        {% elif apartment.average_distance != None %}
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Avg Distance</span>
-                                <span class="font-medium text-gray-900 dark:text-white">
-                                    {{ apartment.average_distance|floatformat:1 }} mi
-                                </span>
-                            </div>
+                            {% endif %}
                         {% else %}
                             <div class="flex justify-between">
                                 <span class="text-gray-500">Distance</span>
