@@ -1,0 +1,190 @@
+{% extends "apartments/base.html" %}
+
+{% block title %}Feature Ideas | Apartment Comparison Tool{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="bg-gray-50 dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800" aria-label="Breadcrumb">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ol class="flex items-center space-x-2 py-3 text-sm">
+            <li>
+                <a href="{% url 'home' %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple dark:hover:text-brand-purple-light">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                    </svg>
+                    <span class="sr-only">Home</span>
+                </a>
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'apartments:dashboard' %}" class="ml-2 text-gray-500 dark:text-gray-400 hover:text-brand-purple dark:hover:text-brand-purple-light">Dashboard</a>
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-2 text-gray-900 dark:text-white font-medium" aria-current="page">Feature Ideas</span>
+            </li>
+        </ol>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Feature Ideas</h1>
+                <p class="mt-1 text-gray-600 dark:text-gray-400">
+                    Vote on what we should build next for the apartment comparison tool
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'feedback:feedback_create' %}" class="text-brand-purple hover:text-brand-purple-dark text-sm font-medium">
+                    Send Feedback
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'feedback:feature_create' %}" class="inline-flex items-center px-4 py-2 bg-brand-purple text-white text-sm font-medium rounded-lg hover:bg-brand-purple-dark transition-colors">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Suggest Feature
+                </a>
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="inline-flex items-center px-4 py-2 bg-brand-purple text-white text-sm font-medium rounded-lg hover:bg-brand-purple-dark transition-colors">
+                    Sign in to Suggest
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature List -->
+    <div class="space-y-4">
+        {% for feature in features %}
+        <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-200 dark:border-neutral-700 p-4 sm:p-6">
+            <div class="flex gap-4">
+                <!-- Vote Button -->
+                <div class="flex-shrink-0">
+                    {% if user.is_authenticated %}
+                    <form method="POST" action="{% url 'feedback:feature_vote_toggle' feature.pk %}" class="vote-form">
+                        {% csrf_token %}
+                        <button type="submit" class="flex flex-col items-center justify-center w-14 h-16 rounded-lg border-2 transition-colors {% if feature.user_has_voted %}border-brand-purple bg-brand-purple/10 text-brand-purple{% else %}border-gray-200 dark:border-neutral-600 hover:border-brand-purple hover:bg-brand-purple/5 text-gray-500 dark:text-gray-400{% endif %}">
+                            <svg class="w-5 h-5 mb-1" fill="{% if feature.user_has_voted %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                            </svg>
+                            <span class="text-sm font-semibold vote-count">{{ feature.votes_count }}</span>
+                        </button>
+                    </form>
+                    {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="flex flex-col items-center justify-center w-14 h-16 rounded-lg border-2 border-gray-200 dark:border-neutral-600 hover:border-brand-purple hover:bg-brand-purple/5 text-gray-500 dark:text-gray-400 transition-colors" title="Sign in to vote">
+                        <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                        <span class="text-sm font-semibold">{{ feature.votes_count }}</span>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Feature Details -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ feature.title }}</h3>
+                        <!-- Status Badge -->
+                        {% if feature.status == 'planned' %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                            Planned
+                        </span>
+                        {% elif feature.status == 'in_progress' %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
+                            In Progress
+                        </span>
+                        {% elif feature.status == 'done' %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                            Done
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if feature.description %}
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-3">{{ feature.description }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 dark:text-gray-500">
+                        {% if feature.user %}
+                        Suggested by {{ feature.user.first_name|default:feature.user.username }}
+                        {% else %}
+                        Suggested anonymously
+                        {% endif %}
+                        &middot; {{ feature.created_at|timesince }} ago
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty State -->
+        <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-200 dark:border-neutral-700 p-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No feature ideas yet</h3>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Be the first to suggest a feature for the apartment comparison tool!</p>
+            {% if user.is_authenticated %}
+            <a href="{% url 'feedback:feature_create' %}" class="mt-6 inline-flex items-center px-4 py-2 bg-brand-purple text-white text-sm font-medium rounded-lg hover:bg-brand-purple-dark transition-colors">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Suggest Feature
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}?next={{ request.path }}" class="mt-6 inline-flex items-center px-4 py-2 bg-brand-purple text-white text-sm font-medium rounded-lg hover:bg-brand-purple-dark transition-colors">
+                Sign in to Suggest
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// AJAX voting
+document.querySelectorAll('.vote-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const button = this.querySelector('button');
+        const voteCount = this.querySelector('.vote-count');
+        const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(this.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                voteCount.textContent = data.vote_count;
+
+                if (data.action === 'added') {
+                    button.classList.remove('border-gray-200', 'dark:border-neutral-600', 'hover:border-brand-purple', 'hover:bg-brand-purple/5', 'text-gray-500', 'dark:text-gray-400');
+                    button.classList.add('border-brand-purple', 'bg-brand-purple/10', 'text-brand-purple');
+                    button.querySelector('svg').setAttribute('fill', 'currentColor');
+                } else {
+                    button.classList.add('border-gray-200', 'dark:border-neutral-600', 'hover:border-brand-purple', 'hover:bg-brand-purple/5', 'text-gray-500', 'dark:text-gray-400');
+                    button.classList.remove('border-brand-purple', 'bg-brand-purple/10', 'text-brand-purple');
+                    button.querySelector('svg').setAttribute('fill', 'none');
+                }
+            }
+        })
+        .catch(error => {
+            // Fallback to regular form submission if AJAX fails
+            this.submit();
+        });
+    });
+});
+</script>
+{% endblock %}

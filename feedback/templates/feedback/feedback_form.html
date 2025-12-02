@@ -1,0 +1,130 @@
+{% extends "apartments/base.html" %}
+
+{% block title %}Send Feedback | Apartment Comparison Tool{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="bg-gray-50 dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800" aria-label="Breadcrumb">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ol class="flex items-center space-x-2 py-3 text-sm">
+            <li>
+                <a href="{% url 'home' %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple dark:hover:text-brand-purple-light">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                    </svg>
+                    <span class="sr-only">Home</span>
+                </a>
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'apartments:dashboard' %}" class="ml-2 text-gray-500 dark:text-gray-400 hover:text-brand-purple dark:hover:text-brand-purple-light">Dashboard</a>
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-2 text-gray-900 dark:text-white font-medium" aria-current="page">Send Feedback</span>
+            </li>
+        </ol>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Send Feedback</h1>
+                <p class="mt-1 text-gray-600 dark:text-gray-400">
+                    Help us improve the Apartment Comparison Tool
+                </p>
+            </div>
+            <a href="{% url 'apartments:dashboard' %}" class="text-brand-purple hover:text-brand-purple-dark text-sm font-medium">
+                Cancel
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-200 dark:border-neutral-700 p-6">
+        <form method="POST" action="">
+            {% csrf_token %}
+            {{ form.page_url }}
+
+            <div class="space-y-6">
+                <!-- Category -->
+                <div>
+                    <label for="id_category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Category <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
+                        What type of feedback are you sharing?
+                    </p>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Message -->
+                <div>
+                    <label for="id_message" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Message <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
+                        Please be as detailed as possible
+                    </p>
+                    {{ form.message }}
+                    {% if form.message.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.message.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Email (only for anonymous users) -->
+                {% if show_email_field %}
+                <div>
+                    <label for="id_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Email (optional)
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
+                        Provide your email if you'd like us to follow up
+                    </p>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Feature Ideas Link -->
+                <div class="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-brand-purple mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Have a feature idea?</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Check out our <a href="{% url 'feedback:feature_list' %}" class="text-brand-purple hover:text-brand-purple-dark font-medium">feature ideas board</a> to vote on existing ideas or suggest new ones.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit buttons -->
+            <div class="mt-8 flex justify-end space-x-3">
+                <a href="{% url 'apartments:dashboard' %}" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-brand-purple text-white text-sm font-medium rounded-lg hover:bg-brand-purple-dark transition-colors">
+                    Send Feedback
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "apartments/base.html" %}
+
+{% block title %}Suggest Feature | Apartment Comparison Tool{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="bg-gray-50 dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800" aria-label="Breadcrumb">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ol class="flex items-center space-x-2 py-3 text-sm">
+            <li>
+                <a href="{% url 'home' %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple dark:hover:text-brand-purple-light">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                    </svg>
+                    <span class="sr-only">Home</span>
+                </a>
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'apartments:dashboard' %}" class="ml-2 text-gray-500 dark:text-gray-400 hover:text-brand-purple dark:hover:text-brand-purple-light">Dashboard</a>
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'feedback:feature_list' %}" class="ml-2 text-gray-500 dark:text-gray-400 hover:text-brand-purple dark:hover:text-brand-purple-light">Feature Ideas</a>
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-2 text-gray-900 dark:text-white font-medium" aria-current="page">Suggest Feature</span>
+            </li>
+        </ol>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Suggest a Feature</h1>
+                <p class="mt-1 text-gray-600 dark:text-gray-400">
+                    Share your idea to improve the Apartment Comparison Tool
+                </p>
+            </div>
+            <a href="{% url 'feedback:feature_list' %}" class="text-brand-purple hover:text-brand-purple-dark text-sm font-medium">
+                Cancel
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-200 dark:border-neutral-700 p-6">
+        <form method="POST" action="">
+            {% csrf_token %}
+
+            <div class="space-y-6">
+                <!-- Title -->
+                <div>
+                    <label for="id_title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Title <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
+                        A brief summary of your idea
+                    </p>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="id_description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Description (optional)
+                    </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-2">
+                        Add more details about your idea and why it would be useful
+                    </p>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tips -->
+                <div class="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tips for good feature ideas</h4>
+                    <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Be specific about what you want to accomplish
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Explain the problem this would solve
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-4 h-4 text-brand-purple mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Check existing ideas to avoid duplicates
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Submit buttons -->
+            <div class="mt-8 flex justify-end space-x-3">
+                <a href="{% url 'feedback:feature_list' %}" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-brand-purple text-white text-sm font-medium rounded-lg hover:bg-brand-purple-dark transition-colors">
+                    Submit Idea
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
