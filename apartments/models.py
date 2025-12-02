@@ -315,6 +315,13 @@ class UserPreferences(models.Model):
         default="net_effective",
     )
 
+    # Which price to use for sorting the Pricing column
+    pricing_sort_basis = models.CharField(
+        max_length=20,
+        choices=[("base", "Base Rent"), ("net_effective", "Net Effective"), ("total_cost", "Total Cost")],
+        default="base",
+    )
+
     # Store the explicit order of scoring factors (comma-separated factor keys)
     # Default order: price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony
     factor_order = models.CharField(

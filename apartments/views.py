@@ -184,6 +184,7 @@ def dashboard(request):
                 "balcony_weight": form.cleaned_data.get("balcony_weight", 0),
                 "discount_calculation": form.cleaned_data["discount_calculation"],
                 "price_per_sqft_basis": form.cleaned_data.get("price_per_sqft_basis", "net_effective"),
+                "pricing_sort_basis": form.cleaned_data.get("pricing_sort_basis", "base"),
                 "factor_order": form.cleaned_data.get(
                     "factor_order",
                     "price,sqft,distance,netRent,totalCost,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
@@ -609,6 +610,7 @@ def update_preferences(request):
             preferences.distance_weight = form.cleaned_data["distance_weight"]
             preferences.discount_calculation = form.cleaned_data["discount_calculation"]
             preferences.price_per_sqft_basis = form.cleaned_data.get("price_per_sqft_basis", "net_effective")
+            preferences.pricing_sort_basis = form.cleaned_data.get("pricing_sort_basis", "base")
             preferences.save()
             messages.success(request, "Preferences updated successfully!")
             return redirect("apartments:index")
@@ -619,6 +621,7 @@ def update_preferences(request):
             "distance_weight": preferences.distance_weight,
             "discount_calculation": preferences.discount_calculation,
             "price_per_sqft_basis": getattr(preferences, "price_per_sqft_basis", "net_effective"),
+            "pricing_sort_basis": getattr(preferences, "pricing_sort_basis", "base"),
         }
         form = UserPreferencesForm(initial=initial_data)
 

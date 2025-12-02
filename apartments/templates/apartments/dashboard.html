@@ -1061,12 +1061,23 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     </th>
                     {% endif %}
                     <th scope="col" class="px-6 py-3 text-left">
-                        <button onclick="sortTable('price')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                            Pricing
-                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button onclick="sortTable('price')" class="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                                Pricing
+                                <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </button>
+                            <div class="relative group/tooltip">
+                                <svg class="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div class="absolute left-0 top-6 w-56 p-2 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50">
+                                    <p class="mb-1"><strong>Sorting by:</strong> {% if preferences.pricing_sort_basis == 'net_effective' %}Net Effective{% elif preferences.pricing_sort_basis == 'total_cost' %}Total Cost{% else %}Base Rent{% endif %}</p>
+                                    <p class="text-gray-400">Change this in Score Tuner preferences.</p>
+                                </div>
+                            </div>
+                        </div>
                     </th>
                     {% if has_beds_baths_variation %}
                     <th scope="col" class="px-6 py-3 text-left">
@@ -2764,6 +2775,9 @@ let sortDirection = {
 sortDirection['distance_{{ place.label|slugify }}'] = 'asc';
 {% endfor %}
 
+// Pricing sort basis preference
+const pricingSortBasis = '{{ preferences.pricing_sort_basis|default:"base" }}';
+
 function sortTable(column) {
     const tbody = document.getElementById('apartmentsTableBody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -2783,8 +2797,22 @@ function sortTable(column) {
                 return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
 
             case 'price':
-                aVal = parseFloat(a.querySelector('[data-field="price"]').textContent.replace(/[$,]/g, ''));
-                bVal = parseFloat(b.querySelector('[data-field="price"]').textContent.replace(/[$,]/g, ''));
+                // Sort by user's preferred pricing basis
+                if (pricingSortBasis === 'net_effective') {
+                    const aNetEl = a.querySelector('[data-net-effective]');
+                    const bNetEl = b.querySelector('[data-net-effective]');
+                    aVal = aNetEl ? parseFloat(aNetEl.getAttribute('data-net-effective')) : 0;
+                    bVal = bNetEl ? parseFloat(bNetEl.getAttribute('data-net-effective')) : 0;
+                } else if (pricingSortBasis === 'total_cost') {
+                    const aTotalEl = a.querySelector('[data-total-cost]');
+                    const bTotalEl = b.querySelector('[data-total-cost]');
+                    aVal = aTotalEl ? parseFloat(aTotalEl.getAttribute('data-total-cost')) : 0;
+                    bVal = bTotalEl ? parseFloat(bTotalEl.getAttribute('data-total-cost')) : 0;
+                } else {
+                    // Default: base rent
+                    aVal = parseFloat(a.querySelector('[data-field="price"]').textContent.replace(/[$,]/g, ''));
+                    bVal = parseFloat(b.querySelector('[data-field="price"]').textContent.replace(/[$,]/g, ''));
+                }
                 break;
 
             case 'net_price':
@@ -3009,6 +3037,7 @@ function openScoreTuner() {
 function createScoreTunerModal() {
     const discountCalcMethod = '{{ preferences.discount_calculation|default:"weekly" }}';
     const pricePerSqftBasis = '{{ preferences.price_per_sqft_basis|default:"net_effective" }}';
+    const pricingSortBasis = '{{ preferences.pricing_sort_basis|default:"base" }}';
     const modal = document.createElement('div');
     modal.id = 'scoreTunerModal';
     modal.className = 'hidden fixed inset-0 z-50 overflow-y-auto';
@@ -3165,6 +3194,29 @@ function createScoreTunerModal() {
                                     </label>
                                     <label class="flex items-center cursor-pointer">
                                         <input type="radio" name="price_sqft_basis_tuner" value="total_cost" ${pricePerSqftBasis === 'total_cost' ? 'checked' : ''}
+                                               class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 dark:border-neutral-600">
+                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Total Cost</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Pricing Sort Basis -->
+                            <div class="p-4 bg-gray-50 dark:bg-neutral-900 rounded-lg border border-gray-200 dark:border-neutral-700">
+                                <h5 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Pricing Column Sort</h5>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Which price to use when sorting the Pricing column:</p>
+                                <div class="space-y-2">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="radio" name="pricing_sort_basis_tuner" value="base" ${pricingSortBasis === 'base' ? 'checked' : ''}
+                                               class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 dark:border-neutral-600">
+                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Base Rent</span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="radio" name="pricing_sort_basis_tuner" value="net_effective" ${pricingSortBasis === 'net_effective' ? 'checked' : ''}
+                                               class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 dark:border-neutral-600">
+                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Net Effective</span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="radio" name="pricing_sort_basis_tuner" value="total_cost" ${pricingSortBasis === 'total_cost' ? 'checked' : ''}
                                                class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 dark:border-neutral-600">
                                         <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Total Cost</span>
                                     </label>
@@ -3925,6 +3977,19 @@ function saveScoreWeights() {
             form.appendChild(priceSqftInput);
         }
         priceSqftInput.value = priceSqftBasisRadio.value;
+    }
+
+    // Get pricing sort basis from Score Tuner modal
+    const pricingSortBasisRadio = document.querySelector('input[name="pricing_sort_basis_tuner"]:checked');
+    if (pricingSortBasisRadio) {
+        let pricingSortInput = form.querySelector('input[name="pricing_sort_basis"]');
+        if (!pricingSortInput) {
+            pricingSortInput = document.createElement('input');
+            pricingSortInput.type = 'hidden';
+            pricingSortInput.name = 'pricing_sort_basis';
+            form.appendChild(pricingSortInput);
+        }
+        pricingSortInput.value = pricingSortBasisRadio.value;
     }
 
     // Submit the form (it will trigger score recalculation automatically)
