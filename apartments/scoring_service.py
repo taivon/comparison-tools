@@ -16,7 +16,19 @@ class ScoringService:
     # Free tier: only price + distance (2 factors)
     # Pro tier: all factors
     FREE_TIER_FACTORS = ["price", "distance"]
-    PRO_TIER_FACTORS = ["price", "net_effective_rent", "sqft", "distance", "bedrooms", "bathrooms", "discount"]
+    PRO_TIER_FACTORS = [
+        "price",
+        "net_effective_rent",
+        "sqft",
+        "distance",
+        "bedrooms",
+        "bathrooms",
+        "discount",
+        "parking",
+        "utilities",
+        "view",
+        "balcony",
+    ]
 
     def __init__(self, user, apartments: list[Apartment], product_slug: str = "apartments"):
         """
@@ -129,6 +141,25 @@ class ScoringService:
         discount_values = [self._get_discount_amount(apt) for apt in self.apartments]
         metrics["discount"] = (min(discount_values), max(discount_values))
 
+        # Parking cost
+        parking_values = [apt.parking_cost if apt.parking_cost else Decimal("0") for apt in self.apartments]
+        metrics["parking"] = (min(parking_values), max(parking_values))
+
+        # Utilities
+        utilities_values = [apt.utilities if apt.utilities else Decimal("0") for apt in self.apartments]
+        metrics["utilities"] = (min(utilities_values), max(utilities_values))
+
+        # View quality (only count rated apartments, 0 = not rated)
+        view_values = [Decimal(apt.view_quality) for apt in self.apartments if apt.view_quality > 0]
+        if view_values:
+            metrics["view"] = (min(view_values), max(view_values))
+        else:
+            metrics["view"] = (Decimal("0"), Decimal("0"))
+
+        # Has balcony (binary: 0 or 1)
+        balcony_values = [Decimal("1") if apt.has_balcony else Decimal("0") for apt in self.apartments]
+        metrics["balcony"] = (min(balcony_values), max(balcony_values))
+
         return metrics
 
     def _get_average_distance(self, apartment: Apartment) -> Decimal | None:
@@ -209,6 +240,10 @@ class ScoringService:
             "bedrooms": getattr(self.preferences, "bedrooms_weight", 0),
             "bathrooms": getattr(self.preferences, "bathrooms_weight", 0),
             "discount": getattr(self.preferences, "discount_weight", 0),
+            "parking": getattr(self.preferences, "parking_weight", 0),
+            "utilities": getattr(self.preferences, "utilities_weight", 0),
+            "view": getattr(self.preferences, "view_weight", 0),
+            "balcony": getattr(self.preferences, "balcony_weight", 0),
         }
 
         for factor in available_factors:
@@ -282,6 +317,10 @@ class ScoringService:
             "bathrooms": "Bathrooms",
             "distance": "Location",
             "discount": "Discount",
+            "parking": "Parking Cost",
+            "utilities": "Utilities",
+            "view": "View Quality",
+            "balcony": "Balcony",
         }
 
         # Calculate weighted score with breakdown
@@ -318,6 +357,20 @@ class ScoringService:
             elif factor == "discount":
                 value = self._get_discount_amount(apartment)
                 invert = False  # Higher discount is better
+            elif factor == "parking":
+                value = apartment.parking_cost if apartment.parking_cost else Decimal("0")
+                invert = True  # Lower parking cost is better
+            elif factor == "utilities":
+                value = apartment.utilities if apartment.utilities else Decimal("0")
+                invert = True  # Lower utilities is better
+            elif factor == "view":
+                value = Decimal(apartment.view_quality)
+                if value == 0:
+                    continue  # Skip unrated apartments for view scoring
+                invert = False  # Higher view quality is better
+            elif factor == "balcony":
+                value = Decimal("1") if apartment.has_balcony else Decimal("0")
+                invert = False  # Having balcony is better
             else:
                 continue
 

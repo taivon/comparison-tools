@@ -200,6 +200,94 @@
                 </div>
             </div>
 
+            <!-- Additional Costs -->
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-amber-100 dark:bg-amber-900/20 rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Additional Costs</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Monthly costs beyond rent</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-6">
+                    <div class="grid grid-cols-6 gap-6">
+                        <div class="col-span-6 sm:col-span-3">
+                            <label for="{{ form.parking_cost.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Monthly Parking Cost</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">$</span>
+                                </div>
+                                {{ form.parking_cost }}
+                            </div>
+                            {% if form.parking_cost.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.parking_cost.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Monthly parking fee (0 if included)</p>
+                        </div>
+
+                        <div class="col-span-6 sm:col-span-3">
+                            <label for="{{ form.utilities.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Monthly Utilities Estimate</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">$</span>
+                                </div>
+                                {{ form.utilities }}
+                            </div>
+                            {% if form.utilities.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.utilities.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Estimated monthly utilities (0 if included)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unit Features -->
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-neutral-700">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Unit Features</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Amenities and quality ratings</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-6">
+                    <div class="grid grid-cols-6 gap-6">
+                        <div class="col-span-6 sm:col-span-3">
+                            <label for="{{ form.view_quality.id_for_label }}" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">View Quality</label>
+                            {{ form.view_quality }}
+                            {% if form.view_quality.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.view_quality.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Rate the windows, sunlight, and view</p>
+                        </div>
+
+                        <div class="col-span-6 sm:col-span-3">
+                            <label class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Has Balcony/Patio</label>
+                            <div class="flex items-center h-10">
+                                {{ form.has_balcony }}
+                                <label for="{{ form.has_balcony.id_for_label }}" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Yes, this unit has a balcony or patio</label>
+                            </div>
+                            {% if form.has_balcony.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.has_balcony.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Actions -->
             <div class="flex justify-end space-x-3">
                 <a href="{% url 'apartments:index' %}" class="px-4 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors">

@@ -231,6 +231,58 @@ class ApartmentForm(forms.Form):
             }
         ),
     )
+    # Additional cost fields
+    parking_cost = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        initial=Decimal("0"),
+        validators=[MinValueValidator(Decimal("0"))],
+        widget=forms.NumberInput(
+            attrs={
+                "step": "0.01",
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary pl-7",
+            }
+        ),
+    )
+    utilities = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        initial=Decimal("0"),
+        validators=[MinValueValidator(Decimal("0"))],
+        widget=forms.NumberInput(
+            attrs={
+                "step": "0.01",
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary pl-7",
+            }
+        ),
+    )
+    # Quality/amenity fields
+    view_quality = forms.ChoiceField(
+        choices=[
+            (0, "Not Rated"),
+            (1, "1 - Poor"),
+            (2, "2 - Fair"),
+            (3, "3 - Average"),
+            (4, "4 - Good"),
+            (5, "5 - Excellent"),
+        ],
+        initial=0,
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-secondary shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white text-secondary",
+            }
+        ),
+    )
+    has_balcony = forms.BooleanField(
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(
+            attrs={
+                "class": "h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 rounded",
+            }
+        ),
+    )
 
 
 class UserPreferencesForm(forms.Form):
@@ -279,6 +331,30 @@ class UserPreferencesForm(forms.Form):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         widget=forms.HiddenInput(),
     )
+    parking_weight = forms.IntegerField(
+        initial=0,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.HiddenInput(),
+    )
+    utilities_weight = forms.IntegerField(
+        initial=0,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.HiddenInput(),
+    )
+    view_weight = forms.IntegerField(
+        initial=0,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.HiddenInput(),
+    )
+    balcony_weight = forms.IntegerField(
+        initial=0,
+        required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.HiddenInput(),
+    )
     discount_calculation = forms.ChoiceField(
         choices=DISCOUNT_CHOICES,
         initial="daily",
@@ -287,7 +363,7 @@ class UserPreferencesForm(forms.Form):
         ),
     )
     factor_order = forms.CharField(
-        initial="price,sqft,distance,netRent,bedrooms,bathrooms,discount",
+        initial="price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
         required=False,
         widget=forms.HiddenInput(),
     )

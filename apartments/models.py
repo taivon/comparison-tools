@@ -197,6 +197,22 @@ class Apartment(models.Model):
         max_digits=10, decimal_places=2, default=Decimal("0"), validators=[MinValueValidator(Decimal("0"))]
     )
 
+    # Additional cost fields
+    parking_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0"), validators=[MinValueValidator(Decimal("0"))]
+    )
+    utilities = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0"), validators=[MinValueValidator(Decimal("0"))]
+    )
+
+    # Quality/amenity fields
+    view_quality = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        help_text="Rating for windows/sunlight/view (0=not rated, 1-5 scale)",
+    )
+    has_balcony = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -250,6 +266,14 @@ class Apartment(models.Model):
         net_price = (total_lease_value - total_discount) / Decimal(str(self.lease_length_months))
         return round(net_price, 2)
 
+    @property
+    def total_cost(self):
+        """Calculate total monthly cost: net effective rent + parking + utilities"""
+        base_cost = self.net_effective_price
+        parking = self.parking_cost if self.parking_cost else Decimal("0")
+        utils = self.utilities if self.utilities else Decimal("0")
+        return round(base_cost + parking + utils, 2)
+
 
 class UserPreferences(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="preferences")
@@ -262,16 +286,20 @@ class UserPreferences(models.Model):
     bedrooms_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     bathrooms_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     discount_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    parking_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    utilities_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    view_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    balcony_weight = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
 
     discount_calculation = models.CharField(
         max_length=20, choices=[("monthly", "Monthly"), ("weekly", "Weekly"), ("daily", "Daily")], default="weekly"
     )
 
     # Store the explicit order of scoring factors (comma-separated factor keys)
-    # Default order: price,sqft,distance,netRent,bedrooms,bathrooms,discount
+    # Default order: price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony
     factor_order = models.CharField(
-        max_length=200,
-        default="price,sqft,distance,netRent,bedrooms,bathrooms,discount",
+        max_length=300,
+        default="price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
         blank=True,
     )
 

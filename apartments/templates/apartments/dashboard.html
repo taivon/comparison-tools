@@ -886,7 +886,11 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         lease_length_months: {{ apartment.lease_length_months|default:12 }},
                         months_free: {{ apartment.months_free|default:0 }},
                         weeks_free: {{ apartment.weeks_free|default:0 }},
-                        flat_discount: {{ apartment.flat_discount|default:0 }}
+                        flat_discount: {{ apartment.flat_discount|default:0 }},
+                        parking_cost: {{ apartment.parking_cost|default:0 }},
+                        utilities: {{ apartment.utilities|default:0 }},
+                        view_quality: {{ apartment.view_quality|default:0 }},
+                        has_balcony: {{ apartment.has_balcony|yesno:'true,false' }}
                     })" class="text-brand-purple hover:text-brand-purple-light text-xs font-medium py-1.5 px-2 touch-manipulation">
                         Edit
                     </button>
@@ -1276,7 +1280,11 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                 lease_length_months: {{ apartment.lease_length_months|default:12 }},
                                 months_free: {{ apartment.months_free|default:0 }},
                                 weeks_free: {{ apartment.weeks_free|default:0 }},
-                                flat_discount: {{ apartment.flat_discount|default:0 }}
+                                flat_discount: {{ apartment.flat_discount|default:0 }},
+                                parking_cost: {{ apartment.parking_cost|default:0 }},
+                                utilities: {{ apartment.utilities|default:0 }},
+                                view_quality: {{ apartment.view_quality|default:0 }},
+                                has_balcony: {{ apartment.has_balcony|yesno:'true,false' }}
                             })" class="text-brand-purple hover:text-brand-purple-light mr-2 p-2 touch-manipulation inline-flex items-center justify-center">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -1693,6 +1701,59 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Additional Costs -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Additional Costs
+                        </h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="edit_parking_cost" class="block text-sm font-medium text-gray-700 mb-2">Parking Cost ($)</label>
+                                <input type="number" name="parking_cost" id="edit_parking_cost" value="0" step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                            <div>
+                                <label for="edit_utilities" class="block text-sm font-medium text-gray-700 mb-2">Utilities ($)</label>
+                                <input type="number" name="utilities" id="edit_utilities" value="0" step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Unit Features -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                            </svg>
+                            Unit Features
+                        </h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="edit_view_quality" class="block text-sm font-medium text-gray-700 mb-2">View Quality</label>
+                                <select name="view_quality" id="edit_view_quality"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+                                    <option value="0">Not Rated</option>
+                                    <option value="1">1 - Poor</option>
+                                    <option value="2">2 - Fair</option>
+                                    <option value="3">3 - Average</option>
+                                    <option value="4">4 - Good</option>
+                                    <option value="5">5 - Excellent</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center pt-8">
+                                <input type="checkbox" name="has_balcony" id="edit_has_balcony" value="true"
+                                       class="h-5 w-5 text-brand-purple focus:ring-brand-purple border-gray-300 rounded">
+                                <label for="edit_has_balcony" class="ml-2 block text-sm text-gray-700">Has Balcony/Patio</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse border-t border-gray-200">
                     <button type="submit" class="w-full inline-flex justify-center items-center rounded-lg border border-transparent shadow-sm px-6 py-3 bg-brand-purple text-sm font-medium text-white hover:bg-brand-purple-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-purple transition-colors sm:ml-3 sm:w-auto">
@@ -1723,7 +1784,11 @@ const userPreferences = {
     bedroomsWeight: {{ preferences.bedrooms_weight|default:0 }},
     bathroomsWeight: {{ preferences.bathrooms_weight|default:0 }},
     discountWeight: {{ preferences.discount_weight|default:0 }},
-    factorOrder: "{{ preferences.factor_order|default:'price,sqft,distance,netRent,bedrooms,bathrooms,discount' }}"
+    parkingWeight: {{ preferences.parking_weight|default:0 }},
+    utilitiesWeight: {{ preferences.utilities_weight|default:0 }},
+    viewWeight: {{ preferences.view_weight|default:0 }},
+    balconyWeight: {{ preferences.balcony_weight|default:0 }},
+    factorOrder: "{{ preferences.factor_order|default:'price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony' }}"
 };
 
 // SessionStorage management for anonymous users
@@ -2391,6 +2456,10 @@ function openEditApartmentModal(apartmentData) {
     document.getElementById('edit_months_free').value = apartmentData.months_free || 0;
     document.getElementById('edit_weeks_free').value = apartmentData.weeks_free || 0;
     document.getElementById('edit_flat_discount').value = apartmentData.flat_discount || 0;
+    document.getElementById('edit_parking_cost').value = apartmentData.parking_cost || 0;
+    document.getElementById('edit_utilities').value = apartmentData.utilities || 0;
+    document.getElementById('edit_view_quality').value = apartmentData.view_quality || 0;
+    document.getElementById('edit_has_balcony').checked = apartmentData.has_balcony || false;
 
     // Show advanced options if any discount fields are set
     if (apartmentData.months_free || apartmentData.weeks_free || apartmentData.flat_discount || apartmentData.lease_length_months != 12) {

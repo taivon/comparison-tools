@@ -177,9 +177,14 @@ def dashboard(request):
                 "bedrooms_weight": form.cleaned_data.get("bedrooms_weight", 0),
                 "bathrooms_weight": form.cleaned_data.get("bathrooms_weight", 0),
                 "discount_weight": form.cleaned_data.get("discount_weight", 0),
+                "parking_weight": form.cleaned_data.get("parking_weight", 0),
+                "utilities_weight": form.cleaned_data.get("utilities_weight", 0),
+                "view_weight": form.cleaned_data.get("view_weight", 0),
+                "balcony_weight": form.cleaned_data.get("balcony_weight", 0),
                 "discount_calculation": form.cleaned_data["discount_calculation"],
                 "factor_order": form.cleaned_data.get(
-                    "factor_order", "price,sqft,distance,netRent,bedrooms,bathrooms,discount"
+                    "factor_order",
+                    "price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
                 ),
             }
 
@@ -204,9 +209,15 @@ def dashboard(request):
                 "bedrooms_weight": getattr(preferences, "bedrooms_weight", 0),
                 "bathrooms_weight": getattr(preferences, "bathrooms_weight", 0),
                 "discount_weight": getattr(preferences, "discount_weight", 0),
+                "parking_weight": getattr(preferences, "parking_weight", 0),
+                "utilities_weight": getattr(preferences, "utilities_weight", 0),
+                "view_weight": getattr(preferences, "view_weight", 0),
+                "balcony_weight": getattr(preferences, "balcony_weight", 0),
                 "discount_calculation": preferences.discount_calculation,
                 "factor_order": getattr(
-                    preferences, "factor_order", "price,sqft,distance,netRent,bedrooms,bathrooms,discount"
+                    preferences,
+                    "factor_order",
+                    "price,sqft,distance,netRent,bedrooms,bathrooms,discount,parking,utilities,view,balcony",
                 ),
             }
         form = UserPreferencesForm(initial=initial_data)
@@ -403,6 +414,10 @@ def create_apartment(request):
                     months_free=form.cleaned_data["months_free"],
                     weeks_free=form.cleaned_data["weeks_free"],
                     flat_discount=form.cleaned_data["flat_discount"],
+                    parking_cost=form.cleaned_data.get("parking_cost", Decimal("0")),
+                    utilities=form.cleaned_data.get("utilities", Decimal("0")),
+                    view_quality=int(form.cleaned_data.get("view_quality", 0)),
+                    has_balcony=form.cleaned_data.get("has_balcony", False),
                 )
 
                 # Calculate distances to favorite places
@@ -452,6 +467,10 @@ def update_apartment(request, pk):
             apartment.months_free = form.cleaned_data["months_free"]
             apartment.weeks_free = form.cleaned_data["weeks_free"]
             apartment.flat_discount = form.cleaned_data["flat_discount"]
+            apartment.parking_cost = form.cleaned_data.get("parking_cost", Decimal("0"))
+            apartment.utilities = form.cleaned_data.get("utilities", Decimal("0"))
+            apartment.view_quality = int(form.cleaned_data.get("view_quality", 0))
+            apartment.has_balcony = form.cleaned_data.get("has_balcony", False)
 
             # Re-geocode if address changed
             geocode_warning = None
