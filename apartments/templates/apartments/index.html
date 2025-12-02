@@ -213,24 +213,27 @@
                                 <svg id="advancedChevron" class="w-4 h-4 mr-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
-                                More options (bedrooms, bathrooms, lease length, discounts)
+                                More options (beds, baths, lease, discounts, costs, features)
                             </button>
                         </div>
 
                         <!-- Advanced Fields (Hidden by Default) -->
                         <div id="advancedOptions" class="hidden mb-6 p-6 bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700">
-                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Additional Details</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Bedrooms & Bathrooms -->
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Bedrooms & Bathrooms</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
                                     <label for="id_bedrooms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bedrooms</label>
                                     <select name="bedrooms" id="id_bedrooms"
                                             class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent">
                                         <option value="0">Studio</option>
-                                        <option value="1" selected>1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
+                                        {% for i in "123456789"|make_list %}<option value="{{ i }}"{% if i == "1" %} selected{% endif %}>{{ i }}</option>{% endfor %}
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="12">12</option>
+                                        <option value="13">13</option>
+                                        <option value="14">14</option>
+                                        <option value="15">15</option>
                                     </select>
                                 </div>
                                 <div>
@@ -243,8 +246,19 @@
                                         <option value="2">2</option>
                                         <option value="2.5">2.5</option>
                                         <option value="3">3</option>
+                                        <option value="3.5">3.5</option>
+                                        <option value="4">4</option>
+                                        <option value="4.5">4.5</option>
+                                        <option value="5">5</option>
+                                        <option value="5.5">5.5</option>
+                                        <option value="6">6</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <!-- Lease & Discounts -->
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Lease & Discounts</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
                                     <label for="id_lease_length_months" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lease Length (months)</label>
                                     <input type="number" name="lease_length_months" id="id_lease_length_months" value="12"
@@ -268,6 +282,48 @@
                                     <input type="number" name="flat_discount" id="id_flat_discount" value="0" step="0.01"
                                            class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
                                            placeholder="0">
+                                </div>
+                            </div>
+
+                            <!-- Additional Costs -->
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Additional Costs</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label for="id_parking_cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly Parking ($)</label>
+                                    <input type="number" name="parking_cost" id="id_parking_cost" value="0" step="0.01"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                           placeholder="0">
+                                </div>
+                                <div>
+                                    <label for="id_utilities" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly Utilities ($)</label>
+                                    <input type="number" name="utilities" id="id_utilities" value="0" step="0.01"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                           placeholder="0">
+                                </div>
+                            </div>
+
+                            <!-- Unit Features -->
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Unit Features</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="id_view_quality" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Windows / Lighting / Scenery</label>
+                                    <select name="view_quality" id="id_view_quality"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+                                        <option value="0" selected>Not rated</option>
+                                        <option value="1">1 - Poor</option>
+                                        <option value="2">2 - Below Average</option>
+                                        <option value="3">3 - Average</option>
+                                        <option value="4">4 - Good</option>
+                                        <option value="5">5 - Excellent</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Has Balcony/Patio</label>
+                                    <div class="flex items-center h-12">
+                                        <input type="checkbox" name="has_balcony" id="id_has_balcony" value="true"
+                                               class="h-4 w-4 text-brand-purple focus:ring-brand-purple border-gray-300 rounded">
+                                        <label for="id_has_balcony" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Yes, this unit has a balcony or patio</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
