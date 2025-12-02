@@ -2699,7 +2699,7 @@ function initializePriorityList() {
     if (priorityList) {
         priorityList.innerHTML = '';
         priorityFactors.forEach((factor, index) => {
-            priorityList.appendChild(createFactorItem(factor, index, true));
+            priorityList.appendChild(createFactorItem(factor, index, true, priorityFactors.length, unusedFactors.length));
         });
     }
 
@@ -2708,7 +2708,7 @@ function initializePriorityList() {
     if (unusedList) {
         unusedList.innerHTML = '';
         unusedFactors.forEach((factor, index) => {
-            unusedList.appendChild(createFactorItem(factor, index, false));
+            unusedList.appendChild(createFactorItem(factor, index, false, priorityFactors.length, unusedFactors.length));
         });
     }
 }
@@ -2728,38 +2728,73 @@ function initializeFreeTierList() {
     if (freeList) {
         freeList.innerHTML = '';
         freeFactors.forEach((factor, index) => {
-            freeList.appendChild(createFreeFactorItem(factor, index));
+            freeList.appendChild(createFreeFactorItem(factor, index, freeFactors.length));
         });
     }
 }
 
-function createFreeFactorItem(factor, index) {
+function createFreeFactorItem(factor, index, total) {
     const div = document.createElement('div');
-    div.className = 'factor-item flex items-center justify-between p-3 bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-lg cursor-move hover:border-brand-purple transition-colors';
-    div.draggable = true;
+    div.className = 'factor-item flex items-center justify-between p-3 bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-lg hover:border-brand-purple transition-colors';
     div.dataset.factorKey = factor.key;
+
+    const isFirst = index === 0;
+    const isLast = index === total - 1;
+
+    // Build arrow buttons based on position
+    let arrowButtons = '';
+    if (total > 1) {
+        if (isFirst) {
+            arrowButtons = `
+                <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-600 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="down">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            `;
+        } else if (isLast) {
+            arrowButtons = `
+                <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-600 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="up">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                </button>
+            `;
+        } else {
+            arrowButtons = `
+                <div class="inline-flex rounded-lg border border-gray-200 dark:border-neutral-600 overflow-hidden">
+                    <button type="button" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600 border-r border-gray-200 dark:border-neutral-600" data-direction="up">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                    </button>
+                    <button type="button" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="down">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }
+    }
 
     div.innerHTML = `
         <div class="flex items-center flex-1">
-            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-            </svg>
             <span class="text-sm font-medium text-gray-900 dark:text-white">${factor.label}</span>
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center gap-2">
+            ${arrowButtons}
             <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold bg-brand-purple text-white">
                 ${index + 1}
             </span>
         </div>
     `;
 
-    // Add drag event listeners
-    div.addEventListener('dragstart', handleDragStart);
-    div.addEventListener('dragend', handleDragEnd);
-    div.addEventListener('dragover', handleDragOver);
-    div.addEventListener('drop', handleDropFreeTier);
-    div.addEventListener('dragenter', handleDragEnter);
-    div.addEventListener('dragleave', handleDragLeave);
+    // Add arrow click handlers
+    const upBtn = div.querySelector('[data-direction="up"]');
+    const downBtn = div.querySelector('[data-direction="down"]');
+    if (upBtn) upBtn.addEventListener('click', handleArrowClickFreeTier);
+    if (downBtn) downBtn.addEventListener('click', handleArrowClickFreeTier);
 
     return div;
 }
@@ -2791,9 +2826,25 @@ function handleDropFreeTier(e) {
     return false;
 }
 
+function handleArrowClickFreeTier(e) {
+    const button = e.currentTarget;
+    const direction = button.dataset.direction;
+    const item = button.closest('.factor-item');
+    const list = item.parentElement;
+
+    if (direction === 'up' && item.previousElementSibling) {
+        list.insertBefore(item, item.previousElementSibling);
+    } else if (direction === 'down' && item.nextElementSibling) {
+        list.insertBefore(item.nextElementSibling, item);
+    }
+
+    rebuildFreeTierList();
+}
+
 function rebuildFreeTierList() {
     const freeList = document.getElementById('freeFactorList');
     const allItems = Array.from(freeList.children);
+    const total = allItems.length;
 
     // Clear list
     freeList.innerHTML = '';
@@ -2802,54 +2853,128 @@ function rebuildFreeTierList() {
     allItems.forEach((item, index) => {
         const factorKey = item.dataset.factorKey;
         const label = item.querySelector('span.text-sm').textContent;
+        const isFirst = index === 0;
+        const isLast = index === total - 1;
+
+        // Build arrow buttons based on position
+        let arrowButtons = '';
+        if (total > 1) {
+            if (isFirst) {
+                arrowButtons = `
+                    <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-600 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="down">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                `;
+            } else if (isLast) {
+                arrowButtons = `
+                    <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-600 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="up">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                    </button>
+                `;
+            } else {
+                arrowButtons = `
+                    <div class="inline-flex rounded-lg border border-gray-200 dark:border-neutral-600 overflow-hidden">
+                        <button type="button" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600 border-r border-gray-200 dark:border-neutral-600" data-direction="up">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                            </svg>
+                        </button>
+                        <button type="button" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="down">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+        }
 
         const newItem = document.createElement('div');
         newItem.className = item.className;
-        newItem.draggable = true;
         newItem.dataset.factorKey = factorKey;
         newItem.innerHTML = `
             <div class="flex items-center flex-1">
-                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                </svg>
                 <span class="text-sm font-medium text-gray-900 dark:text-white">${label}</span>
             </div>
-            <div class="flex items-center">
+            <div class="flex items-center gap-2">
+                ${arrowButtons}
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold bg-brand-purple text-white">
                     ${index + 1}
                 </span>
             </div>
         `;
 
-        // Re-add event listeners
-        newItem.addEventListener('dragstart', handleDragStart);
-        newItem.addEventListener('dragend', handleDragEnd);
-        newItem.addEventListener('dragover', handleDragOver);
-        newItem.addEventListener('drop', handleDropFreeTier);
-        newItem.addEventListener('dragenter', handleDragEnter);
-        newItem.addEventListener('dragleave', handleDragLeave);
+        // Add arrow click handlers
+        const upBtn = newItem.querySelector('[data-direction="up"]');
+        const downBtn = newItem.querySelector('[data-direction="down"]');
+        if (upBtn) upBtn.addEventListener('click', handleArrowClickFreeTier);
+        if (downBtn) downBtn.addEventListener('click', handleArrowClickFreeTier);
 
         freeList.appendChild(newItem);
     });
 }
 
-function createFactorItem(factor, index, isPriority) {
+function createFactorItem(factor, index, isPriority, totalPriority, totalUnused) {
     const weights = [40, 30, 20, 10];
     const weight = isPriority ? weights[index] : 0;
+    const totalAll = totalPriority + totalUnused;
 
     const div = document.createElement('div');
-    div.className = 'factor-item flex items-center justify-between p-3 bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-lg cursor-move hover:border-brand-purple transition-colors';
-    div.draggable = true;
+    div.className = 'factor-item flex items-center justify-between p-3 bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 rounded-lg hover:border-brand-purple transition-colors';
     div.dataset.factorKey = factor.key;
+
+    // Calculate overall position for arrow logic
+    const overallIndex = isPriority ? index : totalPriority + index;
+    const isFirst = overallIndex === 0;
+    const isLast = overallIndex === totalAll - 1;
+
+    // Build arrow buttons based on overall position
+    let arrowButtons = '';
+    if (totalAll > 1) {
+        if (isFirst) {
+            arrowButtons = `
+                <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-600 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="down">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            `;
+        } else if (isLast) {
+            arrowButtons = `
+                <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-600 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="up">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                </button>
+            `;
+        } else {
+            arrowButtons = `
+                <div class="inline-flex rounded-lg border border-gray-200 dark:border-neutral-600 overflow-hidden">
+                    <button type="button" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600 border-r border-gray-200 dark:border-neutral-600" data-direction="up">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                    </button>
+                    <button type="button" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="down">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }
+    }
 
     div.innerHTML = `
         <div class="flex items-center flex-1">
-            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-            </svg>
             <span class="text-sm font-medium text-gray-900 dark:text-white">${factor.label}</span>
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center gap-2">
+            ${arrowButtons}
             ${isPriority ? `
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold bg-brand-purple text-white">
                     ${index + 1}
@@ -2860,13 +2985,11 @@ function createFactorItem(factor, index, isPriority) {
         </div>
     `;
 
-    // Add drag event listeners
-    div.addEventListener('dragstart', handleDragStart);
-    div.addEventListener('dragend', handleDragEnd);
-    div.addEventListener('dragover', handleDragOver);
-    div.addEventListener('drop', handleDrop);
-    div.addEventListener('dragenter', handleDragEnter);
-    div.addEventListener('dragleave', handleDragLeave);
+    // Add arrow click handlers
+    const upBtn = div.querySelector('[data-direction="up"]');
+    const downBtn = div.querySelector('[data-direction="down"]');
+    if (upBtn) upBtn.addEventListener('click', handleArrowClickProTier);
+    if (downBtn) downBtn.addEventListener('click', handleArrowClickProTier);
 
     return div;
 }
@@ -2940,6 +3063,33 @@ function handleDrop(e) {
     return false;
 }
 
+function handleArrowClickProTier(e) {
+    const button = e.currentTarget;
+    const direction = button.dataset.direction;
+    const item = button.closest('.factor-item');
+    const priorityList = document.getElementById('factorPriorityList');
+    const unusedList = document.getElementById('unusedFactorsList');
+
+    // Get all items in order
+    const allItems = [
+        ...Array.from(priorityList.children),
+        ...Array.from(unusedList.children)
+    ];
+    const currentIndex = allItems.indexOf(item);
+
+    if (direction === 'up' && currentIndex > 0) {
+        const prevItem = allItems[currentIndex - 1];
+        // Insert before the previous item (in whichever list it's in)
+        prevItem.parentNode.insertBefore(item, prevItem);
+    } else if (direction === 'down' && currentIndex < allItems.length - 1) {
+        const nextItem = allItems[currentIndex + 1];
+        // Insert after the next item (in whichever list it's in)
+        nextItem.parentNode.insertBefore(item, nextItem.nextSibling);
+    }
+
+    rebuildPriorityLists();
+}
+
 function rebuildPriorityLists() {
     const priorityList = document.getElementById('factorPriorityList');
     const unusedList = document.getElementById('unusedFactorsList');
@@ -2955,67 +3105,98 @@ function rebuildPriorityLists() {
     unusedList.innerHTML = '';
 
     const weights = [40, 30, 20, 10];
+    const totalAll = allItems.length;
 
     // Redistribute: first 4 go to priority, rest to unused
     allItems.forEach((item, index) => {
         const factorKey = item.dataset.factorKey;
         const label = item.querySelector('span.text-sm').textContent;
+        const isFirst = index === 0;
+        const isLast = index === totalAll - 1;
+
+        // Build arrow buttons based on overall position
+        let arrowButtons = '';
+        if (totalAll > 1) {
+            if (isFirst) {
+                arrowButtons = `
+                    <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-600 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="down">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                `;
+            } else if (isLast) {
+                arrowButtons = `
+                    <button type="button" class="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-600 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="up">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                    </button>
+                `;
+            } else {
+                arrowButtons = `
+                    <div class="inline-flex rounded-lg border border-gray-200 dark:border-neutral-600 overflow-hidden">
+                        <button type="button" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600 border-r border-gray-200 dark:border-neutral-600" data-direction="up">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                            </svg>
+                        </button>
+                        <button type="button" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-brand-purple hover:bg-gray-100 dark:hover:bg-neutral-600" data-direction="down">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+        }
 
         if (index < 4) {
             // Priority item
             const weight = weights[index];
+
             const newItem = document.createElement('div');
             newItem.className = item.className;
-            newItem.draggable = true;
             newItem.dataset.factorKey = factorKey;
             newItem.innerHTML = `
                 <div class="flex items-center flex-1">
-                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                    </svg>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">${label}</span>
                 </div>
-                <div class="flex items-center">
+                <div class="flex items-center gap-2">
+                    ${arrowButtons}
                     <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold bg-brand-purple text-white">
                         ${index + 1}
                     </span>
                 </div>
             `;
 
-            // Re-add event listeners
-            newItem.addEventListener('dragstart', handleDragStart);
-            newItem.addEventListener('dragend', handleDragEnd);
-            newItem.addEventListener('dragover', handleDragOver);
-            newItem.addEventListener('drop', handleDrop);
-            newItem.addEventListener('dragenter', handleDragEnter);
-            newItem.addEventListener('dragleave', handleDragLeave);
+            // Add arrow click handlers
+            const upBtn = newItem.querySelector('[data-direction="up"]');
+            const downBtn = newItem.querySelector('[data-direction="down"]');
+            if (upBtn) upBtn.addEventListener('click', handleArrowClickProTier);
+            if (downBtn) downBtn.addEventListener('click', handleArrowClickProTier);
 
             priorityList.appendChild(newItem);
         } else {
             // Unused item
             const newItem = document.createElement('div');
             newItem.className = item.className;
-            newItem.draggable = true;
             newItem.dataset.factorKey = factorKey;
             newItem.innerHTML = `
                 <div class="flex items-center flex-1">
-                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                    </svg>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">${label}</span>
                 </div>
-                <div class="flex items-center">
+                <div class="flex items-center gap-2">
+                    ${arrowButtons}
                     <span class="text-xs text-gray-400 dark:text-gray-500">Unused</span>
                 </div>
             `;
 
-            // Re-add event listeners
-            newItem.addEventListener('dragstart', handleDragStart);
-            newItem.addEventListener('dragend', handleDragEnd);
-            newItem.addEventListener('dragover', handleDragOver);
-            newItem.addEventListener('drop', handleDrop);
-            newItem.addEventListener('dragenter', handleDragEnter);
-            newItem.addEventListener('dragleave', handleDragLeave);
+            // Add arrow click handlers
+            const upBtn = newItem.querySelector('[data-direction="up"]');
+            const downBtn = newItem.querySelector('[data-direction="down"]');
+            if (upBtn) upBtn.addEventListener('click', handleArrowClickProTier);
+            if (downBtn) downBtn.addEventListener('click', handleArrowClickProTier);
 
             unusedList.appendChild(newItem);
         }
