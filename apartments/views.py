@@ -287,6 +287,14 @@ def dashboard(request):
         for apt in apartments
     )
 
+    # Check which optional fields have data (for conditional column display)
+    has_parking = any(getattr(apt, "parking_cost", 0) > 0 for apt in apartments)
+    has_utilities = any(getattr(apt, "utilities", 0) > 0 for apt in apartments)
+    has_view_ratings = any(getattr(apt, "view_quality", 0) > 0 for apt in apartments)
+    has_balcony = any(getattr(apt, "has_balcony", False) for apt in apartments)
+    # Show total cost column if any apartment has parking or utilities
+    has_additional_costs = has_parking or has_utilities
+
     # Get distance data for apartments
     apartments_with_distances = []
     apartments_needing_distances = []
@@ -347,6 +355,11 @@ def dashboard(request):
         "apartment_limit": 2 if not has_premium else None,
         "is_anonymous": not request.user.is_authenticated,
         "has_discounts": has_discounts,
+        "has_parking": has_parking,
+        "has_utilities": has_utilities,
+        "has_view_ratings": has_view_ratings,
+        "has_balcony": has_balcony,
+        "has_additional_costs": has_additional_costs,
         "favorite_places": favorite_places,
         "favorite_place_count": favorite_place_count,
         "favorite_place_limit": favorite_place_limit,
