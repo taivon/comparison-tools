@@ -353,6 +353,19 @@ def dashboard(request):
         can_add_favorite_place(request.user, PRODUCT_SLUG) if request.user.is_authenticated else False
     )
 
+    # Get the lowest monthly price for upgrade banner
+    monthly_plan = (
+        Plan.objects.filter(
+            product__slug=PRODUCT_SLUG,
+            tier="pro",
+            billing_interval="month",
+            is_active=True,
+        )
+        .order_by("price")
+        .first()
+    )
+    monthly_price = monthly_plan.price if monthly_plan else None
+
     context = {
         "apartments": apartments,
         "preferences": preferences,
@@ -374,6 +387,7 @@ def dashboard(request):
         "favorite_place_limit": favorite_place_limit,
         "can_add_favorite_place": can_add_favorite_place_flag,
         "apartments_needing_distances": apartments_needing_distances,
+        "monthly_price": monthly_price,
     }
     return render(request, "apartments/dashboard.html", context)
 

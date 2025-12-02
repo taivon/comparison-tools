@@ -399,11 +399,11 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-900 dark:text-white">
                             {% if apartment_count >= apartment_limit %}
-                                You've reached the free plan limit ({{ apartment_limit }} apartments). Upgrade to Pro for unlimited comparisons!
+                                You've reached the free plan limit ({{ apartment_limit }} apartments). Upgrade to Pro for more comparisons!
                             {% elif apartment_count >= 1 %}
-                                You're using {{ apartment_count }}/{{ apartment_limit }} apartments on the free plan. Upgrade to Pro for unlimited comparisons starting at $9.99/month!
+                                You're using {{ apartment_count }}/{{ apartment_limit }} apartments on the free plan. Upgrade to Pro{% if monthly_price %} starting at ${{ monthly_price }}/month{% endif %}!
                             {% else %}
-                                Upgrade to Pro for unlimited apartment comparisons starting at $9.99/month!
+                                Upgrade to Pro for more apartment comparisons{% if monthly_price %} starting at ${{ monthly_price }}/month{% endif %}!
                             {% endif %}
                         </p>
                     </div>
