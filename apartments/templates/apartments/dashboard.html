@@ -550,7 +550,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             {% for apartment in apartments|slice:":3" %}
-            {% if apartment.score %}
+            {% if apartment.score is not None %}
             <div class="bg-white dark:bg-neutral-800 rounded-lg p-4 border-2 {% if forloop.counter == 1 %}border-yellow-400{% elif forloop.counter == 2 %}border-gray-300{% else %}border-amber-600{% endif %}">
                 <div class="flex items-start justify-between mb-2">
                     <div class="flex items-center">
@@ -659,7 +659,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                 <!-- Card Header: Score + Name + Badges -->
                 <div class="px-4 py-3 border-b border-gray-100 dark:border-neutral-700">
                     <div class="flex items-center gap-3">
-                        {% if user.is_authenticated and apartment.score %}
+                        {% if user.is_authenticated and apartment.score is not None %}
                             <div class="group relative flex-shrink-0">
                                 <div class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-bold cursor-help
                                     {% if apartment.score >= 9 %}bg-green-100 text-green-800{% elif apartment.score >= 7 %}bg-green-50 text-green-700{% elif apartment.score >= 5 %}bg-yellow-50 text-yellow-700{% else %}bg-red-50 text-red-700{% endif %}">
@@ -701,7 +701,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                         </svg>
                                     </span>
                                 {% else %}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" title="Could not find: {{ apartment.address }}">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" title="{% if is_premium %}Address not found. Edit to try a different format.{% else %}Address not in free database. Edit to try a different format or upgrade to Pro for Google Maps lookup.{% endif %}">
                                         <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                                         </svg>
@@ -1184,7 +1184,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                                             Located
                                         </span>
                                     {% else %}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" title="Could not find location for: {{ apartment.address }}">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" title="{% if is_premium %}Address not found. Edit to try a different format.{% else %}Address not in free database. Edit to try a different format or upgrade to Pro for Google Maps lookup.{% endif %}">
                                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                                             </svg>
@@ -1197,7 +1197,7 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                         <!-- Score -->
                         {% if user.is_authenticated %}
                         <td class="px-6 py-4 whitespace-nowrap bg-yellow-50 dark:bg-yellow-900/10">
-                            {% if apartment.score %}
+                            {% if apartment.score is not None %}
                             <div class="group relative" data-score="{{ apartment.score|floatformat:1 }}">
                                 <div class="flex items-center cursor-help">
                                     <span class="text-2xl font-bold

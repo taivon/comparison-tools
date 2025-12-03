@@ -476,7 +476,22 @@ def create_apartment(request):
                 recalculate_user_scores(request.user, PRODUCT_SLUG)
 
                 if geocode_warning:
-                    messages.warning(request, f"Apartment added, but couldn't locate the address. {geocode_warning}")
+                    # Check if user is on free tier to suggest upgrade
+                    has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+                    if has_premium:
+                        messages.warning(
+                            request,
+                            f"Apartment added, but couldn't locate the address. {geocode_warning} "
+                            "You can edit the apartment to update the address.",
+                        )
+                    else:
+                        messages.warning(
+                            request,
+                            "Apartment added, but we couldn't locate the address in our free database. "
+                            "Distance calculations and location-based scoring won't work for this apartment. "
+                            "You can edit the apartment to try a different address format, "
+                            "or upgrade to Pro for Google Maps address lookup which supports more addresses.",
+                        )
                 else:
                     messages.success(request, "Apartment added successfully!")
                 return redirect("apartments:dashboard")
@@ -564,7 +579,21 @@ def update_apartment(request, pk):
                 recalculate_user_scores(request.user, PRODUCT_SLUG)
 
                 if geocode_warning:
-                    messages.warning(request, f"Apartment updated, but couldn't locate the address. {geocode_warning}")
+                    # Check if user is on free tier to suggest upgrade
+                    has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+                    if has_premium:
+                        messages.warning(
+                            request,
+                            f"Apartment updated, but couldn't locate the new address. {geocode_warning}",
+                        )
+                    else:
+                        messages.warning(
+                            request,
+                            "Apartment updated, but we couldn't locate the address in our free database. "
+                            "Distance calculations and location-based scoring won't work for this apartment. "
+                            "Try a different address format, "
+                            "or upgrade to Pro for Google Maps address lookup which supports more addresses.",
+                        )
                 else:
                     messages.success(request, "Apartment updated successfully!")
                 return redirect("apartments:dashboard")

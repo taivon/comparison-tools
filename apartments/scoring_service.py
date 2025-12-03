@@ -306,6 +306,50 @@ class ScoringService:
             return None
         return breakdown["total_score"]
 
+    def _get_factor_value(self, apartment: Apartment, factor: str, has_discounts: bool) -> tuple[Decimal | None, bool]:
+        """
+        Get the value for a scoring factor from an apartment.
+
+        Args:
+            apartment: Apartment instance
+            factor: Factor name
+            has_discounts: Whether any apartments have discounts
+
+        Returns:
+            Tuple of (value, invert) where value is None if factor is not applicable
+        """
+        if factor == "price":
+            return (apartment.net_effective_price if has_discounts else apartment.price, True)
+        elif factor == "net_effective_rent":
+            return (apartment.net_effective_price, True)
+        elif factor == "total_cost":
+            return (apartment.total_cost, True)
+        elif factor == "sqft":
+            return (Decimal(apartment.square_footage), False)
+        elif factor == "bedrooms":
+            return (apartment.bedrooms, False)
+        elif factor == "bathrooms":
+            return (apartment.bathrooms, False)
+        elif factor == "distance":
+            value = self._get_average_distance(apartment)
+            if value is None:
+                return (None, True)
+            return (value, True)
+        elif factor == "discount":
+            return (self._get_discount_amount(apartment), False)
+        elif factor == "parking":
+            return (apartment.parking_cost if apartment.parking_cost else Decimal("0"), True)
+        elif factor == "utilities":
+            return (apartment.utilities if apartment.utilities else Decimal("0"), True)
+        elif factor == "view":
+            value = Decimal(apartment.view_quality)
+            if value == 0:
+                return (None, False)  # Skip unrated apartments
+            return (value, False)
+        elif factor == "balcony":
+            return (Decimal("1") if apartment.has_balcony else Decimal("0"), False)
+        return (None, False)
+
     def calculate_score_breakdown(self, apartment: Apartment) -> dict | None:
         """
         Calculate score breakdown for an apartment showing contribution from each factor
@@ -316,12 +360,10 @@ class ScoringService:
         Returns:
             Dictionary with score breakdown, or None if cannot be calculated
         """
-        # Get active weights and normalize
+        # Get active weights
         raw_weights = self.get_active_weights()
         if not raw_weights:
             return None
-
-        normalized_weights = self.normalize_weights(raw_weights)
 
         # Get min/max values for normalization
         min_max_values = self.get_min_max_values()
@@ -345,59 +387,35 @@ class ScoringService:
             "balcony": "Balcony",
         }
 
-        # Calculate weighted score with breakdown
+        # First pass: determine which factors are applicable for this apartment
+        applicable_weights = {}
+        factor_data = {}  # Store (value, invert, min_val, max_val) for applicable factors
+
+        for factor, weight in raw_weights.items():
+            if factor not in min_max_values:
+                continue
+
+            value, invert = self._get_factor_value(apartment, factor, has_discounts)
+            if value is None:
+                continue  # Skip factors with no data for this apartment
+
+            min_val, max_val = min_max_values[factor]
+            applicable_weights[factor] = weight
+            factor_data[factor] = (value, invert, min_val, max_val)
+
+        # No applicable factors means no score
+        if not applicable_weights:
+            return None
+
+        # Renormalize weights based only on applicable factors for THIS apartment
+        normalized_weights = self.normalize_weights(applicable_weights)
+
+        # Second pass: calculate weighted score with renormalized weights
         weighted_score = 0.0
         factors = []
 
         for factor, weight in normalized_weights.items():
-            if factor not in min_max_values:
-                continue
-
-            min_val, max_val = min_max_values[factor]
-
-            # Get the value for this apartment
-            if factor == "price":
-                value = apartment.net_effective_price if has_discounts else apartment.price
-                invert = True
-            elif factor == "net_effective_rent":
-                value = apartment.net_effective_price
-                invert = True
-            elif factor == "total_cost":
-                value = apartment.total_cost
-                invert = True  # Lower total cost is better
-            elif factor == "sqft":
-                value = Decimal(apartment.square_footage)
-                invert = False
-            elif factor == "bedrooms":
-                value = apartment.bedrooms
-                invert = False
-            elif factor == "bathrooms":
-                value = apartment.bathrooms
-                invert = False
-            elif factor == "distance":
-                value = self._get_average_distance(apartment)
-                if value is None:
-                    continue
-                invert = True
-            elif factor == "discount":
-                value = self._get_discount_amount(apartment)
-                invert = False  # Higher discount is better
-            elif factor == "parking":
-                value = apartment.parking_cost if apartment.parking_cost else Decimal("0")
-                invert = True  # Lower parking cost is better
-            elif factor == "utilities":
-                value = apartment.utilities if apartment.utilities else Decimal("0")
-                invert = True  # Lower utilities is better
-            elif factor == "view":
-                value = Decimal(apartment.view_quality)
-                if value == 0:
-                    continue  # Skip unrated apartments for view scoring
-                invert = False  # Higher view quality is better
-            elif factor == "balcony":
-                value = Decimal("1") if apartment.has_balcony else Decimal("0")
-                invert = False  # Having balcony is better
-            else:
-                continue
+            value, invert, min_val, max_val = factor_data[factor]
 
             # Normalize value
             normalized = self.normalize_value(value, min_val, max_val, invert=invert)
