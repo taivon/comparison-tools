@@ -24,6 +24,7 @@ Each subdomain operates as an independent service while sharing the unified `com
 - **Backend**: Django 5.2, Python 3.13.3
 - **Frontend**: Tailwind CSS, Django Templates
 - **Database**: SQLite (Django admin/auth), Firestore (application data)
+- **Package Management**: UV
 - **Deployment**: Google App Engine
 - **CI/CD**: GitHub Actions
 
@@ -31,6 +32,7 @@ Each subdomain operates as an independent service while sharing the unified `com
 
 ### Prerequisites
 - Python 3.13.3 (managed with pyenv recommended)
+- [UV](https://docs.astral.sh/uv/) - Fast Python package manager
 - Git
 
 ### Setup
@@ -47,28 +49,22 @@ cd comparison-tools
 pyenv install 3.13.3  # Only if not already installed
 ```
 
-3. Create and activate virtual environment:
+3. Install dependencies with UV:
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv sync
 ```
 
-4. Install dependencies:
+4. Run database migrations:
 ```bash
-pip install -r requirements.txt
+uv run python manage.py migrate
 ```
 
-5. Run database migrations:
+5. Start the development server:
 ```bash
-python manage.py migrate
+uv run python manage.py runserver
 ```
 
-6. Start the development server:
-```bash
-python manage.py runserver
-```
-
-7. Visit `http://localhost:8000` in your browser
+6. Visit `http://localhost:8000` in your browser
 
 ## Deployment
 
