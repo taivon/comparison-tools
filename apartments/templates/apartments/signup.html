@@ -114,9 +114,9 @@
 
         {% if stripe_enabled %}
         <!-- Premium Plans -->
-        <div class="grid md:grid-cols-2 {% if lifetime_price %}lg:grid-cols-3{% endif %} gap-8 max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-2 {% if lifetime_price %}lg:grid-cols-3{% endif %} gap-8 {% if lifetime_price %}lg:gap-6{% endif %} max-w-6xl mx-auto">
             <!-- Monthly Plan -->
-            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 hover:border-brand-purple transition-all">
+            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 {% if lifetime_price %}lg:pt-12{% endif %} hover:border-brand-purple transition-all relative">
                 <div class="mb-6">
                     <h3 class="text-2xl font-bold text-gray-900 mb-2">Monthly</h3>
                     <div class="flex items-baseline mb-4">
@@ -184,10 +184,10 @@
             </div>
 
             <!-- Annual Plan -->
-            <div class="bg-white rounded-2xl shadow-lg border-2 border-brand-purple p-8 relative hover:shadow-xl transition-all">
+            <div class="bg-white rounded-2xl shadow-lg border-2 border-brand-purple p-8 {% if lifetime_price %}lg:pt-12{% endif %} relative hover:shadow-xl transition-all">
                 <!-- Best Value Badge -->
-                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span class="bg-brand-green text-white px-4 py-1 rounded-full text-sm font-semibold">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                    <span class="bg-brand-green text-white px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap">
                         Best Value - Save 17%
                     </span>
                 </div>
@@ -242,10 +242,10 @@
 
             {% if lifetime_price %}
             <!-- Lifetime Plan -->
-            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 relative hover:border-brand-purple transition-all md:col-span-2 lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 lg:pt-12 relative hover:border-brand-purple transition-all md:col-span-2 lg:col-span-1">
                 <!-- Lifetime Badge -->
-                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span class="bg-gray-800 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                    <span class="bg-gray-800 text-white px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap">
                         Pay Once, Own Forever
                     </span>
                 </div>
