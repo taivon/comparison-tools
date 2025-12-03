@@ -492,6 +492,12 @@ def create_apartment(request):
                             "You can edit the apartment to try a different address format, "
                             "or upgrade to Pro for Google Maps address lookup which supports more addresses.",
                         )
+                elif not address:
+                    # No address was entered at all
+                    messages.success(
+                        request,
+                        "Apartment added! Tip: Add an address to enable distance calculations and location-based scoring.",
+                    )
                 else:
                     messages.success(request, "Apartment added successfully!")
                 return redirect("apartments:dashboard")
@@ -594,6 +600,12 @@ def update_apartment(request, pk):
                             "Try a different address format, "
                             "or upgrade to Pro for Google Maps address lookup which supports more addresses.",
                         )
+                elif not new_address and not apartment.latitude:
+                    # Address was removed or never set
+                    messages.success(
+                        request,
+                        "Apartment updated! Tip: Add an address to enable distance calculations and location-based scoring.",
+                    )
                 else:
                     messages.success(request, "Apartment updated successfully!")
                 return redirect("apartments:dashboard")
