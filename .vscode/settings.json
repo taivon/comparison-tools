@@ -42,5 +42,9 @@
     },
     "terminal.integrated.env.windows": {
         "DJANGO_SETTINGS_MODULE": "config.settings"
-    }
+    },
+    "cSpell.words": [
+        "hvyff",
+        "pqsor"
+    ]
 }
