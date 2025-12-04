@@ -112,14 +112,7 @@ INSTALLED_APPS = [
 
 # Only add development apps in DEBUG mode
 if DEBUG:
-    INSTALLED_APPS.extend(
-        [
-            "tailwind",
-            "theme",
-            "django_browser_reload",
-        ]
-    )
-    TAILWIND_APP_NAME = "theme"
+    INSTALLED_APPS.append("django_browser_reload")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
