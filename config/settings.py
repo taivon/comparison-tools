@@ -444,6 +444,11 @@ else:
                     "level": "WARNING",
                     "propagate": False,
                 },
+                "config.trace_middleware": {
+                    "handlers": ["cloud", "console"],
+                    "level": "INFO",
+                    "propagate": False,
+                },
             },
         }
     except Exception as e:

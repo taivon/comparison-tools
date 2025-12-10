@@ -31,8 +31,9 @@ class RequestTimingMiddleware:
         cpu_time = time.process_time() - start_cpu
 
         # Log detailed timing information
+        # Use structured logging - extra dict will be included in jsonPayload
         logger.info(
-            f"Request timing: {request.method} {request.path}",
+            f"Request timing: {request.method} {request.path} - {round(duration, 3)}s",
             extra={
                 "method": request.method,
                 "path": request.path,
