@@ -436,7 +436,7 @@ def create_apartment(request):
                     try:
                         latitude = float(google_lat)
                         longitude = float(google_lng)
-                        logger.info(f"Using Google Places coordinates for apartment: ({latitude}, {longitude})")
+                        logger.info("Using Google Places coordinates for apartment.")
                     except ValueError:
                         logger.warning(f"Invalid Google coordinates: ({google_lat}, {google_lng})")
                 elif address:
