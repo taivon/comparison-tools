@@ -16,6 +16,19 @@ handlers:
 - url: /static
   static_dir: staticfiles
 
+# Serve favicon and touch icons at root level (browsers request these automatically)
+- url: /favicon.ico
+  static_files: staticfiles/favicon.ico
+  upload: staticfiles/favicon.ico
+
+- url: /apple-touch-icon.png
+  static_files: staticfiles/apple-touch-icon.png
+  upload: staticfiles/apple-touch-icon.png
+
+- url: /apple-touch-icon-precomposed.png
+  static_files: staticfiles/apple-touch-icon-precomposed.png
+  upload: staticfiles/apple-touch-icon-precomposed.png
+
 - url: /.*
   script: auto
 
