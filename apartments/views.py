@@ -1419,7 +1419,7 @@ def address_autocomplete(request):
         return JsonResponse({"suggestions": suggestions})
     except Exception as e:
         logger.error(f"Autocomplete error: {e}")
-        return JsonResponse({"suggestions": [], "error": str(e)})
+        return JsonResponse({"suggestions": [], "error": "An internal error occurred"})
 
 
 @login_required
