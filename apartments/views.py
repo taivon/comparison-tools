@@ -438,7 +438,7 @@ def create_apartment(request):
                         longitude = float(google_lng)
                         logger.info(f"Using Google Places coordinates for apartment: ({latitude}, {longitude})")
                     except ValueError:
-                        logger.warning(f"Invalid Google coordinates: ({google_lat}, {google_lng})")
+                        logger.warning("Invalid Google coordinates received from POST data.")
                 elif address:
                     # Fall back to geocoding (user typed address manually)
                     geocoding_service = get_geocoding_service()
