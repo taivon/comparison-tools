@@ -722,7 +722,9 @@ def transfer_apartments(request):
         return JsonResponse({"success": True, "transferred_count": transferred_count})
     except Exception as e:
         logger.error(f"Error in transfer_apartments: {e}")
-        return JsonResponse({"success": False, "error": str(e)}, status=500)
+        return JsonResponse(
+            {"success": False, "error": "An internal error occurred. Please try again later."}, status=500
+        )
 
 
 def signup_view(request):
