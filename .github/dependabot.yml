@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    groups:
+      django:
+        patterns:
+          - "django"
+          - "django-*"
+          - "social-auth-*"
+        update-types:
+          - "minor"
+          - "patch"
+      google:
+        patterns:
+          - "google-*"
+          - "googlemaps"
+        update-types:
+          - "minor"
+          - "patch"
+      python-minor-patch:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "django"
+          - "django-*"
+          - "social-auth-*"
+          - "google-*"
+          - "googlemaps"
+        update-types:
+          - "minor"
+          - "patch"
