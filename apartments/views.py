@@ -1311,9 +1311,7 @@ def update_favorite_place(request, pk):
                     try:
                         place.latitude = float(google_lat)
                         place.longitude = float(google_lng)
-                        logger.info(
-                            f"Using Google Places coordinates for place id {place.id}"
-                        )
+                        logger.info(f"Using Google Places coordinates for place id {place.id}")
                     except ValueError:
                         logger.warning(f"Invalid Google coordinates received for place '{place.label}'.")
                         geocode_failed = True
