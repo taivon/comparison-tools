@@ -69,7 +69,7 @@ class GeocodingService:
 
             location = self.geolocator.geocode(address, timeout=10, addressdetails=True)
             if location:
-                logger.info(f"Successfully geocoded: {address} -> ({location.latitude}, {location.longitude})")
+                logger.info("Successfully geocoded address.")
                 return GeocodingResult(
                     latitude=location.latitude,
                     longitude=location.longitude,
@@ -77,7 +77,7 @@ class GeocodingService:
                     matched_address=location.address,
                 )
             else:
-                logger.warning(f"No results for address: {address}")
+                logger.warning("No results found for an address.")
                 return GeocodingResult(
                     latitude=None,
                     longitude=None,
@@ -87,7 +87,7 @@ class GeocodingService:
                 )
 
         except GeocoderTimedOut:
-            logger.warning(f"Geocoding timeout for address: {address}")
+            logger.warning("Geocoding timeout occurred for an address.")
             return GeocodingResult(
                 latitude=None,
                 longitude=None,
@@ -96,7 +96,7 @@ class GeocodingService:
                 suggestion="Request timed out. Please try again.",
             )
         except (GeocoderServiceError, GeocoderUnavailable) as e:
-            logger.error(f"Geocoding service error for address {address}: {e}")
+            logger.error(f"Geocoding service error: {e}")
             return GeocodingResult(
                 latitude=None,
                 longitude=None,
@@ -105,7 +105,7 @@ class GeocodingService:
                 suggestion="Geocoding service is temporarily unavailable. Please try again later.",
             )
         except Exception as e:
-            logger.error(f"Unexpected geocoding error for address {address}: {e}")
+            logger.error(f"Unexpected geocoding error: {e}")
             return GeocodingResult(
                 latitude=None,
                 longitude=None,
