@@ -351,38 +351,127 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Logging configuration
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
+# Use Google Cloud Logging in production, console handler in development
+if DEBUG:
+    # Development: Use console handler
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "verbose": {
+                "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+                "style": "{",
+            },
         },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "verbose",
+            },
         },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO" if not DEBUG else "DEBUG",
-    },
-    "loggers": {
-        "django": {
+        "root": {
             "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
+            "level": "DEBUG",
         },
-        "apartments": {
-            "handlers": ["console"],
-            "level": "INFO" if not DEBUG else "DEBUG",
-            "propagate": False,
+        "loggers": {
+            "django": {
+                "handlers": ["console"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            "apartments": {
+                "handlers": ["console"],
+                "level": "DEBUG",
+                "propagate": False,
+            },
         },
-    },
-}
+    }
+else:
+    # Production: Use Google Cloud Logging
+    try:
+        import google.cloud.logging
+        from google.cloud.logging.handlers import CloudLoggingHandler
+
+        # Initialize Cloud Logging client
+        client = google.cloud.logging.Client()
+        client.setup_logging()
+
+        LOGGING = {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "verbose": {
+                    "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+                    "style": "{",
+                },
+            },
+            "handlers": {
+                "cloud": {
+                    "class": "google.cloud.logging.handlers.CloudLoggingHandler",
+                    "client": client,
+                    "name": "comparison-tools",
+                },
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "verbose",
+                },
+            },
+            "root": {
+                "handlers": ["cloud", "console"],
+                "level": "INFO",
+            },
+            "loggers": {
+                "django": {
+                    "handlers": ["cloud", "console"],
+                    "level": "INFO",
+                    "propagate": False,
+                },
+                "apartments": {
+                    "handlers": ["cloud", "console"],
+                    "level": "INFO",
+                    "propagate": False,
+                },
+            },
+        }
+    except Exception as e:
+        # Fallback to console logging if Cloud Logging fails to initialize
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to initialize Google Cloud Logging: {e}. Falling back to console logging.")
+
+        LOGGING = {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "verbose": {
+                    "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+                    "style": "{",
+                },
+            },
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "verbose",
+                },
+            },
+            "root": {
+                "handlers": ["console"],
+                "level": "INFO",
+            },
+            "loggers": {
+                "django": {
+                    "handlers": ["console"],
+                    "level": "INFO",
+                    "propagate": False,
+                },
+                "apartments": {
+                    "handlers": ["console"],
+                    "level": "INFO",
+                    "propagate": False,
+                },
+            },
+        }
 
 
 # Google OAuth2 Settings - Fetch from Secret Manager in production, env vars in development
