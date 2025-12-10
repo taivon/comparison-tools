@@ -30,31 +30,24 @@ jsonPayload.method="GET"  # or POST, etc.
 jsonPayload.duration_seconds>1.0  # Find slow requests
 ```
 
-### 3. Google Cloud Profiler
-Cloud Profiler provides CPU and memory profiling. It's initialized automatically in production.
+### 3. Google Cloud Profiler (Optional)
+Cloud Profiler provides CPU and memory profiling. 
 
-**View profiles:**
-- **Google Cloud Console** → **Profiler**
-- Select service: `comparison-tools`
-- View CPU profiles, heap profiles, and more
+**Note:** Currently disabled due to Python 3.13 compatibility issues with `google-cloud-profiler`. The package doesn't support Python 3.13 yet. You can still use the request timing middleware for performance monitoring.
 
-**Enable Profiler API** (required):
-```bash
-gcloud services enable cloudprofiler.googleapis.com --project=comparison-tools-479102
-```
-
-**Grant Profiler Agent Role** to App Engine service account:
-```bash
-# Get the App Engine service account email
-SERVICE_ACCOUNT="comparison-tools-479102@appspot.gserviceaccount.com"
-
-# Grant the cloudprofiler.agent role
-gcloud projects add-iam-policy-binding comparison-tools-479102 \
-    --member="serviceAccount:${SERVICE_ACCOUNT}" \
-    --role="roles/cloudprofiler.agent"
-```
-
-**Note:** After enabling the API and granting permissions, redeploy your app for the profiler to start collecting data. It may take a few minutes for profiles to appear.
+**To enable in the future** (when Python 3.13 support is added):
+1. Install `google-cloud-profiler` package
+2. Enable Profiler API:
+   ```bash
+   gcloud services enable cloudprofiler.googleapis.com --project=comparison-tools-479102
+   ```
+3. Grant Profiler Agent Role:
+   ```bash
+   SERVICE_ACCOUNT="comparison-tools-479102@appspot.gserviceaccount.com"
+   gcloud projects add-iam-policy-binding comparison-tools-479102 \
+       --member="serviceAccount:${SERVICE_ACCOUNT}" \
+       --role="roles/cloudprofiler.agent"
+   ```
 
 ## Finding Slow Requests
 
