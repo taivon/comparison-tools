@@ -66,6 +66,64 @@ App Engine automatically adds trace IDs to requests. Use them to:
 2. Copy the trace ID
 3. Search for all logs with that trace ID to see the full request flow
 
+## Viewing Traces in Google Cloud Trace
+
+### Enable Cloud Trace API:
+```bash
+gcloud services enable cloudtrace.googleapis.com --project=comparison-tools-479102
+```
+
+### View Traces in Cloud Console:
+
+**Method 1: From Logs Explorer**
+1. Go to **Cloud Logging** → **Logs Explorer**
+2. Find a log entry for a request
+3. Look for the `trace` field in the log entry
+4. Click on the trace ID (it will be a long hex string)
+5. This opens the trace in **Cloud Trace**
+
+**Method 2: Direct Access to Cloud Trace**
+1. Go to **Google Cloud Console** → **Trace** (or search for "Trace")
+2. Select your project: `comparison-tools-479102`
+3. You'll see a timeline of all traces
+4. Filter by:
+   - Service: `gae_app` or `default`
+   - Time range
+   - Latency threshold (e.g., show only slow requests)
+
+**Method 3: Using Trace ID from Logs**
+1. In **Cloud Logging**, find a request log
+2. Copy the trace ID from the log entry (look for `trace` field)
+3. Go to **Cloud Trace**
+4. Paste the trace ID in the search box
+5. View the detailed trace timeline
+
+### Understanding Trace Data:
+
+Each trace shows:
+- **Spans**: Individual operations within a request
+- **Timeline**: Visual representation of when each operation occurred
+- **Duration**: How long each operation took
+- **Nested spans**: Operations that happen within other operations
+
+### Finding Slow Traces:
+
+In **Cloud Trace**:
+1. Use the latency filter (e.g., "Show traces slower than 1s")
+2. Sort by duration
+3. Click on a trace to see the detailed breakdown
+4. Look for long spans to identify bottlenecks
+
+### Trace Query Examples:
+
+In **Cloud Logging**, you can query by trace:
+```
+resource.type="gae_app"
+trace="projects/comparison-tools-479102/traces/TRACE_ID_HERE"
+```
+
+Replace `TRACE_ID_HERE` with an actual trace ID from a log entry.
+
 ## Performance Tips
 
 1. **Database Queries**: Check for N+1 queries in Django logs

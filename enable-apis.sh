@@ -12,6 +12,7 @@ gcloud services enable appengine.googleapis.com --project=$PROJECT_ID
 gcloud services enable cloudresourcemanager.googleapis.com --project=$PROJECT_ID
 gcloud services enable storage-component.googleapis.com --project=$PROJECT_ID
 gcloud services enable cloudprofiler.googleapis.com --project=$PROJECT_ID
+gcloud services enable cloudtrace.googleapis.com --project=$PROJECT_ID
 
 echo ""
 echo "✅ APIs enabled successfully!"
