@@ -1455,7 +1455,7 @@ def place_details(request):
             return JsonResponse({"error": "Place not found"}, status=404)
     except Exception as e:
         logger.error(f"Place details error: {e}")
-        return JsonResponse({"error": str(e)}, status=500)
+        return JsonResponse({"error": "An internal error occurred."}, status=500)
 
 
 @login_required
