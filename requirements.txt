@@ -31,16 +31,16 @@ geographiclib==2.1
     # via geopy
 geopy==2.4.1
     # via comparison-tools
-google-api-core==2.25.2 ; python_full_version >= '3.14'
+google-api-core==2.28.1 ; python_full_version >= '3.14'
     # via google-cloud-secret-manager
 google-api-core==2.28.1 ; python_full_version < '3.14'
     # via google-cloud-secret-manager
-google-auth==2.34.0
+google-auth==2.43.0
     # via
     #   comparison-tools
     #   google-api-core
     #   google-cloud-secret-manager
-google-cloud-secret-manager==2.20.2
+google-cloud-secret-manager==2.25.0
     # via comparison-tools
 googleapis-common-protos==1.72.0
     # via
