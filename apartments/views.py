@@ -1208,7 +1208,7 @@ def create_favorite_place(request):
                     longitude = float(google_lng)
                     logger.info(f"Using Google Places coordinates for '{label}': ({latitude}, {longitude})")
                 except ValueError:
-                    logger.warning(f"Invalid Google coordinates for '{label}': ({google_lat}, {google_lng})")
+                    logger.warning(f"Invalid Google coordinates received for label '{label}'.")
                     geocode_failed = True
 
             if latitude is None or longitude is None:
