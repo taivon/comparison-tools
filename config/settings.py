@@ -384,6 +384,11 @@ if DEBUG:
                 "level": "DEBUG",
                 "propagate": False,
             },
+            "stripe": {
+                "handlers": ["console"],
+                "level": "WARNING",
+                "propagate": False,
+            },
         },
     }
 else:
@@ -431,6 +436,11 @@ else:
                     "level": "INFO",
                     "propagate": False,
                 },
+                "stripe": {
+                    "handlers": ["cloud", "console"],
+                    "level": "WARNING",
+                    "propagate": False,
+                },
             },
         }
     except Exception as e:
@@ -468,6 +478,11 @@ else:
                 "apartments": {
                     "handlers": ["console"],
                     "level": "INFO",
+                    "propagate": False,
+                },
+                "stripe": {
+                    "handlers": ["console"],
+                    "level": "WARNING",
                     "propagate": False,
                 },
             },
