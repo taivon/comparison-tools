@@ -30,8 +30,8 @@ types-python-dateutil==2.9.0.20241206
 urllib3==2.4.0
 social-auth-app-django==5.4.2
 social-auth-core==4.8.1
-google-cloud-secret-manager==2.20.2
-google-auth==2.34.0
+google-cloud-secret-manager==2.25.0
+google-auth==2.43.0
 psycopg2-binary==2.9.11
 stripe==11.2.0
 geopy==2.4.1
