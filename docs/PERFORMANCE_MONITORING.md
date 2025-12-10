@@ -38,10 +38,23 @@ Cloud Profiler provides CPU and memory profiling. It's initialized automatically
 - Select service: `comparison-tools`
 - View CPU profiles, heap profiles, and more
 
-**Enable Profiler API** (if not already enabled):
+**Enable Profiler API** (required):
 ```bash
-gcloud services enable cloudprofiler.googleapis.com
+gcloud services enable cloudprofiler.googleapis.com --project=comparison-tools-479102
 ```
+
+**Grant Profiler Agent Role** to App Engine service account:
+```bash
+# Get the App Engine service account email
+SERVICE_ACCOUNT="comparison-tools-479102@appspot.gserviceaccount.com"
+
+# Grant the cloudprofiler.agent role
+gcloud projects add-iam-policy-binding comparison-tools-479102 \
+    --member="serviceAccount:${SERVICE_ACCOUNT}" \
+    --role="roles/cloudprofiler.agent"
+```
+
+**Note:** After enabling the API and granting permissions, redeploy your app for the profiler to start collecting data. It may take a few minutes for profiles to appear.
 
 ## Finding Slow Requests
 
