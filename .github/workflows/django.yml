@@ -93,6 +93,9 @@ jobs:
         # Run migrations against production database
         uv run python manage.py migrate --noinput
 
+    - name: Generate requirements.txt for App Engine
+      run: uv export --no-hashes -o requirements.txt
+
     - name: Deploy to App Engine
       run: |
         gcloud app deploy app.yaml --quiet

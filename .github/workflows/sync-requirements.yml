@@ -1,0 +1,41 @@
+name: Sync requirements.txt
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'uv.lock'
+      - 'pyproject.toml'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+
+    - name: Generate requirements.txt
+      run: uv export --no-hashes -o requirements.txt
+
+    - name: Check for changes
+      id: changes
+      run: |
+        if git diff --quiet requirements.txt; then
+          echo "changed=false" >> $GITHUB_OUTPUT
+        else
+          echo "changed=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit and push
+      if: steps.changes.outputs.changed == 'true'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add requirements.txt
+        git commit -m "Sync requirements.txt with uv.lock"
+        git push
