@@ -554,9 +554,7 @@ def update_apartment(request, pk):
                         try:
                             apartment.latitude = float(google_lat)
                             apartment.longitude = float(google_lng)
-                            logger.info(
-                                f"Using Google Places coordinates for apartment update: ({apartment.latitude}, {apartment.longitude})"
-                            )
+                            logger.info("Using Google Places coordinates for apartment update.")
                         except ValueError:
                             logger.warning("Invalid Google coordinates received during apartment update.")
                             apartment.latitude = None
