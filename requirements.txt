@@ -33,18 +33,30 @@ geopy==2.4.1
     # via comparison-tools
 google-api-core==2.28.1
     # via
+    #   google-api-python-client
     #   google-cloud-appengine-logging
     #   google-cloud-core
     #   google-cloud-logging
     #   google-cloud-secret-manager
+    #   google-cloud-trace
+google-api-python-client==2.187.0
+    # via google-cloud-profiler
 google-auth==2.43.0
     # via
     #   comparison-tools
     #   google-api-core
+    #   google-api-python-client
+    #   google-auth-httplib2
     #   google-cloud-appengine-logging
     #   google-cloud-core
     #   google-cloud-logging
+    #   google-cloud-profiler
     #   google-cloud-secret-manager
+    #   google-cloud-trace
+google-auth-httplib2==0.2.1
+    # via
+    #   google-api-python-client
+    #   google-cloud-profiler
 google-cloud-appengine-logging==1.7.0
     # via google-cloud-logging
 google-cloud-audit-log==0.4.0
@@ -53,7 +65,11 @@ google-cloud-core==2.5.0
     # via google-cloud-logging
 google-cloud-logging==3.12.1
     # via comparison-tools
+google-cloud-profiler==4.1.0
+    # via comparison-tools
 google-cloud-secret-manager==2.25.0
+    # via comparison-tools
+google-cloud-trace==1.17.0
     # via comparison-tools
 googleapis-common-protos==1.72.0
     # via
@@ -72,6 +88,7 @@ grpcio==1.76.0
     #   google-api-core
     #   google-cloud-appengine-logging
     #   google-cloud-secret-manager
+    #   google-cloud-trace
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
@@ -79,6 +96,10 @@ grpcio-status==1.76.0
     # via google-api-core
 gunicorn==23.0.0
     # via comparison-tools
+httplib2==0.31.0
+    # via
+    #   google-api-python-client
+    #   google-auth-httplib2
 idna==3.11
     # via requests
 importlib-metadata==8.7.0
@@ -97,13 +118,16 @@ proto-plus==1.26.1
     #   google-cloud-appengine-logging
     #   google-cloud-logging
     #   google-cloud-secret-manager
+    #   google-cloud-trace
 protobuf==6.33.2
     # via
     #   google-api-core
     #   google-cloud-appengine-logging
     #   google-cloud-audit-log
     #   google-cloud-logging
+    #   google-cloud-profiler
     #   google-cloud-secret-manager
+    #   google-cloud-trace
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
@@ -120,11 +144,14 @@ pycparser==2.23 ; implementation_name != 'PyPy' and platform_python_implementati
     # via cffi
 pyjwt==2.10.1
     # via social-auth-core
+pyparsing==3.2.5
+    # via httplib2
 python3-openid==3.2.0
     # via social-auth-core
 requests==2.32.5
     # via
     #   google-api-core
+    #   google-cloud-profiler
     #   googlemaps
     #   requests-oauthlib
     #   social-auth-core
@@ -151,6 +178,8 @@ typing-extensions==4.15.0
     #   stripe
 tzdata==2025.2 ; sys_platform == 'win32'
     # via django
+uritemplate==4.2.0
+    # via google-api-python-client
 urllib3==2.6.1
     # via requests
 zipp==3.23.0
