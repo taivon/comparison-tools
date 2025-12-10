@@ -989,7 +989,7 @@ def create_checkout_session(request):
 
     except stripe_lib.error.StripeError as e:
         logger.error(f"Stripe error: {e}")
-        return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse({"error": "Payment processing error"}, status=400)
     except Exception as e:
         logger.error(f"Error creating checkout session: {e}")
         import traceback
