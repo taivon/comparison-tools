@@ -98,6 +98,16 @@ jobs:
     - name: Generate requirements.txt for App Engine
       run: uv export --no-hashes -o requirements.txt
 
+    - name: Clean up old App Engine versions
+      run: |
+        # Get all versions sorted by creation time (newest first), skip first 10, delete the rest
+        VERSIONS_TO_DELETE=$(gcloud app versions list --format="value(version.id)" --sort-by="~version.createTime" | tail -n +11)
+        if [ -n "$VERSIONS_TO_DELETE" ]; then
+          echo "$VERSIONS_TO_DELETE" | xargs -r gcloud app versions delete --quiet
+        else
+          echo "No old versions to delete"
+        fi
+
     - name: Deploy to App Engine
       run: |
         gcloud app deploy app.yaml --quiet
