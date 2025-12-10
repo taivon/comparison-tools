@@ -32,26 +32,45 @@ geographiclib==2.1
 geopy==2.4.1
     # via comparison-tools
 google-api-core==2.28.1
-    # via google-cloud-secret-manager
+    # via
+    #   google-cloud-appengine-logging
+    #   google-cloud-core
+    #   google-cloud-logging
+    #   google-cloud-secret-manager
 google-auth==2.43.0
     # via
     #   comparison-tools
     #   google-api-core
+    #   google-cloud-appengine-logging
+    #   google-cloud-core
+    #   google-cloud-logging
     #   google-cloud-secret-manager
+google-cloud-appengine-logging==1.7.0
+    # via google-cloud-logging
+google-cloud-audit-log==0.4.0
+    # via google-cloud-logging
+google-cloud-core==2.5.0
+    # via google-cloud-logging
+google-cloud-logging==3.12.1
+    # via comparison-tools
 google-cloud-secret-manager==2.25.0
     # via comparison-tools
 googleapis-common-protos==1.72.0
     # via
     #   google-api-core
+    #   google-cloud-audit-log
     #   grpc-google-iam-v1
     #   grpcio-status
 googlemaps==4.10.0
     # via comparison-tools
 grpc-google-iam-v1==0.14.3
-    # via google-cloud-secret-manager
+    # via
+    #   google-cloud-logging
+    #   google-cloud-secret-manager
 grpcio==1.76.0
     # via
     #   google-api-core
+    #   google-cloud-appengine-logging
     #   google-cloud-secret-manager
     #   googleapis-common-protos
     #   grpc-google-iam-v1
@@ -62,19 +81,28 @@ gunicorn==23.0.0
     # via comparison-tools
 idna==3.11
     # via requests
+importlib-metadata==8.7.0
+    # via opentelemetry-api
 oauthlib==3.3.1
     # via
     #   requests-oauthlib
     #   social-auth-core
+opentelemetry-api==1.39.0
+    # via google-cloud-logging
 packaging==25.0
     # via gunicorn
 proto-plus==1.26.1
     # via
     #   google-api-core
+    #   google-cloud-appengine-logging
+    #   google-cloud-logging
     #   google-cloud-secret-manager
 protobuf==6.33.2
     # via
     #   google-api-core
+    #   google-cloud-appengine-logging
+    #   google-cloud-audit-log
+    #   google-cloud-logging
     #   google-cloud-secret-manager
     #   googleapis-common-protos
     #   grpc-google-iam-v1
@@ -119,8 +147,11 @@ stripe==14.0.1
 typing-extensions==4.15.0
     # via
     #   grpcio
+    #   opentelemetry-api
     #   stripe
 tzdata==2025.2 ; sys_platform == 'win32'
     # via django
 urllib3==2.6.1
     # via requests
+zipp==3.23.0
+    # via importlib-metadata
