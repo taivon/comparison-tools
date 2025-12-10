@@ -125,6 +125,9 @@ MIDDLEWARE = [
     "social_django.middleware.SocialAuthExceptionMiddleware",
 ]
 
+# Add request timing middleware for performance monitoring
+MIDDLEWARE.insert(0, "config.trace_middleware.RequestTimingMiddleware")
+
 # Only add browser reload middleware in DEBUG mode
 if DEBUG:
     MIDDLEWARE.append("django_browser_reload.middleware.BrowserReloadMiddleware")
