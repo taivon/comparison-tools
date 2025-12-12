@@ -656,7 +656,7 @@ if not DEBUG:
 # Session security settings
 SESSION_COOKIE_SECURE = not DEBUG  # Use secure cookies in production
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_AGE = 86400  # 1 day
+SESSION_COOKIE_AGE = 604800  # 1 week
 
 # Allow Google Sign-In popups to communicate back to the page
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
