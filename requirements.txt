@@ -4,7 +4,7 @@ asgiref==3.11.0
     # via
     #   django
     #   django-browser-reload
-cachetools==6.2.4
+cachetools==6.2.2
     # via google-auth
 certifi==2025.11.12
     # via requests
@@ -156,9 +156,9 @@ typing-extensions==4.15.0
     #   grpcio
     #   opentelemetry-api
     #   stripe
-tzdata==2025.3 ; sys_platform == 'win32'
+tzdata==2025.2 ; sys_platform == 'win32'
     # via django
-urllib3==2.6.2
+urllib3==2.6.1
     # via requests
 zipp==3.23.0
     # via importlib-metadata
