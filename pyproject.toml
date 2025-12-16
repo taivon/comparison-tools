@@ -16,7 +16,7 @@ dependencies = [
     "google-cloud-trace~=1.11",
     "google-auth~=2.43",
     "psycopg2-binary~=2.9",
-    "stripe~=14.0",
+    "stripe~=14.1",
     "geopy~=2.4",
     "googlemaps~=4.10",
 ]
