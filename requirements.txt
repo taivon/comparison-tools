@@ -38,7 +38,7 @@ google-api-core==2.28.1
     #   google-cloud-logging
     #   google-cloud-secret-manager
     #   google-cloud-trace
-google-auth==2.43.0
+google-auth==2.45.0
     # via
     #   comparison-tools
     #   google-api-core
@@ -53,7 +53,7 @@ google-cloud-audit-log==0.4.0
     # via google-cloud-logging
 google-cloud-core==2.5.0
     # via google-cloud-logging
-google-cloud-logging==3.12.1
+google-cloud-logging==3.13.0
     # via comparison-tools
 google-cloud-secret-manager==2.25.0
     # via comparison-tools
