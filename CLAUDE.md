@@ -41,9 +41,20 @@ uv run python manage.py migrate
 # Seed subscription products/plans
 uv run python manage.py seed_products
 
+# Run tests
+uv run python manage.py test
+
 # Deploy to App Engine
 gcloud app deploy
 ```
+
+## Pre-Push Requirements
+Before pushing to the repository, a git pre-push hook automatically runs:
+1. **Linting**: Runs `ruff check --fix` to auto-fix linting issues
+2. **Formatting**: Runs `ruff format` to format code
+3. **Tests**: Runs `python manage.py test` to ensure all tests pass
+
+If any of these checks fail, the push will be blocked. If auto-fix makes changes, you'll need to commit them before pushing.
 
 ## Environment Variables (Production)
 - `DATABASE_URL` - Supabase PostgreSQL connection string
