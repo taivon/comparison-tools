@@ -56,6 +56,26 @@ Before pushing to the repository, a git pre-push hook automatically runs:
 
 If any of these checks fail, the push will be blocked. If auto-fix makes changes, you'll need to commit them before pushing.
 
+## Information Citation Guidelines
+When providing information, follow these citation standards:
+
+1. **Cite documentation sources whenever possible**, especially for claims about how tools, services, or APIs work.
+2. **If documentation cannot be found to support a claim**, clearly state that the information is based on inference or general knowledge.
+3. **Prefer linking to official documentation** over blog posts or community discussions whenever available.
+
+## Unit Testing Conventions
+When writing unit tests, follow these guidelines:
+
+1. **First, look for existing test files in the same directory** to match patterns, structure, and testing tools.
+2. **If none are found, look for test files elsewhere in the project** to understand the project's testing conventions.
+3. **If no test files exist in the project**, use best practices:
+   - Follow standard test file naming conventions (e.g., `test_*.py` or `*_test.py`)
+   - Use appropriate testing frameworks for the language/project (e.g., Django's `TestCase` for Django projects)
+   - Structure tests with clear describe/setup blocks or equivalent
+   - Include setup/tear down as needed
+   - Mock external dependencies appropriately
+   - **Only test your own code**, not the functionality of external libraries or dependencies
+
 ## Environment Variables (Production)
 - `DATABASE_URL` - Supabase PostgreSQL connection string
 - `STRIPE_SECRET_KEY` - Stripe API key
