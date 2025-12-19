@@ -59,11 +59,33 @@
         "@type": "WebSite",
         "name": "Comparison Tools",
         "url": "{{ request.scheme }}://{{ request.get_host }}",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": "{{ request.scheme }}://{{ request.get_host }}/apartments/?q={search_term_string}",
-            "query-input": "required name=search_term_string"
-        }
+        "description": "Compare apartments, homes, and hotels with smart comparison tools and rent concession calculators."
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Apartment Comparison Tool",
+        "url": "{{ request.scheme }}://{{ request.get_host }}/apartments/",
+        "applicationCategory": "RealEstateApplication",
+        "operatingSystem": "Web",
+        "description": "Compare multiple apartments side-by-side with features including net effective rent calculation, distance to favorite places, price per square foot, and customizable scoring weights.",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "description": "Free tier: Compare up to 2 apartments"
+        },
+        "featureList": [
+            "Side-by-side apartment comparison",
+            "Net effective rent calculator",
+            "Rent concession calculator (months/weeks free, flat discounts)",
+            "Distance to favorite places",
+            "Price per square foot calculation",
+            "Customizable scoring weights",
+            "Mobile-responsive design"
+        ]
     }
     </script>
 
