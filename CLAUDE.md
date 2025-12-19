@@ -1,5 +1,7 @@
 # Project Context for Claude
 
+> **Important**: This file should be kept in sync with `agents.md`. When updating this file, also update `agents.md` with the same changes, and vice versa.
+
 ## Deployment
 - **Platform**: Google App Engine
 - **Database**: Supabase PostgreSQL
