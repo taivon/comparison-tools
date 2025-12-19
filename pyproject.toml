@@ -2,7 +2,7 @@
 name = "comparison-tools"
 version = "1.0.0"
 description = "Smart comparison tools for apartments, homes, and hotels"
-readme = "README.md"
+readme = "docs/README.md"
 requires-python = ">=3.12"
 dependencies = [
     "django~=6.0",
