@@ -1,0 +1,30 @@
+name: Add Reviewer to Dependabot PRs
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  add-reviewer:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    
+    steps:
+    - name: Add reviewer to Dependabot PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const reviewer = 'taivon';
+          
+          await github.rest.pulls.requestReviewers({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.payload.pull_request.number,
+            reviewers: [reviewer]
+          });
+          
+          console.log(`Added ${reviewer} as reviewer to PR #${context.payload.pull_request.number}`);
+
