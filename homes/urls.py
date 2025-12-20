@@ -27,6 +27,9 @@ urlpatterns = [
     path("api/import-redfin/", views.import_redfin_property, name="import_redfin"),
     # Favorite places
     path("favorite-places/", views.favorite_places_list, name="favorite_places"),
+    path("favorite-places/create/", views.create_favorite_place, name="create_favorite_place"),
+    path("favorite-places/<int:pk>/update/", views.update_favorite_place, name="update_favorite_place"),
+    path("favorite-places/<int:pk>/delete/", views.delete_favorite_place, name="delete_favorite_place"),
     # Google Maps API endpoints
     path("api/address-autocomplete/", views.address_autocomplete, name="address_autocomplete"),
     path("api/place-details/", views.place_details, name="place_details"),

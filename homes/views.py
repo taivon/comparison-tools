@@ -2,6 +2,7 @@ import json
 import logging
 import random
 import string
+from collections import defaultdict
 from decimal import Decimal
 
 from django.conf import settings
@@ -67,10 +68,16 @@ def index(request):
         home_count = 0
         can_add_home = True  # JavaScript will enforce the limit
 
+    from apartments.context_processors import subscription_status
+
+    # Get context from subscription_status processor
+    subscription_context = subscription_status(request)
     context = {
         "can_add_home": can_add_home,
         "is_anonymous": not request.user.is_authenticated,
         "home_count": home_count,
+        "user_has_premium": subscription_context.get("user_has_premium", False),
+        "google_client_id": subscription_context.get("google_client_id", ""),
     }
     return render(request, "homes/index.html", context)
 
@@ -196,34 +203,48 @@ def dashboard(request):
                             homes_needing_distances.append(home.id)
 
         # Use similar logic to apartments for getting distances
+        # Batch fetch all distances for efficiency
+        home_ids = [home.id for home in homes if home.latitude and home.longitude]
+        if home_ids:
+            all_distances = HomeDistance.objects.filter(home_id__in=home_ids).select_related("favorite_place")
+            distances_by_home = defaultdict(list)
+            for d in all_distances:
+                distances_by_home[d.home_id].append(d)
+
         for home in homes:
             if home.latitude and home.longitude:
-                distances = {}
-                for place in favorite_places:
-                    if place.latitude and place.longitude:
-                        try:
-                            distance_obj = HomeDistance.objects.get(home=home, favorite_place=place)
-                            distances[place.id] = {
-                                "distance_miles": float(distance_obj.distance_miles)
-                                if distance_obj.distance_miles
-                                else None,
-                                "travel_time_minutes": distance_obj.travel_time_minutes,
-                                "transit_fare": float(distance_obj.transit_fare) if distance_obj.transit_fare else None,
-                            }
-                        except HomeDistance.DoesNotExist:
-                            distances[place.id] = None
+                # Initialize distances dict with place labels as keys (matching apartments structure)
+                distances_dict = {
+                    place.label: {"distance": None, "travel_time": None, "transit_fare": None}
+                    for place in favorite_places
+                }
 
-                home.distance_data = distances
-                if distances:
-                    valid_distances = [d["distance_miles"] for d in distances.values() if d and d.get("distance_miles")]
-                    home.average_distance = sum(valid_distances) / len(valid_distances) if valid_distances else None
-                    valid_times = [
-                        d["travel_time_minutes"] for d in distances.values() if d and d.get("travel_time_minutes")
-                    ]
-                    home.average_travel_time = sum(valid_times) / len(valid_times) if valid_times else None
-                else:
-                    home.average_distance = None
-                    home.average_travel_time = None
+                # Get cached distances from pre-fetched data
+                cached_distances = distances_by_home.get(home.id, [])
+
+                total_distance = 0.0
+                total_time = 0
+                count = 0
+                time_count = 0
+
+                for d in cached_distances:
+                    if d.distance_miles is not None:
+                        dist_float = float(d.distance_miles)
+                        distances_dict[d.favorite_place.label] = {
+                            "distance": dist_float,
+                            "travel_time": d.travel_time_minutes,
+                            "transit_fare": float(d.transit_fare) if d.transit_fare else None,
+                        }
+                        total_distance += dist_float
+                        count += 1
+
+                        if d.travel_time_minutes is not None:
+                            total_time += d.travel_time_minutes
+                            time_count += 1
+
+                home.distance_data = distances_dict
+                home.average_distance = round(total_distance / count, 2) if count > 0 else None
+                home.average_travel_time = round(total_time / time_count) if time_count > 0 else None
             else:
                 home.distance_data = {}
                 home.average_distance = None
@@ -265,6 +286,23 @@ def dashboard(request):
         except AgentClientRelationship.DoesNotExist:
             pass
 
+    # Check which optional fields have data (for template conditionals)
+    # These are needed for the dashboard template to show/hide columns
+    has_beds_baths_variation = False
+    if homes:
+        bedrooms_set = {home.bedrooms for home in homes}
+        bathrooms_set = {home.bathrooms for home in homes}
+        has_beds_baths_variation = len(bedrooms_set) > 1 or len(bathrooms_set) > 1
+
+    # Homes don't have discounts, parking, utilities, view, or balcony like apartments
+    # But we need these variables for template compatibility
+    has_discounts = False  # Homes are purchased, not rented with discounts
+    has_parking = False  # Not applicable for homes
+    has_utilities = False  # Not applicable for homes
+    has_view_ratings = False  # Not applicable for homes
+    has_balcony = False  # Not applicable for homes
+    has_additional_costs = has_hoa or has_taxes  # HOA and taxes are additional costs
+
     context = {
         "homes": homes,
         "preferences": preferences,
@@ -278,6 +316,13 @@ def dashboard(request):
         "has_taxes": has_taxes,
         "has_year_built": has_year_built,
         "has_lot_size": has_lot_size,
+        "has_discounts": has_discounts,
+        "has_parking": has_parking,
+        "has_utilities": has_utilities,
+        "has_view_ratings": has_view_ratings,
+        "has_balcony": has_balcony,
+        "has_additional_costs": has_additional_costs,
+        "has_beds_baths_variation": has_beds_baths_variation,
         "favorite_places": favorite_places,
         "favorite_place_count": favorite_place_count,
         "favorite_place_limit": favorite_place_limit,
@@ -916,6 +961,221 @@ def favorite_places_list(request):
         "is_premium": has_premium,
     }
     return render(request, "homes/favorite_places.html", context)
+
+
+@login_required
+def create_favorite_place(request):
+    """Create a new favorite place with geocoding"""
+    has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+
+    # Require premium for location features
+    if not has_premium:
+        messages.info(request, "Favorite Places is a Pro feature. Upgrade to unlock distance calculations!")
+        return redirect("signup")
+
+    # Check limit
+    if not homes_can_add_favorite_place(request.user, PRODUCT_SLUG):
+        messages.error(request, "You've reached the maximum of 5 favorite places.")
+        return redirect("homes:favorite_places")
+
+    from apartments.forms import FavoritePlaceForm
+
+    if request.method == "POST":
+        form = FavoritePlaceForm(request.POST)
+        if form.is_valid():
+            label = form.cleaned_data["label"]
+            address = form.cleaned_data["address"]
+
+            # Check if we have pre-fetched coordinates from Google Places
+            google_lat = request.POST.get("google_latitude", "").strip()
+            google_lng = request.POST.get("google_longitude", "").strip()
+
+            latitude = None
+            longitude = None
+            geocode_failed = False
+
+            if google_lat and google_lng:
+                # Use coordinates from Google Places (user selected from dropdown)
+                try:
+                    latitude = float(google_lat)
+                    longitude = float(google_lng)
+                    logger.info(f"Using Google Places coordinates for '{label}'.")
+                except ValueError:
+                    logger.warning(f"Invalid Google coordinates received for label '{label}'.")
+                    geocode_failed = True
+
+            if latitude is None or longitude is None:
+                # Fall back to geocoding (user typed address manually)
+                geocoding_service = get_geocoding_service()
+                result = geocoding_service.geocode_address_detailed(address)
+                latitude = result.latitude
+                longitude = result.longitude
+                if not result.success:
+                    geocode_failed = True
+
+            # Get travel preferences
+            travel_mode = form.cleaned_data["travel_mode"]
+            time_type = form.cleaned_data["time_type"]
+            day_of_week = form.cleaned_data["day_of_week"]
+            time_of_day = form.cleaned_data["time_of_day"]
+
+            place = FavoritePlace.objects.create(
+                user=request.user,
+                label=label,
+                address=address,
+                latitude=latitude,
+                longitude=longitude,
+                travel_mode=travel_mode,
+                time_type=time_type,
+                day_of_week=int(day_of_week),
+                time_of_day=time_of_day,
+            )
+
+            if geocode_failed or (latitude is None and longitude is None):
+                messages.warning(
+                    request,
+                    f"Added '{label}' but couldn't locate the address. Distance calculations won't be available.",
+                )
+            else:
+                messages.success(request, f"Added '{label}' to your favorite places!")
+                # Calculate distances to all apartments and homes
+                from apartments.distance_service import recalculate_distances_for_favorite_place
+
+                recalculate_distances_for_favorite_place(place)
+
+            return redirect("homes:favorite_places")
+    else:
+        form = FavoritePlaceForm()
+
+    context = {
+        "form": form,
+        "is_edit": False,
+    }
+    return render(request, "apartments/favorite_place_form.html", context)
+
+
+@login_required
+def update_favorite_place(request, pk):
+    """Update an existing favorite place"""
+    has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+
+    # Require premium for location features
+    if not has_premium:
+        messages.info(request, "Favorite Places is a Pro feature. Upgrade to unlock!")
+        return redirect("signup")
+
+    place = get_object_or_404(FavoritePlace, pk=pk, user=request.user)
+
+    from apartments.forms import FavoritePlaceForm
+
+    if request.method == "POST":
+        form = FavoritePlaceForm(request.POST)
+        if form.is_valid():
+            new_address = form.cleaned_data["address"]
+            address_changed = new_address != place.address
+
+            place.label = form.cleaned_data["label"]
+            place.address = new_address
+
+            # Update travel preferences
+            travel_mode = form.cleaned_data["travel_mode"]
+            time_type = form.cleaned_data["time_type"]
+            day_of_week = form.cleaned_data["day_of_week"]
+            time_of_day = form.cleaned_data["time_of_day"]
+
+            # Check if travel preferences changed
+            travel_prefs_changed = (
+                place.travel_mode != travel_mode
+                or place.time_type != time_type
+                or place.day_of_week != int(day_of_week)
+                or place.time_of_day != time_of_day
+            )
+
+            place.travel_mode = travel_mode
+            place.time_type = time_type
+            place.day_of_week = int(day_of_week)
+            place.time_of_day = time_of_day
+
+            # Re-geocode if address changed
+            geocode_failed = False
+            if address_changed:
+                # Check if we have pre-fetched coordinates from Google Places
+                google_lat = request.POST.get("google_latitude", "").strip()
+                google_lng = request.POST.get("google_longitude", "").strip()
+
+                if google_lat and google_lng:
+                    # Use coordinates from Google Places
+                    try:
+                        place.latitude = float(google_lat)
+                        place.longitude = float(google_lng)
+                        logger.info(f"Using Google Places coordinates for place id {place.id}")
+                    except ValueError:
+                        logger.warning(f"Invalid Google coordinates received for place '{place.label}'.")
+                        geocode_failed = True
+                        place.latitude = None
+                        place.longitude = None
+                else:
+                    # Fall back to geocoding
+                    geocoding_service = get_geocoding_service()
+                    result = geocoding_service.geocode_address_detailed(new_address)
+                    place.latitude = result.latitude
+                    place.longitude = result.longitude
+                    if not result.success:
+                        geocode_failed = True
+
+            place.save()
+
+            # Recalculate distances if address or travel preferences changed
+            if (address_changed or travel_prefs_changed) and place.latitude and place.longitude:
+                from apartments.distance_service import recalculate_distances_for_favorite_place
+
+                recalculate_distances_for_favorite_place(place)
+
+            if geocode_failed:
+                messages.warning(request, f"Updated '{place.label}' but couldn't locate the new address.")
+            else:
+                messages.success(request, f"Updated '{place.label}'!")
+            return redirect("homes:favorite_places")
+    else:
+        form = FavoritePlaceForm(
+            initial={
+                "label": place.label,
+                "address": place.address,
+                "travel_mode": place.travel_mode,
+                "time_type": place.time_type,
+                "day_of_week": place.day_of_week,
+                "time_of_day": place.time_of_day,
+            }
+        )
+
+    context = {
+        "form": form,
+        "place": place,
+        "is_edit": True,
+    }
+    return render(request, "apartments/favorite_place_form.html", context)
+
+
+@login_required
+def delete_favorite_place(request, pk):
+    """Delete a favorite place"""
+    has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+
+    # Require premium for location features
+    if not has_premium:
+        messages.info(request, "Favorite Places is a Pro feature. Upgrade to unlock!")
+        return redirect("signup")
+
+    place = get_object_or_404(FavoritePlace, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        label = place.label
+        place.delete()
+        messages.success(request, f"Deleted '{label}' from your favorite places.")
+        return redirect("homes:favorite_places")
+
+    # GET request - show confirmation (handled by template form)
+    return redirect("homes:favorite_places")
 
 
 # =============================================================================
