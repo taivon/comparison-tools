@@ -1,0 +1,29 @@
+{% extends 'apartments/base.html' %}
+
+{% block title %}Favorite Places{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Favorite Places</h1>
+    
+    <p class="mb-4">Manage your favorite places for distance calculations.</p>
+    
+    <a href="{% url 'homes:create_home' %}" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark mb-6">
+        Add Favorite Place
+    </a>
+    
+    {% if favorite_places %}
+        <ul>
+            {% for place in favorite_places %}
+                <li class="border rounded-lg p-4 mb-4">
+                    <h3 class="font-semibold">{{ place.label }}</h3>
+                    <p class="text-gray-600">{{ place.address }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-gray-600">No favorite places added yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,79 @@
+{% extends 'apartments/base.html' %}
+
+{% block title %}Home Comparison Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Your Home Comparisons</h1>
+    
+    {% if linked_agent %}
+        <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+            <p>Linked with agent: {{ linked_agent.get_full_name|default:linked_agent.username }}</p>
+        </div>
+    {% endif %}
+    
+    {% if homes %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white rounded-lg shadow">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Sq Ft</th>
+                        <th>Bed/Bath</th>
+                        {% if has_hoa %}<th>HOA</th>{% endif %}
+                        {% if has_taxes %}<th>Taxes</th>{% endif %}
+                        {% if has_year_built %}<th>Year Built</th>{% endif %}
+                        {% if has_lot_size %}<th>Lot Size</th>{% endif %}
+                        {% if is_premium and favorite_places %}<th>Distance</th>{% endif %}
+                        {% if homes.0.score %}<th>Score</th>{% endif %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for home in homes %}
+                    <tr>
+                        <td>{{ home.name }}</td>
+                        <td>${{ home.price|floatformat:0 }}</td>
+                        <td>{{ home.square_footage }}</td>
+                        <td>{{ home.bedrooms }}/{{ home.bathrooms }}</td>
+                        {% if has_hoa %}<td>${{ home.hoa_fees|floatformat:0 }}</td>{% endif %}
+                        {% if has_taxes %}<td>${{ home.property_taxes|floatformat:0 }}</td>{% endif %}
+                        {% if has_year_built %}<td>{{ home.year_built|default:"—" }}</td>{% endif %}
+                        {% if has_lot_size %}<td>{{ home.lot_size_sqft|default:"—" }}</td>{% endif %}
+                        {% if is_premium and favorite_places %}
+                            <td>
+                                {% if home.average_distance %}
+                                    {{ home.average_distance|floatformat:1 }} mi
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                        {% if home.score %}
+                            <td>{{ home.score }}/10</td>
+                        {% endif %}
+                        <td>
+                            <a href="{% url 'homes:update_home' home.pk %}" class="text-blue-600 hover:underline">Edit</a>
+                            <form method="post" action="{% url 'homes:delete_home' home.pk %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-red-600 hover:underline ml-2">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-gray-600 mb-4">No homes added yet. <a href="{% url 'homes:create_home' %}" class="text-blue-600 hover:underline">Add your first home</a>.</p>
+    {% endif %}
+    
+    <div class="mt-8">
+        <a href="{% url 'homes:create_home' %}" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark">
+            Add Home
+        </a>
+    </div>
+</div>
+{% endblock %}
+
