@@ -59,9 +59,10 @@ If any of these checks fail, the push will be blocked. If auto-fix makes changes
 ## Information Citation Guidelines
 When providing information, follow these citation standards:
 
-1. **Cite documentation sources whenever possible**, especially for claims about how tools, services, or APIs work.
+1. **Always cite documentation sources when making factual claims**, especially for claims about how tools, services, or APIs work.
 2. **If documentation cannot be found to support a claim**, clearly state that the information is based on inference or general knowledge.
 3. **Prefer linking to official documentation** over blog posts or community discussions whenever available.
+4. **Format citations as markdown links**, e.g. `[Source Name](https://example.com)`.
 
 ## Unit Testing Conventions
 When writing unit tests, follow these guidelines:
