@@ -1,6 +1,6 @@
 # Project Context for Claude
 
-> **Important**: This file should be kept in sync with `AGENTS.md`. When updating this file, also update `AGENTS.md` with the same changes, and vice versa. Whenever one is updated, the other should be updated as well.
+> **Important**: This file should be kept in sync with `agents.md`. When updating this file, also update `agents.md` with the same changes, and vice versa.
 
 ## Deployment
 - **Platform**: Google App Engine
@@ -59,10 +59,9 @@ If any of these checks fail, the push will be blocked. If auto-fix makes changes
 ## Information Citation Guidelines
 When providing information, follow these citation standards:
 
-1. **Always cite documentation sources when making factual claims**, especially for claims about how tools, services, or APIs work. Include links to official documentation whenever possible.
+1. **Cite documentation sources whenever possible**, especially for claims about how tools, services, or APIs work.
 2. **If documentation cannot be found to support a claim**, clearly state that the information is based on inference or general knowledge.
 3. **Prefer linking to official documentation** over blog posts or community discussions whenever available.
-4. **When referencing documentation**, use markdown links with the format: `[documentation title](URL)` to make sources easily accessible.
 
 ## Unit Testing Conventions
 When writing unit tests, follow these guidelines:

@@ -1,2 +1,0 @@
-# Homes comparison tool app
-
