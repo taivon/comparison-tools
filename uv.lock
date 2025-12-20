@@ -181,7 +181,7 @@ requires-dist = [
     { name = "django-environ", specifier = "~=0.12" },
     { name = "geopy", specifier = "~=2.4" },
     { name = "google-auth", specifier = "~=2.45" },
-    { name = "google-cloud-logging", specifier = "~=3.13" },
+    { name = "google-cloud-logging", specifier = "~=3.11" },
     { name = "google-cloud-secret-manager", specifier = "~=2.26" },
     { name = "google-cloud-trace", specifier = "~=1.11" },
     { name = "googlemaps", specifier = "~=4.10" },
