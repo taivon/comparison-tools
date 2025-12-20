@@ -107,6 +107,7 @@ INSTALLED_APPS = [
     "django.contrib.sitemaps",  # For SEO sitemap generation
     "social_django",  # For Google OAuth
     "apartments",
+    "homes",  # Homes comparison tool
     "feedback",  # Feedback and feature voting
 ]
 
