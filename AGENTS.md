@@ -1,6 +1,6 @@
 # Project Context for Claude
 
-> **Important**: This file should be kept in sync with `CLAUDE.md`. When updating this file, also update `CLAUDE.md` with the same changes, and vice versa. Whenever one is updated, the other should be updated as well.
+> **Important**: This file should be kept in sync with `CLAUDE.md`. When updating this file, also update `CLAUDE.md` with the same changes, and vice versa.
 
 ## Deployment
 - **Platform**: Google App Engine
