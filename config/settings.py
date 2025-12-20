@@ -108,6 +108,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",  # For number formatting (intcomma, etc.)
     "social_django",  # For Google OAuth
     "apartments",
+    "homes",
     "feedback",  # Feedback and feature voting
 ]
 
