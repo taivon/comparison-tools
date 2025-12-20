@@ -35,7 +35,7 @@ if [ -f ".env" ]; then
     source .env
     if [ -z "$GOOGLE_OAUTH2_KEY" ] || [ -z "$GOOGLE_OAUTH2_SECRET" ]; then
         echo "⚠️  Warning: OAuth credentials not configured in .env"
-        echo "   See ENVIRONMENT_SECURITY.md for setup instructions"
+        echo "   See docs/ENVIRONMENT_SECURITY.md for setup instructions"
     else
         echo "✅ OAuth credentials configured"
     fi
@@ -51,4 +51,4 @@ fi
 
 echo ""
 echo "🛡️  Security checks completed"
-echo "   For more information, see ENVIRONMENT_SECURITY.md"
+echo "   For more information, see docs/ENVIRONMENT_SECURITY.md"
