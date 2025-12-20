@@ -105,6 +105,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",  # For SEO sitemap generation
+    "django.contrib.humanize",  # For number formatting (intcomma, etc.)
     "social_django",  # For Google OAuth
     "apartments",
     "feedback",  # Feedback and feature voting
