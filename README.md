@@ -35,6 +35,21 @@ Each subdomain operates as an independent service while sharing the unified `com
 - [UV](https://docs.astral.sh/uv/) - Fast Python package manager
 - Git
 
+### Installing UV
+
+```bash
+# macOS and Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Or with Homebrew (macOS)
+brew install uv
+```
+
+After installation, restart your terminal or run `source ~/.bashrc` (or equivalent) to ensure UV is in your PATH.
+
 ### Setup
 
 1. Clone the repository:
