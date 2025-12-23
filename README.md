@@ -50,6 +50,36 @@ brew install uv
 
 After installation, restart your terminal or run `source ~/.bashrc` (or equivalent) to ensure UV is in your PATH.
 
+### Installing pyenv
+
+pyenv lets you easily switch between multiple versions of Python.
+
+```bash
+# macOS (Homebrew)
+brew install pyenv
+
+# Linux (automatic installer)
+curl https://pyenv.run | bash
+```
+
+After installation, add pyenv to your shell. For **bash**:
+```bash
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+For **zsh**:
+```bash
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.zshrc
+echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.zshrc
+echo 'eval "$(pyenv init -)"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+For other shells or detailed instructions, see the [pyenv installation guide](https://github.com/pyenv/pyenv#installation).
+
 ### Setup
 
 1. Clone the repository:
