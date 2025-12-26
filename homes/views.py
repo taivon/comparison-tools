@@ -284,6 +284,7 @@ def dashboard(request):
             relationship = AgentClientRelationship.objects.get(client=request.user, status="active")
             linked_agent = relationship.agent
         except AgentClientRelationship.DoesNotExist:
+            # No active agent relationship for this user; leave linked_agent as None
             pass
 
     # Check which optional fields have data (for template conditionals)
