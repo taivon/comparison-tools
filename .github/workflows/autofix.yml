@@ -29,6 +29,7 @@ jobs:
         uv run ruff format .
 
     - name: Sync requirements.txt
+      if: github.actor != 'dependabot[bot]'
       run: uv export --no-hashes -o requirements.txt
 
     - name: Commit changes
