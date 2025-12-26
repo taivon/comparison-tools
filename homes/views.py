@@ -1245,7 +1245,7 @@ def create_checkout_session(request):
 
         # Verify plan exists and is active
         try:
-            plan = Plan.objects.get(id=plan_id, is_active=True, tier="pro")
+            Plan.objects.get(id=plan_id, is_active=True, tier="pro")
         except Plan.DoesNotExist:
             return JsonResponse({"error": "Invalid plan"}, status=400)
 
