@@ -281,20 +281,7 @@ def recalculate_distances_for_favorite_place(favorite_place, use_google_maps: bo
         use_google_maps=use_google_maps,
     )
 
-    # Future: Add hotels here when implemented
-    # try:
-    #     from hotels.models import Hotel, HotelDistance
-    #     _recalculate_distances_for_product_type(
-    #         favorite_place=favorite_place,
-    #         product_type="hotels",
-    #         item_model=Hotel,
-    #         distance_model=HotelDistance,
-    #         item_fk_field="hotel",
-    #         item_name_field="name",
-    #         use_google_maps=use_google_maps,
-    #     )
-    # except ImportError:
-    #     pass
+    # TODO: Add hotels here when hotel support is implemented
 
 
 def recalculate_all_distances_for_user(user, use_google_maps: bool = True) -> None:
