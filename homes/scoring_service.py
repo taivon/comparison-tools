@@ -284,7 +284,7 @@ class HomeScoringService:
             return (None, False)
         elif factor == "year_built":
             if home.year_built:
-                return (Decimal(home.year_built), True)  # Newer is better (inverted: higher year = better)
+                return (Decimal(home.year_built), False)  # Newer is better (higher year = better)
             return (None, False)
         return (None, False)
 
