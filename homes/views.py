@@ -844,11 +844,36 @@ def approve_suggestion(request, pk):
     """Client approves an agent suggestion"""
     suggestion = get_object_or_404(HomeSuggestion, pk=pk, client=request.user, status="pending")
 
+    # Check tier limit before creating home
+    current_count = Home.objects.filter(user=request.user).count()
+    item_limit = get_user_item_limit(request.user, PRODUCT_SLUG)
+    if current_count >= item_limit:
+        has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+        if has_premium:
+            messages.error(
+                request,
+                f"You've reached the limit of {item_limit} homes. Please remove one to add the suggested home.",
+            )
+        else:
+            messages.error(request, "Free tier limit reached. Upgrade to Pro to add more homes.")
+        return redirect("homes:view_suggestions")
+
     # Create a copy of the home for the client
     original_home = suggestion.home
+
+    # Ensure the new home name is unique for this user
+    base_name = original_home.name
+    new_home_name = base_name
+    if Home.objects.filter(user=request.user, name=new_home_name).exists():
+        new_home_name = f"{base_name} (Suggested)"
+        counter = 2
+        while Home.objects.filter(user=request.user, name=new_home_name).exists():
+            new_home_name = f"{base_name} (Suggested {counter})"
+            counter += 1
+
     new_home = Home.objects.create(
         user=request.user,
-        name=original_home.name,
+        name=new_home_name,
         address=original_home.address,
         latitude=original_home.latitude,
         longitude=original_home.longitude,
