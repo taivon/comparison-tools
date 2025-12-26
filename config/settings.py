@@ -46,6 +46,15 @@ DEBUG = "GAE_ENV" not in os.environ
 if DEBUG:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
     CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
+
+    # GitHub Codespaces support
+    CODESPACE_NAME = os.environ.get("CODESPACE_NAME")
+    if CODESPACE_NAME:
+        CODESPACES_HOST = f"{CODESPACE_NAME}-8000.app.github.dev"
+        ALLOWED_HOSTS.append(CODESPACES_HOST)
+        ALLOWED_HOSTS.append(".app.github.dev")  # Allow all Codespaces subdomains
+        CSRF_TRUSTED_ORIGINS.append(f"https://{CODESPACES_HOST}")
+        CSRF_TRUSTED_ORIGINS.append("https://*.app.github.dev")  # Allow all Codespaces origins
 else:
     APPENGINE_URL = os.environ.get("APPENGINE_URL", "")
     if APPENGINE_URL:
