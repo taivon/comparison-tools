@@ -42,7 +42,7 @@ urlpatterns = [
             ]
         ),
     ),
-    path("homes/", apartment_views.homes_coming_soon, name="homes"),
+    path("homes/", include("homes.urls")),
     path("hotels/", apartment_views.hotels_coming_soon, name="hotels"),
     # Authentication (kept at root level for consistency)
     path("login/", apartment_views.login_view, name="login"),

@@ -173,35 +173,46 @@ def calculate_and_cache_distances(apartment, use_google_maps: bool = True) -> No
         )
 
 
-def recalculate_distances_for_favorite_place(favorite_place, use_google_maps: bool = True) -> None:
+def _recalculate_distances_for_product_type(
+    favorite_place,
+    product_type: str,
+    item_model,
+    distance_model,
+    item_fk_field: str,
+    item_name_field: str = "name",
+    use_google_maps: bool = True,
+) -> None:
     """
-    Recalculate distances when a favorite place is added or updated.
-    Uses Google Maps Distance Matrix API for accurate driving distances when available.
+    Recalculate distances for a specific product type (apartments, homes, hotels, etc.).
 
     Args:
-        favorite_place: The FavoritePlace instance that was changed
+        favorite_place: The FavoritePlace instance
+        product_type: Product type identifier ('apartments', 'homes', 'hotels', etc.)
+        item_model: The model class for items (Apartment, Home, Hotel, etc.)
+        distance_model: The model class for distances (ApartmentDistance, HomeDistance, etc.)
+        item_fk_field: Field name on distance_model that references item_model (e.g., 'apartment', 'home', 'hotel')
+        item_name_field: Field name on the item model for the name (default: 'name')
         use_google_maps: Whether to use Google Maps API (default True)
     """
-    from .models import Apartment, ApartmentDistance
-
     if not favorite_place.latitude or not favorite_place.longitude:
         logger.info(f"Favorite place {favorite_place.id} has no coordinates, skipping distance calculation")
         return
 
-    # Get all apartments for this user
-    apartments = Apartment.objects.filter(user=favorite_place.user)
+    # Get all items for this user with coordinates
+    items = item_model.objects.filter(user=favorite_place.user, latitude__isnull=False, longitude__isnull=False)
 
     # Check if Google Maps is available
     google_maps_available = use_google_maps and bool(settings.GOOGLE_MAPS_API_KEY)
 
-    for apartment in apartments:
-        if not apartment.latitude or not apartment.longitude:
-            logger.info(f"Apartment {apartment.id} has no coordinates, skipping")
+    for item in items:
+        # Double-check item has coordinates (defensive programming)
+        if not item.latitude or not item.longitude:
+            logger.info(f"{product_type.capitalize()} {item.id} has no coordinates, skipping")
             continue
 
         distance_miles, travel_time, fare, is_google = _calculate_distance_with_fallback(
-            apartment.latitude,
-            apartment.longitude,
+            item.latitude,
+            item.longitude,
             favorite_place.latitude,
             favorite_place.longitude,
             use_google_maps=google_maps_available,
@@ -216,9 +227,13 @@ def recalculate_distances_for_favorite_place(favorite_place, use_google_maps: bo
         if fare is not None:
             defaults["transit_fare"] = Decimal(str(fare))
 
-        ApartmentDistance.objects.update_or_create(
-            apartment=apartment,
-            favorite_place=favorite_place,
+        # Get the item name for logging
+        item_name = getattr(item, item_name_field, str(item))
+
+        # Update or create distance record using the correct foreign key field name
+        lookup_kwargs = {item_fk_field: item, "favorite_place": favorite_place}
+        distance_model.objects.update_or_create(
+            **lookup_kwargs,
             defaults=defaults,
         )
 
@@ -226,8 +241,47 @@ def recalculate_distances_for_favorite_place(favorite_place, use_google_maps: bo
         time_str = f" ({travel_time} min)" if travel_time else ""
         fare_str = f" (${fare} fare)" if fare else ""
         logger.info(
-            f"Cached {distance_type} distance: {apartment.name} -> {favorite_place.label} = {distance_miles} mi{time_str}{fare_str}"
+            f"Cached {distance_type} distance ({product_type}): {item_name} -> {favorite_place.label} = {distance_miles} mi{time_str}{fare_str}"
         )
+
+
+def recalculate_distances_for_favorite_place(favorite_place, use_google_maps: bool = True) -> None:
+    """
+    Recalculate distances when a favorite place is added or updated.
+    Uses Google Maps Distance Matrix API for accurate driving distances when available.
+    Handles all product types (apartments, homes, hotels, etc.).
+
+    Args:
+        favorite_place: The FavoritePlace instance that was changed
+        use_google_maps: Whether to use Google Maps API (default True)
+    """
+    from .models import Apartment, ApartmentDistance
+
+    # Recalculate for apartments
+    _recalculate_distances_for_product_type(
+        favorite_place=favorite_place,
+        product_type="apartments",
+        item_model=Apartment,
+        distance_model=ApartmentDistance,
+        item_fk_field="apartment",
+        item_name_field="name",
+        use_google_maps=use_google_maps,
+    )
+
+    # Recalculate for homes
+    from homes.models import Home, HomeDistance
+
+    _recalculate_distances_for_product_type(
+        favorite_place=favorite_place,
+        product_type="homes",
+        item_model=Home,
+        distance_model=HomeDistance,
+        item_fk_field="home",
+        item_name_field="name",
+        use_google_maps=use_google_maps,
+    )
+
+    # TODO: Add hotels here when hotel support is implemented
 
 
 def recalculate_all_distances_for_user(user, use_google_maps: bool = True) -> None:

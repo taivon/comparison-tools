@@ -1,0 +1,29 @@
+{% extends 'apartments/base.html' %}
+
+{% block title %}Enter Agent Invite Code{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Link with Your Real Estate Agent</h1>
+    
+    <p class="mb-6">Enter the invite code provided by your real estate agent to link your account.</p>
+    
+    <form method="post" class="max-w-md">
+        {% csrf_token %}
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Invite Code</label>
+            {{ form.code }}
+            {% if form.code.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.code.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark">
+            Link Account
+        </button>
+        <a href="{% url 'homes:dashboard' %}" class="ml-4 text-gray-600 hover:text-gray-800">Cancel</a>
+    </form>
+</div>
+{% endblock %}
+

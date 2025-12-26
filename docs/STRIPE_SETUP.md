@@ -129,7 +129,7 @@ From https://dashboard.stripe.com/apikeys:
 
 1. Go to https://dashboard.stripe.com/webhooks
 2. Click **+ Add endpoint**
-3. Endpoint URL: `https://apartments.comparison.tools/webhook/stripe/`
+3. Endpoint URL: `https://comparison.tools/webhook/stripe/`
 4. Select events to listen for:
    - `checkout.session.completed`
    - `customer.subscription.updated`
@@ -210,7 +210,7 @@ gcloud app deploy
 
 ### 8. Verify Production Setup
 
-1. Visit https://apartments.comparison.tools/pricing/
+1. Visit https://comparison.tools/pricing/
 2. Test the subscription flow with a real card (you can cancel immediately)
 3. Check Stripe Dashboard → Events to verify webhook delivery
 4. Check App Engine logs for any errors:

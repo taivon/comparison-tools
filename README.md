@@ -1,12 +1,12 @@
 # Comparison Tools
 
-A comprehensive platform for comparing various products and services across multiple domains. This repository contains the **apartments comparison** service, hosted at [apartments.comparison.tools](https://apartments.comparison.tools).
+A comprehensive platform for comparing various products and services across multiple domains. This repository contains the **apartments comparison** service, hosted at [comparison.tools](https://comparison.tools).
 
 ## Platform Architecture
 
 This is part of a larger comparison tools ecosystem:
 
-- **apartments.comparison.tools** - Real estate and rental comparison (this app)
+- **comparison.tools** - Real estate and rental comparison (this app)
 - *Future subdomains planned for other comparison categories*
 
 Each subdomain operates as an independent service while sharing the unified `comparison.tools` brand.
