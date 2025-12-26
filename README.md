@@ -115,7 +115,7 @@ uv run python manage.py runserver
 
 The application is automatically deployed to Google App Engine via GitHub Actions on every push to the main branch.
 
-- **Production URL**: https://apartments.comparison.tools
+- **Production URL**: https://comparison.tools
 - **Runtime**: Python 3.13 on Google App Engine
 
 ## Project Structure
