@@ -74,11 +74,16 @@ class Home(models.Model):
 
     @property
     def total_monthly_cost(self):
-        """Calculate total monthly cost: mortgage + HOA + (property taxes / 12)"""
-        mortgage = self.price  # This would be actual mortgage payment, but for now use price
+        """
+        Calculate estimated total monthly cost excluding mortgage:
+        HOA fees + (property taxes / 12).
+
+        Note: Mortgage payment is intentionally not included here until a proper
+        calculation (with interest rate, term, and down payment) is implemented.
+        """
         hoa = self.hoa_fees if self.hoa_fees else Decimal("0")
         taxes_monthly = (self.property_taxes / Decimal("12")) if self.property_taxes else Decimal("0")
-        return round(mortgage + hoa + taxes_monthly, 2)
+        return round(hoa + taxes_monthly, 2)
 
     @property
     def price_per_sqft(self):
