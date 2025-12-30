@@ -1006,18 +1006,29 @@ function calculateDiscountAmount(price, amount, type, discountCalcMethod) {
                     })" class="text-brand-purple hover:text-brand-purple-light text-xs font-medium py-1.5 px-2 touch-manipulation">
                         Edit
                     </button>
-                    {% if apartment.pk %}
-                        <form action="{% url 'apartments:delete_apartment' apartment.pk %}" method="post" class="inline">
-                            {% csrf_token %}
-                            <button type="submit" class="text-red-500 hover:text-red-600 text-xs font-medium py-1.5 px-2 touch-manipulation" onclick="return confirm('Are you sure you want to delete {{ apartment.name }}?')">
+                    <div class="flex gap-1">
+                        {% if apartment.pk %}
+                            <form action="{% url 'apartments:duplicate_apartment' apartment.pk %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-blue-600 hover:text-blue-700 text-xs font-medium py-1.5 px-2 touch-manipulation">
+                                    Copy
+                                </button>
+                            </form>
+                            <form action="{% url 'apartments:delete_apartment' apartment.pk %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-red-500 hover:text-red-600 text-xs font-medium py-1.5 px-2 touch-manipulation" onclick="return confirm('Are you sure you want to delete {{ apartment.name }}?')">
+                                    Remove
+                                </button>
+                            </form>
+                        {% else %}
+                            <button onclick='duplicateSessionApartment("{{ apartment.id }}")' class="text-blue-600 hover:text-blue-700 text-xs font-medium py-1.5 px-2 touch-manipulation">
+                                Copy
+                            </button>
+                            <button onclick='deleteSessionApartment("{{ apartment.id }}")' class="text-red-500 hover:text-red-600 text-xs font-medium py-1.5 px-2 touch-manipulation">
                                 Remove
                             </button>
-                        </form>
-                    {% else %}
-                        <button onclick='deleteSessionApartment("{{ apartment.id }}")' class="text-red-500 hover:text-red-600 text-xs font-medium py-1.5 px-2 touch-manipulation">
-                            Remove
-                        </button>
-                    {% endif %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         {% endfor %}
