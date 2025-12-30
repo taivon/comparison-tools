@@ -307,22 +307,28 @@
         </form>
 
         <script>
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const submitBtn = document.getElementById('submitBtn');
-            const submitText = document.getElementById('submitText');
-            const submitLoading = document.getElementById('submitLoading');
+        (function() {
+            let isSubmitting = false;
 
-            // Prevent double submission
-            if (submitBtn.disabled) {
-                e.preventDefault();
-                return false;
-            }
+            document.querySelector('form').addEventListener('submit', function(e) {
+                // Prevent double submission
+                if (isSubmitting) {
+                    e.preventDefault();
+                    return false;
+                }
 
-            // Disable button and show loading state
-            submitBtn.disabled = true;
-            submitText.classList.add('hidden');
-            submitLoading.classList.remove('hidden');
-        });
+                isSubmitting = true;
+
+                const submitBtn = document.getElementById('submitBtn');
+                const submitText = document.getElementById('submitText');
+                const submitLoading = document.getElementById('submitLoading');
+
+                // Disable button and show loading state
+                submitBtn.disabled = true;
+                submitText.classList.add('hidden');
+                submitLoading.classList.remove('hidden');
+            });
+        })();
         </script>
     </div>
 </div>
