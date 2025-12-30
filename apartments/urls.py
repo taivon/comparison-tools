@@ -12,6 +12,7 @@ urlpatterns = [
     path("apartment/create/", views.create_apartment, name="create_apartment"),
     path("apartment/<str:pk>/update/", views.update_apartment, name="update_apartment"),
     path("apartment/<str:pk>/delete/", views.delete_apartment, name="delete_apartment"),
+    path("apartment/<str:pk>/duplicate/", views.duplicate_apartment, name="duplicate_apartment"),
     # Favorite Places
     path("favorite-places/", views.favorite_places_list, name="favorite_places"),
     path("favorite-places/create/", views.create_favorite_place, name="create_favorite_place"),

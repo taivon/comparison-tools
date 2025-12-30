@@ -28,10 +28,6 @@ jobs:
         uv run ruff check --fix . || true
         uv run ruff format .
 
-    - name: Sync requirements.txt
-      if: github.actor != 'dependabot[bot]'
-      run: uv export --no-hashes -o requirements.txt
-
     - name: Commit changes
       run: |
         git config user.name "github-actions[bot]"
@@ -40,6 +36,6 @@ jobs:
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Autofix: format code and sync requirements.txt"
+          git commit -m "Autofix: format code"
           git push
         fi

@@ -517,6 +517,83 @@ def create_apartment(request):
 
 
 @login_required
+def duplicate_apartment(request, pk):
+    """Duplicate an apartment with a new name that avoids conflicts"""
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Method not allowed"}, status=405)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"success": False, "error": "Authentication required"}, status=401)
+
+    apartment = get_object_or_404(Apartment, pk=pk, user=request.user)
+
+    # Check tier limit
+    current_count = Apartment.objects.filter(user=request.user).count()
+    item_limit = get_user_item_limit(request.user, PRODUCT_SLUG)
+    if current_count >= item_limit:
+        has_premium = user_has_premium(request.user, PRODUCT_SLUG)
+        if has_premium:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": f"You've reached the limit of {item_limit} apartments. Please remove one to add another.",
+                },
+                status=400,
+            )
+        else:
+            return JsonResponse(
+                {"success": False, "error": "Free tier limit reached. Upgrade to Pro to add more apartments."},
+                status=400,
+            )
+
+    # Generate a unique name
+    base_name = apartment.name
+    new_name = f"{base_name} Copy"
+    counter = 1
+
+    # Check for name conflicts and increment until we find a unique name
+    while Apartment.objects.filter(user=request.user, name=new_name).exists():
+        new_name = f"{base_name} Copy {counter}"
+        counter += 1
+
+    try:
+        # Create duplicate apartment with all the same fields
+        new_apartment = Apartment.objects.create(
+            user=request.user,
+            name=new_name,
+            address=apartment.address,
+            latitude=apartment.latitude,
+            longitude=apartment.longitude,
+            price=apartment.price,
+            square_footage=apartment.square_footage,
+            bedrooms=apartment.bedrooms,
+            bathrooms=apartment.bathrooms,
+            lease_length_months=apartment.lease_length_months,
+            months_free=apartment.months_free,
+            weeks_free=apartment.weeks_free,
+            flat_discount=apartment.flat_discount,
+            parking_cost=apartment.parking_cost,
+            utilities=apartment.utilities,
+            view_quality=apartment.view_quality,
+            has_balcony=apartment.has_balcony,
+        )
+
+        # Calculate distances to favorite places
+        if new_apartment.latitude and new_apartment.longitude:
+            calculate_and_cache_distances(new_apartment)
+
+        # Recalculate scores for all apartments
+        recalculate_user_scores(request.user, PRODUCT_SLUG)
+
+        messages.success(request, f"Apartment duplicated as '{new_name}'!")
+        return redirect("apartments:dashboard")
+    except Exception as e:
+        logger.error(f"Error duplicating apartment: {str(e)}")
+        messages.error(request, "An error occurred while duplicating the apartment.")
+        return redirect("apartments:dashboard")
+
+
+@login_required
 def update_apartment(request, pk):
     apartment = get_object_or_404(Apartment, pk=pk, user=request.user)
 
