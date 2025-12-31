@@ -566,9 +566,6 @@ def update_home(request, pk):
 @require_http_methods(["POST"])
 def delete_home(request, pk):
     """Delete a home"""
-    if request.method != "POST":
-        return JsonResponse({"success": False, "error": "Method not allowed"}, status=405)
-
     home = get_object_or_404(Home, pk=pk, user=request.user)
     home.delete()
 
