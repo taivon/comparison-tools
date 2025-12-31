@@ -205,9 +205,9 @@ def dashboard(request):
         # Use similar logic to apartments for getting distances
         # Batch fetch all distances for efficiency
         home_ids = [home.id for home in homes if home.latitude and home.longitude]
+        distances_by_home = defaultdict(list)
         if home_ids:
             all_distances = HomeDistance.objects.filter(home_id__in=home_ids).select_related("favorite_place")
-            distances_by_home = defaultdict(list)
             for d in all_distances:
                 distances_by_home[d.home_id].append(d)
 
