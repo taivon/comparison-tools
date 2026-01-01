@@ -273,3 +273,32 @@ class AgentProfileForm(forms.Form):
             }
         ),
     )
+
+
+class RedfinCSVImportForm(forms.Form):
+    """Form for uploading Redfin CSV export file"""
+
+    csv_file = forms.FileField(
+        widget=forms.FileInput(
+            attrs={
+                "class": "hidden",
+                "accept": ".csv,.xlsx,.xls",
+                "id": "csv-file-input",
+            }
+        ),
+        help_text="Upload a CSV file exported from Redfin (max 350 homes)",
+    )
+
+    def clean_csv_file(self):
+        file = self.cleaned_data.get("csv_file")
+        if file:
+            # Check file extension
+            name = file.name.lower()
+            if not name.endswith((".csv", ".xlsx", ".xls")):
+                raise forms.ValidationError("Please upload a CSV or Excel file.")
+
+            # Check file size (max 5MB)
+            if file.size > 5 * 1024 * 1024:
+                raise forms.ValidationError("File size must be less than 5MB.")
+
+        return file

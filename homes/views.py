@@ -27,7 +27,7 @@ from apartments.models import (
 )
 from apartments.stripe_service import StripeService
 
-from .forms import HomeForm, HomePreferencesForm, HomeSuggestionForm, InviteCodeForm
+from .forms import HomeForm, HomePreferencesForm, HomeSuggestionForm, InviteCodeForm, RedfinCSVImportForm
 from .models import (
     AgentClientRelationship,
     AgentInviteCode,
@@ -953,6 +953,129 @@ def import_redfin_property(request):
 
     # TODO: Implement Redfin API integration
     return JsonResponse({"success": False, "error": "Redfin API integration not yet implemented."}, status=501)
+
+
+@login_required
+def import_redfin_csv(request):
+    """Import homes from a Redfin CSV export file"""
+    from .csv_import import parse_redfin_csv
+
+    # Check premium access
+    if not user_has_premium(request.user, PRODUCT_SLUG):
+        messages.error(request, "CSV import is a premium feature. Please upgrade to Pro.")
+        return redirect("homes:pricing")
+
+    if request.method == "POST":
+        form = RedfinCSVImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = form.cleaned_data["csv_file"]
+
+            # Parse the CSV file
+            results, detected_columns = parse_redfin_csv(csv_file)
+
+            if not results:
+                messages.error(request, "Could not parse the CSV file. Please check the file format.")
+                return redirect("homes:import_redfin_csv")
+
+            # Check tier limits
+            current_count = Home.objects.filter(user=request.user).count()
+            item_limit = get_user_item_limit(request.user, PRODUCT_SLUG)
+            available_slots = item_limit - current_count
+
+            # Process successful results
+            imported_count = 0
+            skipped_count = 0
+            error_count = 0
+            errors = []
+
+            for result in results:
+                if not result.success:
+                    error_count += 1
+                    errors.append(f"Row {result.row_number}: {result.error}")
+                    continue
+
+                # Check if we have room
+                if imported_count >= available_slots:
+                    skipped_count += len([r for r in results if r.success]) - imported_count
+                    errors.append(f"Reached home limit ({item_limit}). Remaining homes were skipped.")
+                    break
+
+                data = result.data
+
+                # Check for duplicate address
+                if Home.objects.filter(user=request.user, address__iexact=data.address).exists():
+                    skipped_count += 1
+                    errors.append(f"Row {result.row_number}: Duplicate address '{data.address}'")
+                    continue
+
+                # Generate unique name
+                base_name = data.name
+                name = base_name
+                counter = 2
+                while Home.objects.filter(user=request.user, name=name).exists():
+                    name = f"{base_name} ({counter})"
+                    counter += 1
+
+                # Create the home
+                try:
+                    Home.objects.create(
+                        user=request.user,
+                        name=name,
+                        address=data.address,
+                        price=data.price,
+                        square_footage=data.square_footage,
+                        bedrooms=data.bedrooms,
+                        bathrooms=data.bathrooms,
+                        hoa_fees=data.hoa_fees,
+                        property_taxes=data.property_taxes,
+                        year_built=data.year_built,
+                        lot_size_sqft=data.lot_size_sqft,
+                        latitude=data.latitude,
+                        longitude=data.longitude,
+                        redfin_id=data.redfin_id,
+                        mls_number=data.mls_number,
+                        source="redfin",
+                    )
+                    imported_count += 1
+                except Exception as e:
+                    error_count += 1
+                    errors.append(f"Row {result.row_number}: Failed to save - {str(e)}")
+                    logger.error(f"Error importing home from CSV row {result.row_number}: {e}")
+
+            # Recalculate scores if any homes were imported
+            if imported_count > 0:
+                from .scoring_service import recalculate_user_scores
+
+                recalculate_user_scores(request.user, PRODUCT_SLUG)
+
+            # Show results
+            if imported_count > 0:
+                messages.success(request, f"Successfully imported {imported_count} home(s)!")
+            if skipped_count > 0:
+                messages.warning(request, f"Skipped {skipped_count} home(s) (duplicates or limit reached).")
+            if error_count > 0:
+                messages.error(request, f"Failed to import {error_count} row(s). Check the file format.")
+
+            # Store errors in session for display
+            if errors:
+                request.session["import_errors"] = errors[:20]  # Limit to first 20 errors
+
+            return redirect("homes:dashboard")
+        else:
+            for _field, errs in form.errors.items():
+                for err in errs:
+                    messages.error(request, err)
+    else:
+        form = RedfinCSVImportForm()
+
+    # Get import errors from session if any
+    import_errors = request.session.pop("import_errors", [])
+
+    context = {
+        "form": form,
+        "import_errors": import_errors,
+    }
+    return render(request, "homes/import_redfin_csv.html", context)
 
 
 # =============================================================================

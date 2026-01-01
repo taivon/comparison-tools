@@ -25,6 +25,8 @@ urlpatterns = [
     path("api/import-zillow/", views.import_zillow_property, name="import_zillow"),
     path("api/import-mls/", views.import_mls_listing, name="import_mls"),
     path("api/import-redfin/", views.import_redfin_property, name="import_redfin"),
+    # CSV import
+    path("import/redfin-csv/", views.import_redfin_csv, name="import_redfin_csv"),
     # Favorite places
     path("favorite-places/", views.favorite_places_list, name="favorite_places"),
     path("favorite-places/create/", views.create_favorite_place, name="create_favorite_place"),
