@@ -749,7 +749,7 @@ def enter_invite_code(request):
             AgentClientRelationship.objects.create(
                 agent=invite_code.agent,
                 client=request.user,
-                invite_code=code,
+                invite_code=invite_code,
                 status="active",
                 linked_at=timezone.now(),
             )

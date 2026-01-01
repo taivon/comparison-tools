@@ -194,7 +194,14 @@ class AgentClientRelationship(models.Model):
 
     agent = models.ForeignKey(User, on_delete=models.CASCADE, related_name="agent_relationships")
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name="client_relationships")
-    invite_code = models.CharField(max_length=50)
+    invite_code = models.ForeignKey(
+        "AgentInviteCode",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="relationships",
+        help_text="The invite code used to establish this relationship",
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     linked_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
