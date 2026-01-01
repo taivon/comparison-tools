@@ -1018,7 +1018,7 @@ def import_redfin_csv(request):
 
                 # Create the home
                 try:
-                    Home.objects.create(
+                    home = Home.objects.create(
                         user=request.user,
                         name=name,
                         address=data.address,
@@ -1037,6 +1037,10 @@ def import_redfin_csv(request):
                         source="redfin",
                     )
                     imported_count += 1
+
+                    # Calculate distances to favorite places if home has coordinates
+                    if home.latitude and home.longitude:
+                        calculate_home_distances(home)
                 except Exception as e:
                     error_count += 1
                     errors.append(f"Row {result.row_number}: Failed to save - {str(e)}")
