@@ -1,0 +1,158 @@
+{% extends 'apartments/base.html' %}
+
+{% block title %}Import from Redfin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Import from Redfin</h1>
+        <!-- Instructions -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h2 class="text-lg font-semibold text-blue-800 mb-2">How to export from Redfin</h2>
+            <ol class="list-decimal list-inside text-blue-700 space-y-1">
+                <li>Go to <a href="https://www.redfin.com" target="_blank" class="underline">redfin.com</a> and log in to your account</li>
+                <li>Go to your <a href="https://www.redfin.com/myredfin/favorites" target="_blank" class="underline font-medium">Favorites page</a></li>
+                <li>Click the <strong>Download All</strong> button (download icon at the top of your favorites list)</li>
+                <li>Save the CSV file to your computer</li>
+                <li>Upload the file below</li>
+            </ol>
+        </div>
+
+        <!-- Upload Form -->
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors" id="drop-zone">
+                <input type="file" name="csv_file" id="csv-file-input" class="hidden" accept=".csv,.xlsx,.xls">
+
+                <div id="upload-prompt">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="mt-2 text-gray-600">
+                        <label for="csv-file-input" class="text-primary hover:text-primary-dark cursor-pointer font-medium">
+                            Click to upload
+                        </label>
+                        or drag and drop
+                    </p>
+                    <p class="mt-1 text-sm text-gray-500">CSV or Excel file (max 5MB)</p>
+                </div>
+
+                <div id="file-selected" class="hidden">
+                    <svg class="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="mt-2 text-gray-700 font-medium" id="file-name"></p>
+                    <button type="button" id="clear-file" class="mt-2 text-sm text-red-600 hover:text-red-800">
+                        Remove file
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <a href="{% url 'homes:dashboard' %}" class="text-gray-600 hover:text-gray-800">Cancel</a>
+                <button type="submit" id="submit-btn" disabled class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed">
+                    Import Homes
+                </button>
+            </div>
+        </form>
+
+        <!-- Import Errors -->
+        {% if import_errors %}
+        <div class="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-red-800 mb-2">Import Errors</h3>
+            <ul class="list-disc list-inside text-red-700 space-y-1 text-sm">
+                {% for error in import_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Expected Columns -->
+        <div class="mt-8 text-sm text-gray-600">
+            <h3 class="font-semibold mb-2">What gets imported</h3>
+            <p class="mb-2">The importer reads these fields from your Redfin export:</p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>ADDRESS</strong>, <strong>CITY</strong>, <strong>STATE</strong>, <strong>ZIP</strong> - Full property address</li>
+                <li><strong>PRICE</strong>, <strong>SQUARE FEET</strong> - Listing price and size (required)</li>
+                <li><strong>BEDS</strong>, <strong>BATHS</strong> - Bedroom and bathroom count</li>
+                <li><strong>HOA/MONTH</strong>, <strong>YEAR BUILT</strong>, <strong>LOT SIZE</strong> - Additional details</li>
+                <li><strong>LATITUDE</strong>, <strong>LONGITUDE</strong> - Coordinates for distance calculations</li>
+                <li><strong>MLS#</strong> - MLS listing number</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('csv-file-input');
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const fileSelected = document.getElementById('file-selected');
+    const fileName = document.getElementById('file-name');
+    const clearFile = document.getElementById('clear-file');
+    const submitBtn = document.getElementById('submit-btn');
+
+    function showFile(file) {
+        fileName.textContent = file.name;
+        uploadPrompt.classList.add('hidden');
+        fileSelected.classList.remove('hidden');
+        submitBtn.disabled = false;
+    }
+
+    function clearFileSelection() {
+        fileInput.value = '';
+        uploadPrompt.classList.remove('hidden');
+        fileSelected.classList.add('hidden');
+        submitBtn.disabled = true;
+    }
+
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            showFile(e.target.files[0]);
+        }
+    });
+
+    // Clear file button
+    clearFile.addEventListener('click', clearFileSelection);
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('border-primary', 'bg-primary-light');
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('border-primary', 'bg-primary-light');
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('border-primary', 'bg-primary-light');
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            const name = file.name.toLowerCase();
+            if (name.endsWith('.csv') || name.endsWith('.xlsx') || name.endsWith('.xls')) {
+                fileInput.files = files;
+                showFile(file);
+            } else {
+                alert('Please upload a CSV or Excel file.');
+            }
+        }
+    });
+
+    // Click anywhere in drop zone to trigger file input
+    dropZone.addEventListener('click', function(e) {
+        if (e.target !== clearFile && !clearFile.contains(e.target)) {
+            fileInput.click();
+        }
+    });
+});
+</script>
+{% endblock %}

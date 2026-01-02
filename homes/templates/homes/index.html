@@ -1,0 +1,584 @@
+{% extends 'apartments/base.html' %}
+
+{% block title %}Home Comparison Tool | Compare Homes for Purchase{% endblock %}
+
+{% block meta_description %}Free home comparison tool to compare homes and condos for purchase by price, features, location, HOA fees, property taxes, and more. Make smarter home buying decisions.{% endblock %}
+
+{% block meta_keywords %}home comparison tool, house comparison, condo comparison, home buying tool, property comparison, real estate comparison, HOA fees calculator, property taxes calculator{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org Structured Data for Home Comparison Tool -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Home Comparison Tool",
+    "url": "{{ request.scheme }}://{{ request.get_host }}/homes/",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any",
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+    },
+    "description": "Free home comparison tool to compare homes and condos for purchase by price, features, location, HOA fees, and property taxes.",
+    "featureList": [
+        "Price and feature comparison",
+        "HOA fees and property taxes",
+        "Location scoring",
+        "Real estate agent integration",
+        "Side-by-side home comparison",
+        "Custom ranking by price, size, and location",
+        "Free to use - no credit card required"
+    ]
+}
+</script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="bg-gray-50 dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800" aria-label="Breadcrumb">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ol class="flex items-center space-x-2 py-3 text-sm">
+            <li>
+                <a href="{% url 'home' %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-purple dark:hover:text-brand-purple-light">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                    </svg>
+                    <span class="sr-only">Home</span>
+                </a>
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-2 text-gray-900 dark:text-white font-medium" aria-current="page">Home Comparison Tool</span>
+            </li>
+        </ol>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Returning User Banner -->
+{% if user.is_authenticated and home_count > 0 %}
+<div class="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-sm text-blue-800 dark:text-blue-200">
+                    You have <span class="font-semibold">{{ home_count }} home{{ home_count|pluralize }}</span> saved.
+                </p>
+            </div>
+            <a href="{% url 'homes:dashboard' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-800/50 hover:bg-blue-200 dark:hover:bg-blue-700/50 rounded-lg transition-colors">
+                View Dashboard
+                <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Hero Section -->
+<div id="heroSection" class="bg-white dark:bg-neutral-900">
+    <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
+                Find your perfect
+                <span class="text-brand-purple">home</span>
+            </h1>
+            <p class="mt-6 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-300">
+                Compare homes and condos for purchase by price, features, location, HOA fees, and property taxes. Make smarter home buying decisions.
+            </p>
+            {% if is_anonymous %}
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No account needed to try! Compare up to 2 homes as a guest.</p>
+            {% endif %}
+        </div>
+
+        <!-- Inline Home Entry Form -->
+        {% if can_add_home %}
+            <div class="max-w-4xl mx-auto">
+                <form id="inlineHomeForm" method="post" action="{% url 'homes:create_home' %}" onsubmit="handleInlineHomeSubmit(event)" class="bg-gradient-to-br from-gray-50 to-white dark:from-neutral-800 dark:to-neutral-900 border-2 border-gray-200 dark:border-neutral-700 rounded-2xl p-8 shadow-lg">
+                    {% csrf_token %}
+
+                    <!-- Basic Fields -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="id_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Home Name</label>
+                            <input type="text" name="name" id="id_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., 123 Main St">
+                        </div>
+                        <div>
+                            <label for="id_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price ($)</label>
+                            <input type="number" name="price" id="id_price" required step="0.01"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., 500000">
+                        </div>
+                        <div>
+                            <label for="id_square_footage" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Square Footage</label>
+                            <input type="number" name="square_footage" id="id_square_footage" required
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                   placeholder="e.g., 2000">
+                        </div>
+                    </div>
+
+                    <!-- Address Field -->
+                    <div class="mb-4">
+                        <label for="id_address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Address (optional)</label>
+                        <input type="text" name="address" id="id_address"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                               placeholder="Start typing an address..."
+                               data-address-autocomplete="true"
+                               autocomplete="off">
+                        <input type="hidden" name="google_latitude" id="google_latitude">
+                        <input type="hidden" name="google_longitude" id="google_longitude">
+                    </div>
+
+                    <!-- Hidden default fields for bedrooms and bathrooms -->
+                    <input type="hidden" name="bedrooms" value="1">
+                    <input type="hidden" name="bathrooms" value="1">
+
+                    <!-- Advanced Options Toggle -->
+                    <div class="mb-6">
+                        <button type="button" onclick="toggleAdvancedOptions()"
+                                class="flex items-center text-sm font-medium text-brand-purple dark:text-brand-purple-light hover:text-brand-purple-light transition-colors">
+                            <svg id="advancedChevron" class="w-4 h-4 mr-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            More options (beds, baths, HOA fees, property taxes, year built, lot size)
+                        </button>
+                    </div>
+
+                    <!-- Advanced Fields (Hidden by Default) -->
+                    <div id="advancedOptions" class="hidden mb-6 p-6 bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700">
+                        <!-- Bedrooms & Bathrooms -->
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Bedrooms & Bathrooms</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label for="id_bedrooms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bedrooms</label>
+                                <select name="bedrooms" id="id_bedrooms"
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+                                    <option value="0">Studio</option>
+                                    {% for i in "123456789"|make_list %}<option value="{{ i }}"{% if i == "1" %} selected{% endif %}>{{ i }}</option>{% endfor %}
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                    <option value="13">13</option>
+                                    <option value="14">14</option>
+                                    <option value="15">15</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="id_bathrooms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bathrooms</label>
+                                <select name="bathrooms" id="id_bathrooms"
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent">
+                                    <option value="0.5">0.5</option>
+                                    <option value="1" selected>1</option>
+                                    <option value="1.5">1.5</option>
+                                    <option value="2">2</option>
+                                    <option value="2.5">2.5</option>
+                                    <option value="3">3</option>
+                                    <option value="3.5">3.5</option>
+                                    <option value="4">4</option>
+                                    <option value="4.5">4.5</option>
+                                    <option value="5">5</option>
+                                    <option value="5.5">5.5</option>
+                                    <option value="6">6</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Home-Specific Costs -->
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Home Costs</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label for="id_hoa_fees" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly HOA Fees ($)</label>
+                                <input type="number" name="hoa_fees" id="id_hoa_fees" value="0" step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                            <div>
+                                <label for="id_property_taxes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Annual Property Taxes ($)</label>
+                                <input type="number" name="property_taxes" id="id_property_taxes" value="0" step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+                        </div>
+
+                        <!-- Property Details -->
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Property Details</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="id_year_built" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Year Built</label>
+                                <input type="number" name="year_built" id="id_year_built"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="e.g., 2020">
+                            </div>
+                            <div>
+                                <label for="id_lot_size_sqft" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lot Size (sq ft)</label>
+                                <input type="number" name="lot_size_sqft" id="id_lot_size_sqft"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-purple focus:border-transparent"
+                                       placeholder="e.g., 5000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-center">
+                        <button type="submit"
+                                class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-purple hover:bg-brand-purple-light transition-colors shadow-md hover:shadow-lg">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            Add & Compare
+                        </button>
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <div class="max-w-md mx-auto bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-amber-800 dark:text-amber-200">Free Tier Limit Reached</h3>
+                        <p class="mt-1 text-sm text-amber-700 dark:text-amber-300">You've reached the 2-home limit for free accounts. Upgrade to Pro to add unlimited homes.</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="py-16 bg-gray-50 dark:bg-neutral-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Smart home comparison</h2>
+            <p class="mt-4 text-xl text-gray-500 dark:text-gray-300">Make better home buying decisions with data-driven insights</p>
+        </div>
+        <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="bg-white dark:bg-neutral-700 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-600">
+                <div class="w-12 h-12 bg-brand-purple/10 dark:bg-brand-purple/20 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Smart Comparison</h3>
+                <p class="text-gray-500 dark:text-gray-300">Compare homes based on what matters most - price, size, location, HOA fees, and property taxes.</p>
+            </div>
+            <div class="bg-white dark:bg-neutral-700 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-600">
+                <div class="w-12 h-12 bg-brand-green/10 dark:bg-brand-green/20 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Total Cost Analysis</h3>
+                <p class="text-gray-500 dark:text-gray-300">Calculate true monthly cost including mortgage, HOA fees, and property taxes spread over the year.</p>
+            </div>
+            <div class="bg-white dark:bg-neutral-700 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-600">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Location Scoring</h3>
+                <p class="text-gray-500 dark:text-gray-300">Add your work, gym, or favorite spots and see driving distances from each home (Pro feature).</p>
+            </div>
+            <div class="bg-white dark:bg-neutral-700 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-neutral-600">
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Agent Integration</h3>
+                <p class="text-gray-500 dark:text-gray-300">Link with your real estate agent to receive suggestions and collaborate on your home search (Pro feature).</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FAQ Section -->
+<div class="py-16 bg-white dark:bg-neutral-900">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Frequently Asked Questions</h2>
+            <p class="mt-4 text-lg text-gray-500 dark:text-gray-300">Everything you need to know about comparing homes</p>
+        </div>
+        <div class="space-y-6">
+            <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                    How does the home comparison tool work?
+                </summary>
+                <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                    <p>Simply add homes you're considering with their price, square footage, and any additional costs like HOA fees or property taxes. Our tool automatically calculates price per square foot and ranks them based on your priorities.</p>
+                    <p class="mt-2">You can also add your important locations (like work or gym) to see driving distances from each home, helping you factor commute time into your decision.</p>
+                </div>
+            </details>
+            <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                    Can I compare homes by commute time to work?
+                </summary>
+                <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                    <p>Yes! Add your workplace or any important locations as "Favorite Places" and our tool will calculate driving distances from each home. You can prioritize location in your ranking to find homes that balance price, size, and convenience.</p>
+                    <p class="mt-2">This feature uses Google Maps to calculate real driving distances, so you get accurate commute estimates for each home. Location features are available with a Pro subscription.</p>
+                </div>
+            </details>
+            <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                    Is this home comparison tool free?
+                </summary>
+                <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                    <p>Yes, our home comparison tool is free to use. You can compare up to 2 homes as a guest without signing up. Create a free account to save unlimited homes and access all features including commute time calculations and real estate agent integration.</p>
+                </div>
+            </details>
+            <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                    How do I work with my real estate agent?
+                </summary>
+                <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                    <p>If you have a real estate agent, they can provide you with an invite code. Enter the code in your account settings to link with your agent. Once linked, your agent can suggest homes to you, and you can approve or reject their suggestions.</p>
+                    <p class="mt-2">Agent integration is a Pro feature, so you'll need to upgrade to link with your agent and receive suggestions.</p>
+                </div>
+            </details>
+            <details class="bg-gray-50 dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700">
+                <summary class="px-6 py-4 cursor-pointer font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-xl">
+                    What costs should I include when comparing homes?
+                </summary>
+                <div class="px-6 pb-4 text-gray-600 dark:text-gray-300">
+                    <p>When comparing homes, it's important to factor in all costs, not just the purchase price. Our tool helps you compare:</p>
+                    <ul class="mt-2 list-disc list-inside space-y-1">
+                        <li><strong>Purchase price</strong> - The listed price of the home</li>
+                        <li><strong>HOA fees</strong> - Monthly homeowners association fees (if applicable)</li>
+                        <li><strong>Property taxes</strong> - Annual property taxes (we calculate the monthly equivalent)</li>
+                        <li><strong>Square footage</strong> - To calculate price per square foot</li>
+                    </ul>
+                    <p class="mt-2">This gives you a true picture of the total monthly cost of ownership for each home.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+</div>
+
+<script>
+const HOME_DRAFT_KEY = 'homesInlineDraft';
+
+/**
+ * Determine if sessionStorage is available for storing drafts.
+ */
+function hasSessionStorageSupport() {
+    try {
+        const testKey = '__homesDraftTest__';
+        sessionStorage.setItem(testKey, '1');
+        sessionStorage.removeItem(testKey);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+/**
+ * Convert FormData into a plain object for draft persistence.
+ */
+function serializeHomeForm(formData) {
+    const draft = {};
+    formData.forEach((value, key) => {
+        // Only store serializable primitives; ignore files if added later.
+        if (!(value instanceof File)) {
+            draft[key] = value;
+        }
+    });
+    return draft;
+}
+
+/**
+ * Persist the current home form draft to sessionStorage.
+ */
+function saveInlineHomeDraft(formData) {
+    if (!hasSessionStorageSupport()) return;
+    const draftPayload = {
+        draft: serializeHomeForm(formData),
+        savedAt: Date.now(),
+    };
+    sessionStorage.setItem(HOME_DRAFT_KEY, JSON.stringify(draftPayload));
+}
+
+/**
+ * Retrieve any stored inline home draft from sessionStorage.
+ */
+function getInlineHomeDraft() {
+    if (!hasSessionStorageSupport()) return null;
+    const rawDraft = sessionStorage.getItem(HOME_DRAFT_KEY);
+    if (!rawDraft) return null;
+
+    try {
+        return JSON.parse(rawDraft);
+    } catch (error) {
+        sessionStorage.removeItem(HOME_DRAFT_KEY);
+        return null;
+    }
+}
+
+/**
+ * Remove the stored inline home draft from sessionStorage.
+ */
+function clearInlineHomeDraft() {
+    if (!hasSessionStorageSupport()) return;
+    sessionStorage.removeItem(HOME_DRAFT_KEY);
+}
+
+/**
+ * Populate the inline home form with a previously saved draft.
+ */
+function populateInlineHomeForm(form, draft) {
+    Object.entries(draft).forEach(([key, value]) => {
+        const field = form.elements.namedItem(key);
+        if (!field) return;
+
+        if (field.type === 'checkbox' || field.type === 'radio') {
+            if (Array.isArray(field)) {
+                Array.from(field).forEach((option) => {
+                    option.checked = option.value === value;
+                });
+            } else {
+                field.checked = Boolean(value);
+            }
+        } else {
+            field.value = value;
+        }
+    });
+}
+
+/**
+ * Render a lightweight banner when a draft is restored, allowing submit or discard.
+ */
+function showDraftRestoredBanner(form, onSubmit, onDiscard) {
+    const banner = document.createElement('div');
+    banner.className = 'mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3';
+    banner.setAttribute('role', 'status');
+
+    const message = document.createElement('p');
+    message.textContent = 'We restored your last home draft. Review and submit, or discard it.';
+
+    const actions = document.createElement('div');
+    actions.className = 'flex flex-wrap items-center gap-2';
+
+    const submitButton = document.createElement('button');
+    submitButton.type = 'button';
+    submitButton.className = 'inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700';
+    submitButton.textContent = 'Submit restored draft';
+    submitButton.addEventListener('click', onSubmit);
+
+    const discardButton = document.createElement('button');
+    discardButton.type = 'button';
+    discardButton.className = 'inline-flex items-center rounded-md border border-blue-200 px-3 py-2 text-xs font-semibold text-blue-900 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-50 dark:hover:bg-blue-800/60';
+    discardButton.textContent = 'Discard draft';
+    discardButton.addEventListener('click', () => {
+        onDiscard();
+        banner.remove();
+    });
+
+    actions.appendChild(submitButton);
+    actions.appendChild(discardButton);
+    banner.appendChild(message);
+    banner.appendChild(actions);
+
+    form.parentElement.insertBefore(banner, form);
+}
+
+function toggleAdvancedOptions() {
+    const advancedOptions = document.getElementById('advancedOptions');
+    const chevron = document.getElementById('advancedChevron');
+
+    if (advancedOptions.classList.contains('hidden')) {
+        advancedOptions.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+    } else {
+        advancedOptions.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+    }
+}
+
+async function handleInlineHomeSubmit(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const isAnonymous = {{ is_anonymous|yesno:"true,false" }};
+
+    // Get coordinates from address input if available
+    const addressInput = document.getElementById('id_address');
+    if (addressInput && addressInput.dataset.latitude && addressInput.dataset.longitude) {
+        const latInput = document.getElementById('google_latitude');
+        const lngInput = document.getElementById('google_longitude');
+        if (latInput) latInput.value = addressInput.dataset.latitude;
+        if (lngInput) lngInput.value = addressInput.dataset.longitude;
+        formData.set('google_latitude', addressInput.dataset.latitude);
+        formData.set('google_longitude', addressInput.dataset.longitude);
+    }
+
+    if (isAnonymous) {
+        // Save draft for anonymous users so it can be restored after signup
+        saveInlineHomeDraft(formData);
+        alert('Please sign up to save and compare homes! We saved your draft and will restore it after signup.');
+        window.location.href = '{% url "signup" %}?next=/homes/';
+        return;
+    } else {
+        // Authenticated user - submit form normally
+        clearInlineHomeDraft();
+        form.submit();
+    }
+}
+
+// Address autocomplete initialization
+document.addEventListener('DOMContentLoaded', () => {
+    const inlineHomeForm = document.getElementById('inlineHomeForm');
+    const inlineDraft = getInlineHomeDraft();
+    const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+
+    if (inlineHomeForm && inlineDraft?.draft) {
+        populateInlineHomeForm(inlineHomeForm, inlineDraft.draft);
+
+        if (isAuthenticated) {
+            showDraftRestoredBanner(
+                inlineHomeForm,
+                () => {
+                    clearInlineHomeDraft();
+                    inlineHomeForm.submit();
+                },
+                () => {
+                    clearInlineHomeDraft();
+                }
+            );
+        }
+    }
+
+    const addressInput = document.getElementById('id_address');
+    if (addressInput && typeof AddressAutocomplete !== 'undefined') {
+        const isPremium = {{ user.is_authenticated|yesno:"true,false" }} && {{ user_has_premium|yesno:"true,false" }};
+        
+        if (isPremium) {
+            // Initialize with homes-specific endpoints
+            const latInput = document.getElementById('google_latitude');
+            const lngInput = document.getElementById('google_longitude');
+            
+            new AddressAutocomplete(addressInput, {
+                apiEndpoint: '{% url "homes:address_autocomplete" %}',
+                detailsEndpoint: '{% url "homes:place_details" %}',
+                latInput: latInput,
+                lngInput: lngInput
+            });
+        }
+    }
+});
+</script>
+{% endblock %}
